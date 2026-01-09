@@ -1,7 +1,12 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Plus, Trash2, Check, Edit3, Download } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
+
 import { ExportModal } from './ExportModal';
 import { FileEntry } from '../../types';
+import { SortableItem } from '../../ui/SortableItem';
+import { api } from '../../services/api';
 
 interface ComicWorkstationProps {
     comic: {
@@ -23,40 +28,67 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
     onDeletePages,
     onAddPages,
 }) => {
+    // Local state for optimistic UI reordering
+    const [orderedPages, setOrderedPages] = useState<FileEntry[]>([]);
     const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
     const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Sort pages by order or name
-    const sortedPages = React.useMemo(() => {
-        return [...pages].sort((a, b) => {
-            if (a.order !== undefined && b.order !== undefined) {
-                return a.order - b.order;
-            }
+    // Sync props to local state
+    // We sort initially by 'order' or 'name' to ensure consistent start
+    useEffect(() => {
+        const sorted = [...pages].sort((a, b) => {
+            if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
             return a.name.localeCompare(b.name, undefined, { numeric: true });
         });
+        setOrderedPages(sorted);
     }, [pages]);
+
+    // Sensors for DnD
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), // Distance prevents accidental drags on click
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        setOrderedPages((items) => {
+            const oldIndex = items.findIndex((item) => item.id === active.id);
+            const newIndex = items.findIndex((item) => item.id === over.id);
+
+            const reordered = arrayMove(items, oldIndex, newIndex);
+
+            // Background save
+            api.reorderItems(reordered.map(p => p.id)).catch(err => console.error("Reorder failed", err));
+
+            return reordered;
+        });
+    };
 
     // Multi-selection handler
     const handlePageClick = useCallback((pageId: string, e: React.MouseEvent) => {
+        // Prevent selection if we just finished a drag (handled by sensors/click separation usually but good to be safe)
+        // ... handled by PointerSensor distance constraint.
+
         const newSet = new Set(selectedPageIds);
 
         if (e.shiftKey && lastSelectedId) {
-            // Range Selection
-            const lastIndex = sortedPages.findIndex(p => p.id === lastSelectedId);
-            const currIndex = sortedPages.findIndex(p => p.id === pageId);
+            // Finding index in current VISIBLE order
+            const lastIndex = orderedPages.findIndex(p => p.id === lastSelectedId);
+            const currIndex = orderedPages.findIndex(p => p.id === pageId);
 
             if (lastIndex !== -1 && currIndex !== -1) {
                 const start = Math.min(lastIndex, currIndex);
                 const end = Math.max(lastIndex, currIndex);
 
                 for (let i = start; i <= end; i++) {
-                    newSet.add(sortedPages[i].id);
+                    newSet.add(orderedPages[i].id);
                 }
             }
         } else if (e.metaKey || e.ctrlKey) {
-            // Toggle Selection
             if (newSet.has(pageId)) {
                 newSet.delete(pageId);
                 setLastSelectedId(null);
@@ -65,14 +97,13 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
                 setLastSelectedId(pageId);
             }
         } else {
-            // Single Select
             newSet.clear();
             newSet.add(pageId);
             setLastSelectedId(pageId);
         }
 
         setSelectedPageIds(newSet);
-    }, [selectedPageIds, lastSelectedId, sortedPages]);
+    }, [selectedPageIds, lastSelectedId, orderedPages]);
 
     // Bulk delete handler
     const handleBulkDelete = useCallback(() => {
@@ -90,12 +121,12 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
         if (selectedPageIds.size !== 1) return;
 
         const pageId = Array.from(selectedPageIds)[0];
-        const page = sortedPages.find(p => p.id === pageId);
+        const page = orderedPages.find(p => p.id === pageId);
 
         if (page) {
             onSelectPage(pageId, page.url || '');
         }
-    }, [selectedPageIds, sortedPages, onSelectPage]);
+    }, [selectedPageIds, orderedPages, onSelectPage]);
 
     // Add pages handler
     const handleAddPages = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,15 +144,12 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Delete key
             if (e.key === 'Delete' && selectedPageIds.size > 0) {
                 handleBulkDelete();
             }
-            // Enter key - edit
             if (e.key === 'Enter' && selectedPageIds.size === 1) {
                 handleEditPage();
             }
-            // Escape - clear selection
             if (e.key === 'Escape') {
                 setSelectedPageIds(new Set());
                 setLastSelectedId(null);
@@ -139,7 +167,7 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
                 <div className="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-[#0c0c0e]">
                     <div className="flex items-center gap-4">
                         <h1 className="text-lg font-bold text-white">{comic.name}</h1>
-                        <span className="text-sm text-white/40">{sortedPages.length} páginas</span>
+                        <span className="text-sm text-white/40">{orderedPages.length} páginas</span>
                         {selectedPageIds.size > 0 && (
                             <span className="text-sm text-accent-blue font-medium">
                                 {selectedPageIds.size} selecionada(s)
@@ -194,48 +222,60 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
                     </div>
                 </div>
 
-                {/* Pages Grid */}
+                {/* Pages Grid with DnD */}
                 <div className="flex-1 overflow-y-auto p-8">
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-                        {sortedPages.map((page) => {
-                            const isSelected = selectedPageIds.has(page.id);
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={orderedPages.map(p => p.id)}
+                            strategy={rectSortingStrategy}
+                        >
+                            <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+                                {orderedPages.map((page) => {
+                                    const isSelected = selectedPageIds.has(page.id);
 
-                            return (
-                                <PageCard
-                                    key={page.id}
-                                    page={page}
-                                    isSelected={isSelected}
-                                    onClick={(e) => handlePageClick(page.id, e)}
-                                    onEdit={() => onSelectPage(page.id, page.url || '')}
-                                />
-                            );
-                        })}
+                                    return (
+                                        <SortableItem key={page.id} id={page.id}>
+                                            <PageCard
+                                                page={page}
+                                                isSelected={isSelected}
+                                                onClick={(e) => handlePageClick(page.id, e)}
+                                                onEdit={() => onSelectPage(page.id, page.url || '')}
+                                            />
+                                        </SortableItem>
+                                    );
+                                })}
 
-                        {/* Add Page Button */}
-                        {onAddPages && (
-                            <div className="aspect-[3/4] rounded-xl border border-dashed border-border-color bg-app-bg/50 flex flex-col items-center justify-center gap-3 hover:border-accent-blue hover:bg-accent-blue/5 transition-all cursor-pointer relative">
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    onChange={handleAddPages}
-                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                />
-                                <div className="p-4 rounded-full bg-white/5 pointer-events-none">
-                                    <Plus size={32} className="text-white/40" />
-                                </div>
-                                <span className="text-sm text-white/40 pointer-events-none">Adicionar Página</span>
+                                {/* Add Page Button */}
+                                {onAddPages && (
+                                    <div className="aspect-[3/4] rounded-xl border border-dashed border-border-color bg-app-bg/50 flex flex-col items-center justify-center gap-3 hover:border-accent-blue hover:bg-accent-blue/5 transition-all cursor-pointer relative">
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            multiple
+                                            accept="image/*"
+                                            onChange={handleAddPages}
+                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                        />
+                                        <div className="p-4 rounded-full bg-white/5 pointer-events-none">
+                                            <Plus size={32} className="text-white/40" />
+                                        </div>
+                                        <span className="text-sm text-white/40 pointer-events-none">Adicionar Página</span>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        </SortableContext>
+                    </DndContext>
                 </div>
             </div>
 
             <ExportModal
                 isOpen={isExportModalOpen}
                 onClose={() => setIsExportModalOpen(false)}
-                projectId={comic.id} // Fix: comic does not have parentId type here, using id which is the folder ID.
+                projectId={comic.id}
                 projectName={comic.name}
             />
         </>
@@ -252,8 +292,8 @@ const PageCard = React.memo<{
     return (
         <div
             onClick={onClick}
-            className={`group cursor-pointer relative aspect-[3/4] rounded-xl border overflow-hidden transition-all ${isSelected
-                ? 'border-accent-blue ring-2 ring-accent-blue/50 scale-[1.02]'
+            className={`group cursor-pointer relative aspect-[3/4] rounded-xl border overflow-hidden transition-all bg-[#121214] ${isSelected
+                ? 'border-accent-blue ring-2 ring-accent-blue/50 scale-[1.02] z-10'
                 : 'border-border-color hover:border-accent-blue/50 hover:shadow-lg'
                 }`}
         >
@@ -276,10 +316,15 @@ const PageCard = React.memo<{
                 </div>
             )}
 
+            {/* Page Number Badge (Optional but helpful for ordering) */}
+            <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur rounded text-[10px] text-white/80 font-mono">
+                {page.name}
+            </div>
+
             {/* Footer - Shows on hover */}
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 pt-8 transition-all translate-y-full group-hover:translate-y-0">
                 <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white truncate">
+                    <span className="text-sm font-medium text-white truncate flex-1">
                         {page.name}
                     </span>
                     <button

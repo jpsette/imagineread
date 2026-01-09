@@ -33,4 +33,6 @@ class FileSystemEntry(Base):
     # Metadata
     created_at = Column(String)
     order = Column(Integer, default=0)
+
     is_pinned = Column(Boolean, default=False)
+    color = Column(String, nullable=True)

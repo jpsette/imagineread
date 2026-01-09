@@ -54,6 +54,11 @@ export interface CreateProjectRequest {
     color: string;
 }
 
+export interface CreateFolderRequest {
+    name: string;
+    parentId: string;
+}
+
 export interface FileUpdateData {
     balloons: Balloon[];
 }

@@ -1,37 +1,52 @@
-import { View, Text, Image, TouchableOpacity } from 'react-native';
-import { cn } from '@/lib/utils'; // Assuming alias is configured as @/lib/utils, but instruction said @/* -> ./src/*. So @/lib/utils is correct.
-import { Link } from 'expo-router';
+import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
+// Import Animated from Reanimated for Shared Transitions
+import Animated from 'react-native-reanimated';
 
 interface ComicCardProps {
+    id: string; // Added ID
     title: string;
     coverUrl: string;
+    description: string;
     progress?: number;
-    className?: string;
+    className?: string; // Keep for compatibility if used elsewhere
 }
 
-export function ComicCard({ title, coverUrl, progress, className }: ComicCardProps) {
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - 48) / 2;
+
+export function ComicCard({ id, title, coverUrl, description, progress, className }: ComicCardProps) {
+    const router = useRouter();
+
     return (
-        <Link href="/reader/1" asChild>
-            <TouchableOpacity className={cn('w-[140px] mr-4', className)}>
-                <View className="w-full aspect-[2/3] rounded-lg overflow-hidden bg-surface shadow-sm">
-                    <Image
-                        source={{ uri: coverUrl }}
-                        className="w-full h-full"
-                        resizeMode="cover"
+        <TouchableOpacity
+            className="mb-4 bg-zinc-900 rounded-xl overflow-hidden mx-auto" // Added mx-auto for grid centering
+            style={{ width: CARD_WIDTH }}
+            onPress={() => router.push(`/comic/${id}`)} // Navigate to Details
+        >
+            <Animated.Image
+                source={{ uri: coverUrl }}
+                className="w-full h-64 bg-zinc-800"
+                resizeMode="cover"
+                // @ts-ignore
+                sharedTransitionTag={`cover-${id}`}
+            />
+            {progress !== undefined && (
+                <View className="absolute bottom-0 left-0 right-0 h-1 bg-zinc-800">
+                    <View
+                        className="h-full bg-blue-500"
+                        style={{ width: `${progress * 100}%` }}
                     />
-                    {progress !== undefined && (
-                        <View className="absolute bottom-0 left-0 right-0 h-1 bg-surface-highlight">
-                            <View
-                                className="h-full bg-primary"
-                                style={{ width: `${progress * 100}%` }}
-                            />
-                        </View>
-                    )}
                 </View>
-                <Text className="text-text-primary text-sm font-medium mt-2" numberOfLines={1}>
+            )}
+            <View className="p-3">
+                <Text className="text-white font-bold text-base mb-1" numberOfLines={1}>
                     {title}
                 </Text>
-            </TouchableOpacity>
-        </Link>
+                <Text className="text-zinc-400 text-xs" numberOfLines={2}>
+                    {description}
+                </Text>
+            </View>
+        </TouchableOpacity>
     );
 }

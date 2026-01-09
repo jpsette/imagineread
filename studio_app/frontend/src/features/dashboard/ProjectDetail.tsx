@@ -1,9 +1,11 @@
-import React, { useState } from 'react'
-import { Folder, Plus, Pin, Pencil, Trash2, LayoutGrid } from 'lucide-react'
+import React, { useState, useRef } from 'react'
+import { Folder, Pin, Pencil, Trash2, ChevronRight, ArrowLeft, Upload, File } from 'lucide-react'
+
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Card } from '../../ui/Card';
 import { Project, FileEntry } from '../../types';
+import { api } from '../../services/api';
 
 interface ProjectDetailProps {
     project: Project | null
@@ -35,6 +37,8 @@ interface ProjectDetailProps {
     onTogglePin: (itemId: string) => void
     onImportFiles: (files: File[]) => void
     onDeletePages: (pageIds: string[]) => void
+    onBack: () => void
+    onRefresh: () => void
 }
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({
@@ -67,9 +71,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     onTogglePin,
     onImportFiles,
     onDeletePages,
+    onBack,
+    onRefresh
 }) => {
+
     // Selection State
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const toggleSelection = (id: string) => {
         const newSet = new Set(selectedItems);
@@ -90,6 +98,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         }
         setSelectedItems(new Set());
     };
+
     const getCurrentItems = () => {
         if (!project) return []
         const rootId = project.rootFolderId
@@ -97,316 +106,298 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         return fileSystem.filter(item => item.parentId === targetParent)
     }
 
+    const items = getCurrentItems()
+        .filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        .sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            // Folders first
+            if (a.type === 'folder' && b.type !== 'folder') return -1;
+            if (a.type !== 'folder' && b.type === 'folder') return 1;
+
+            return sortOrder === 'az'
+                ? a.name.localeCompare(b.name)
+                : b.name.localeCompare(a.name);
+        });
+
     return (
         <>
-            {loading && (
-                <div className="mb-6 p-4 rounded-lg bg-blue-900/10 border border-blue-900/30 flex items-center gap-3 text-blue-300">
-                    <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-sm font-medium">Processando PDF e gerando imagens...</span>
-                </div>
-            )}
-
-            {error && (
-                <div className="mb-6 p-4 rounded-lg bg-red-900/20 border border-red-900/50 text-red-200 text-sm">
-                    <strong>Erro:</strong> {error}
-                </div>
-            )}
-
-
-            {/* Toolbar for Selection */}
-            {selectedItems.size > 0 && (
-                <div className="mb-4 p-2 bg-red-900/20 border border-red-900/50 rounded-lg flex items-center justify-between">
-                    <span className="text-sm font-medium text-red-200 ml-2">{selectedItems.size} item(s) selecionado(s)</span>
-                    <Button
-                        onClick={handleBulkDelete}
-                        variant="danger"
-                        size="sm"
-                        icon={Trash2}
-                    >
-                        Excluir Selecionados
-                    </Button>
-                </div>
-            )}
-
-            <div className="grid grid-cols-[repeat(auto-fill,180px)] gap-4 content-start justify-start">
-
-                {/* Add New Library Card */}
-                {!isCreatingFolder && (
-                    <>
-                        {/* Import Button */}
-                        <label className="group aspect-square p-4 rounded-xl border border-dashed border-border-color bg-app-bg hover:border-accent-blue hover:bg-accent-blue/5 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer">
-                            <input
-                                type="file"
-                                multiple
-                                className="hidden"
-                                onChange={(e) => {
-                                    if (e.target.files && e.target.files.length > 0) {
-                                        onImportFiles(Array.from(e.target.files));
-                                        e.target.value = ''; // Reset
-                                    }
-                                }}
-                                accept="application/pdf,image/*"
-                            />
-                            <div className="p-3 rounded-full bg-[#27272a] text-text-secondary group-hover:bg-accent-blue group-hover:text-white transition-colors">
-                                <Plus size={24} className="rotate-45" /> {/* Upload Icon Style */}
+            {/* Header */}
+            <header className="flex flex-col gap-6 mb-8 pt-4 px-2">
+                <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" onClick={onBack}>
+                            <ArrowLeft size={20} />
+                        </Button>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-3xl font-bold tracking-tight text-white/90">
+                                    {(currentFolderId && fileSystem.find(f => f.id === currentFolderId)?.name) || project?.name || 'Loading...'}
+                                </h2>
                             </div>
-                            <span className="text-sm font-medium text-text-secondary group-hover:text-accent-blue text-center">
-                                Importar<br />Arquivos
-                            </span>
-                        </label>
+                            <p className="text-text-secondary mt-1 flex items-center gap-1 text-sm font-medium">
+                                <span className="opacity-60">Projetos</span>
+                                {(currentFolderId && currentFolderId !== project?.rootFolderId) && (
+                                    <>
+                                        <ChevronRight size={14} className="opacity-40" />
+                                        <span className="opacity-60">{project?.name}</span>
+                                    </>
+                                )}
+                            </p>
+                        </div>
+                    </div>
 
-                        {/* Create Folder Button */}
+                    {/* Actions */}
+                    <div className="flex items-center gap-3">
+                        {selectedItems.size > 0 && (
+                            <Button
+                                variant="destructive"
+                                onClick={handleBulkDelete}
+                                className="flex items-center gap-2"
+                            >
+                                <Trash2 size={14} />
+                                Excluir ({selectedItems.size})
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </header>
+
+            {/* Grid */}
+            <div className="grid grid-cols-[repeat(auto-fill,180px)] gap-6 content-start justify-start p-2 pb-20">
+
+                {/* Create Folder Card */}
+                {
+                    !isCreatingFolder && (
                         <Card
                             onClick={() => setIsCreatingFolder(true)}
-                            className="group aspect-square p-4 border-dashed bg-app-bg hover:border-accent-blue hover:bg-accent-blue/5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
+                            className="group relative p-4 border-dashed bg-app-bg hover:border-accent-blue hover:bg-accent-blue/5 flex flex-col items-center justify-center gap-3 h-48 shadow-sm hover:shadow-md cursor-pointer transition-all"
                         >
                             <div className="p-3 rounded-full bg-[#27272a] text-text-secondary group-hover:bg-accent-blue group-hover:text-white transition-colors">
                                 <Folder size={24} />
                             </div>
-                            <span className="text-sm font-medium text-text-secondary group-hover:text-accent-blue">Nova Biblioteca</span>
+                            <span className="text-xs font-bold text-text-secondary group-hover:text-accent-blue transition-colors">Nova Biblioteca</span>
                         </Card>
-                    </>
-                )}
+                    )
+                }
 
-                {/* Inline Creator for Folder */}
-                {isCreatingFolder && (
-                    <Card className="flex flex-col gap-2 p-3 border-accent-blue bg-app-bg animate-pulse">
-                        <div className="aspect-square rounded-xl bg-[#27272a] flex items-center justify-center mb-1">
-                            <Folder size={32} className="text-accent-blue" />
+                {/* Import Card */}
+                {!isCreatingFolder && (
+                    <Card
+                        onClick={() => fileInputRef.current?.click()}
+                        className="group relative p-4 border-dashed bg-app-bg hover:border-accent-blue hover:bg-accent-blue/5 flex flex-col items-center justify-center gap-3 h-48 shadow-sm hover:shadow-md cursor-pointer transition-all"
+                    >
+                        <div className="p-3 rounded-full bg-[#27272a] text-text-secondary group-hover:bg-accent-blue group-hover:text-white transition-colors">
+                            <Upload size={24} />
                         </div>
-                        <Input
-                            autoFocus
-                            placeholder="Nome da biblioteca..."
-                            value={newItemName}
-                            onChange={(e) => setNewItemName(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') onCreateFolder();
-                                if (e.key === 'Escape') setIsCreatingFolder(false);
+                        <span className="text-xs font-bold text-text-secondary group-hover:text-accent-blue transition-colors">Importar</span>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => {
+                                if (e.target.files?.length) onImportFiles(Array.from(e.target.files));
                             }}
-                            className="mb-2 !text-xs !py-1"
                         />
-                        <div className="grid grid-cols-8 gap-1 mb-2">
-                            {PROJECT_THEMES.map(theme => (
-                                <button
-                                    key={theme.bg}
-                                    onClick={() => setNewItemColor(theme.bg)}
-                                    className={`w-3 h-3 rounded-full transition-all ${theme.bg} ${newItemColor === theme.bg ? 'ring-1 ring-white scale-125' : 'hover:scale-125 opacity-70 hover:opacity-100'}`}
-                                />
-                            ))}
-                        </div>
-                        <div className="flex gap-2">
-                            <Button onClick={onCreateFolder} size="sm" className="flex-1 text-[10px] py-1 h-auto">Criar</Button>
-                            <Button variant="secondary" size="sm" onClick={() => setIsCreatingFolder(false)} className="px-2 text-[10px] py-1 h-auto">Cancel</Button>
-                        </div>
                     </Card>
                 )}
 
-                {getCurrentItems()
-                    .filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                    .sort((a, b) => {
-                        // Pin Priority
-                        if (a.isPinned && !b.isPinned) return -1;
-                        if (!a.isPinned && b.isPinned) return 1;
-                        // Name Sort
-                        return sortOrder === 'az'
-                            ? a.name.localeCompare(b.name)
-                            : b.name.localeCompare(a.name);
-                    })
-                    .map(item => (
-                        editingFolder?.id === item.id ? (
-                            <Card key={item.id} className="p-4 border-accent-blue bg-app-bg shadow-xl cursor-default flex flex-col gap-2">
-                                <h3 className="text-xs font-bold text-accent-blue">Editar Biblioteca</h3>
+                {/* Inline Folder Creator */}
+                {
+                    isCreatingFolder && (
+                        <Card className="p-4 border-accent-blue bg-app-bg shadow-xl shadow-blue-500/10 h-48 flex flex-col justify-between">
+                            <div>
+                                <h3 className="text-xs font-bold mb-2 text-accent-blue">Nova Pasta</h3>
                                 <Input
                                     autoFocus
-                                    value={editName}
-                                    onChange={(e) => setEditName(e.target.value)}
+                                    placeholder="Nome..."
+                                    value={newItemName}
+                                    onChange={(e) => setNewItemName(e.target.value)}
                                     onKeyDown={(e) => {
-                                        if (e.key === 'Enter') onUpdateFolder();
-                                        if (e.key === 'Escape') setEditingFolder(null);
+                                        if (e.key === 'Enter') onCreateFolder();
+                                        if (e.key === 'Escape') setIsCreatingFolder(false);
                                     }}
-                                    className="!text-xs !py-1"
+                                    className="mb-2 !text-xs !py-1"
                                 />
-                                {item.type === 'folder' && (
-                                    <div className="grid grid-cols-8 gap-1">
-                                        {PROJECT_THEMES.map(theme => (
-                                            <button
-                                                key={theme.bg}
-                                                onClick={() => setEditColor(theme.bg)}
-                                                className={`w-3 h-3 rounded-full transition-all ${theme.bg} ${editColor === theme.bg ? 'ring-1 ring-white scale-125' : 'hover:scale-125 opacity-70 hover:opacity-100'}`}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                                <div className="flex gap-2 mt-1">
-                                    <Button onClick={onUpdateFolder} size="sm" className="flex-1 text-[10px] py-1 h-auto">Salvar</Button>
-                                    <Button variant="secondary" size="sm" onClick={() => setEditingFolder(null)} className="px-2 text-[10px] py-1 h-auto">Cancel</Button>
-                                </div>
-                            </Card>
-                        ) : (
-                            <div
-                                key={item.id}
-                                onClick={() => {
-                                    if (item.type === 'comic') {
-                                        onOpenComic(item.id);
-                                    } else if (item.type === 'folder') {
-                                        // SMART NAVIGATION: If folder contains files, open as comic
-                                        const hasFiles = fileSystem.some(f => f.parentId === item.id && f.type === 'file');
-                                        if (hasFiles) {
-                                            onOpenComic(item.id);
-                                        } else {
-                                            onOpenItem(item);
-                                        }
-                                    } else {
-                                        onOpenItem(item);
-                                    }
-                                }}
-                                onContextMenu={(e) => {
-                                    e.preventDefault();
-                                    if (confirm(`Excluir ${item.name}?`)) {
-                                        onDeleteFolder(item.id, e);
-                                    }
-                                }}
-                                className="group cursor-pointer relative"
-                            >
-                                {/* Pin Button */}
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onTogglePin(item.id);
-                                    }}
-                                    className={`absolute top-2 right-2 z-20 hover:bg-white/20 !p-1.5 h-auto w-auto ${item.isPinned ? 'opacity-100 bg-white/20' : 'opacity-0 group-hover:opacity-100'}`}
-                                >
-                                    <Pin size={14} className={item.isPinned ? "fill-white text-white" : "text-white"} />
-                                </Button>
-
-                                {/* Checkbox for Selection */}
-                                <div
-                                    className={`absolute top-2 left-2 z-20 transition-all ${selectedItems.has(item.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedItems.has(item.id)}
-                                        onChange={() => toggleSelection(item.id)}
-                                        className="w-4 h-4 rounded border-gray-600 bg-black/50 checked:bg-accent-blue cursor-pointer"
-                                    />
-                                </div>
-
-                                <div className={`aspect-square rounded-xl border border-border-color bg-app-bg overflow-hidden relative transition-all group-hover:border-accent-blue group-hover:shadow-lg ${item.type === 'folder' ? 'flex flex-col items-center justify-center gap-3' : ''}`}>
-                                    {item.type === 'folder' ? (
-                                        (() => {
-                                            // SMART THUMBNAIL: Check if folder has images
-                                            const images = fileSystem.filter(f => f.parentId === item.id && f.type === 'file').sort((a, b) => (a.order || 0) - (b.order || 0));
-                                            const coverUrl = images[0]?.url;
-
-                                            if (coverUrl) {
-                                                return (
-                                                    <>
-                                                        <img src={coverUrl} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt={item.name} />
-                                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-6">
-                                                            <div className="flex items-center gap-2 mb-0.5">
-                                                                <Folder size={12} className="text-accent-blue" />
-                                                                <span className="text-xs font-bold text-white truncate shadow-black drop-shadow-md">{item.name}</span>
-                                                            </div>
-                                                            <span className="text-[10px] text-white/80 font-medium">{images.length} páginas</span>
-                                                        </div>
-                                                    </>
-                                                )
-                                            }
-
-                                            return (
-                                                <>
-                                                    <Folder size={40} className={PROJECT_THEMES.find(t => t.bg === item.color)?.text || 'text-blue-400 fill-blue-400/10'} />
-                                                    <div className="flex flex-col items-center">
-                                                        <span className="text-xs font-medium text-center truncate px-2 text-white max-w-full">{item.name}</span>
-                                                        {item.createdAt && <span className="text-[10px] text-white/40">{new Date(item.createdAt).toLocaleDateString()}</span>}
-                                                    </div>
-                                                </>
-                                            )
-                                        })()
-                                    ) : item.type === 'comic' ? (
-                                        (() => {
-                                            const pages = fileSystem.filter(f => f.parentId === item.id).sort((a, b) => a.name.localeCompare(b.name));
-                                            const coverUrl = pages[0]?.url;
-
-                                            return (
-                                                <>
-                                                    {coverUrl ? (
-                                                        <img src={coverUrl} className="w-full h-full object-cover" alt={item.name} />
-                                                    ) : (
-                                                        <div className="flex flex-col items-center text-text-secondary">
-                                                            <LayoutGrid size={32} />
-                                                            <span className="text-[10px] mt-2">Sem capa</span>
-                                                        </div>
-                                                    )}
-                                                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-6">
-                                                        <span className="text-xs font-medium text-white truncate block">{item.name}</span>
-                                                        <span className="text-[10px] text-white/60">{pages.length} páginas</span>
-                                                    </div>
-                                                </>
-                                            )
-                                        })()
-                                    ) : (
-                                        <>
-                                            <img src={item.url} className="w-full h-full object-cover" alt={item.name} />
-                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-6">
-                                                <span className="text-xs font-medium text-white truncate block">{item.name}</span>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {/* Hover Actions */}
-                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-10">
-                                        {item.type === 'folder' && (
-                                            <>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    onClick={(e) => onStartEditingFolder(item, e)}
-                                                    className="bg-black/50 hover:bg-black/80 text-white backdrop-blur-sm !p-1.5 h-auto w-auto"
-                                                >
-                                                    <Pencil size={12} />
-                                                </Button>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    onClick={(e) => onDeleteFolder(item.id, e)}
-                                                    className="bg-black/50 hover:bg-red-900/80 text-red-300 backdrop-blur-sm !p-1.5 h-auto w-auto"
-                                                >
-                                                    <Trash2 size={12} />
-                                                </Button>
-                                            </>
-                                        )}
-                                        {/* File/Comic Delete Button */}
-                                        {item.type !== 'folder' && (
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onDeletePages([item.id]);
-                                                }}
-                                                className="bg-black/50 hover:bg-red-900/80 text-red-300 backdrop-blur-sm !p-1.5 h-auto w-auto"
-                                            >
-                                                <Trash2 size={12} />
-                                            </Button>
-                                        )}
-                                    </div>
+                                <div className="grid grid-cols-5 gap-1">
+                                    {PROJECT_THEMES.slice(0, 5).map(theme => (
+                                        <button
+                                            key={theme.bg}
+                                            onClick={() => setNewItemColor(theme.bg)}
+                                            className={`w-4 h-4 rounded-full transition-all ${theme.bg} ${newItemColor === theme.bg ? 'ring-2 ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                                        />
+                                    ))}
                                 </div>
                             </div>
-                        )
-                    ))}
+                            <div className="flex gap-1 mt-2">
+                                <Button size="sm" onClick={onCreateFolder} className="flex-1 !text-xs !h-7">Criar</Button>
+                                <Button size="sm" variant="secondary" onClick={() => setIsCreatingFolder(false)} className="!text-xs !h-7">Cancel</Button>
+                            </div>
+                        </Card>
+                    )
+                }
 
-                {getCurrentItems().length === 0 && !loading && !isCreatingFolder && (
-                    <div className="col-span-full h-64 flex flex-col items-center justify-center text-text-secondary opacity-50">
-                        <div className="text-6xl mb-4">📂</div>
-                        <p>Biblioteca vazia</p>
-                        <p className="text-xs">Arraste um PDF ou crie uma sub-biblioteca</p>
-                    </div>
-                )}
-            </div>
+                {
+                    items.map(item => {
+                        const isSelected = selectedItems.has(item.id);
+                        const isEditing = editingFolder?.id === item.id;
+                        const isFolder = item.type === 'folder';
+
+                        // LOGIC TO DETERMINE IF IT IS AN IMAGE
+                        // Check both mime_type AND file extension to be safe
+                        // Also check item.type === 'file' as a base
+                        const isImage = (item.type === 'file') && (
+                            (item.mimeType && item.mimeType.startsWith('image/')) ||
+                            (item.name && item.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/)) ||
+                            item.url // Fallback if url exists it's likely a renderable file in this context
+                        );
+
+                        // Define click handler (CRITICAL: Restore Editor access)
+                        const handleClick = (e: React.MouseEvent) => {
+                            if (e.ctrlKey || e.metaKey) {
+                                e.stopPropagation();
+                                toggleSelection(item.id);
+                            } else {
+                                if (item.type === 'folder') {
+                                    onOpenItem(item); // Enter folder
+                                } else if (item.type === 'comic') {
+                                    onOpenComic(item.id);
+                                } else {
+                                    // IT IS A FILE - OPEN THE EDITOR
+                                    const targetComicId = currentFolderId || item.parentId;
+                                    if (targetComicId) {
+                                        onOpenComic(targetComicId);
+                                    } else {
+                                        console.warn("Cannot open editor: File has no parent context");
+                                    }
+                                }
+                            }
+                        };
+
+                        return (
+                            <div
+                                key={item.id}
+                                className={`relative group cursor-pointer transition-all ${selectedItems.has(item.id) ? 'ring-2 ring-accent-blue rounded-lg' : ''}`}
+                                onClick={handleClick}
+                            >
+                                {/* ACTION OVERLAY (Pin, Edit, Delete) - Common for both */}
+                                {!isEditing && (
+                                    <div className="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={(e) => { e.stopPropagation(); onTogglePin(item.id) }} className={`p-1.5 rounded-md hover:bg-black/50 backdrop-blur-sm ${item.isPinned ? 'text-accent-blue' : 'text-white/70 hover:text-white'}`}>
+                                            <Pin size={12} className={item.isPinned ? "fill-current" : ""} />
+                                        </button>
+                                        {isFolder && (
+                                            <button onClick={(e) => { e.stopPropagation(); onStartEditingFolder(item, e) }} className="p-1.5 rounded-md hover:bg-black/50 text-zinc-400 hover:text-white">
+                                                <Pencil size={12} />
+                                            </button>
+                                        )}
+                                        {/* Delete for files */}
+                                        {!isFolder && (
+                                            <button onClick={(e) => { e.stopPropagation(); onDeletePages([item.id]) }} className={`p-1.5 rounded-md hover:bg-black/50 backdrop-blur-sm text-red-300 hover:text-red-200`}>
+                                                <Trash2 size={12} />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+
+                                {isEditing ? (
+                                    // EDITING STATE
+                                    <Card className="h-48 p-4 flex flex-col justify-between bg-app-bg border-accent-blue">
+                                        <div className="flex flex-col h-full justify-between" onClick={e => e.stopPropagation()}>
+                                            <div>
+                                                <h3 className="text-xs font-bold mb-2 text-accent-blue">Editar</h3>
+                                                <Input
+                                                    autoFocus
+                                                    value={editName}
+                                                    onChange={(e) => setEditName(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') onUpdateFolder();
+                                                        if (e.key === 'Escape') setEditingFolder(null);
+                                                    }}
+                                                    className="mb-2 !text-xs"
+                                                />
+                                                {isFolder && (
+                                                    <div className="grid grid-cols-8 gap-1 mb-2">
+                                                        {PROJECT_THEMES.map(theme => (
+                                                            <button
+                                                                key={theme.bg}
+                                                                onClick={() => setEditColor(theme.bg)}
+                                                                className={`w-3 h-3 rounded-full transition-all ${theme.bg} ${editColor === theme.bg ? 'ring-1 ring-white scale-125' : 'hover:scale-125 opacity-70 hover:opacity-100'}`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-1">
+                                                <Button size="sm" onClick={onUpdateFolder} className="flex-1 !text-xs !h-7">Salvar</Button>
+                                                <Button size="sm" variant="secondary" onClick={() => setEditingFolder(null)} className="!text-xs !h-7">Cancel</Button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ) : (
+                                    // VIEW STATE
+                                    <>
+                                        {isImage ? (
+                                            // --- CASE A: IT IS AN IMAGE (Show Thumbnail) ---
+                                            <div className="aspect-[3/4] relative overflow-hidden rounded-lg border border-white/5 bg-gray-900 group-hover:border-accent-blue transition-colors">
+                                                <img
+                                                    src={item.url || item.thumbnailUrl} // Prioritize URL, fallback to thumbnail if exists
+                                                    alt={item.name}
+                                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                />
+                                                {/* Name overlay */}
+                                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-6">
+                                                    <span className="text-xs text-white font-medium truncate block shadow-sm">
+                                                        {item.name}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            // --- CASE B: IT IS A FOLDER/OTHER (Show Icon) ---
+                                            <Card className="h-48 p-4 flex flex-col items-center justify-center gap-3 bg-app-bg hover:bg-accent-blue/5 border-white/5 hover:border-accent-blue/30 transition-all">
+                                                {(() => {
+                                                    // Check for Folder Cover (Smart Thumbnail)
+                                                    if (isFolder || item.type === 'comic') {
+                                                        const children = fileSystem.filter(f => f.parentId === item.id && f.type === 'file');
+                                                        const coverUrl = children[0]?.url;
+
+                                                        if (coverUrl) {
+                                                            return (
+                                                                <>
+                                                                    <img src={coverUrl} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity absolute inset-0 rounded-xl" alt={item.name} />
+                                                                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 pt-8 rounded-b-xl z-10">
+                                                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                                                            <Folder size={12} className="text-accent-blue fill-current" />
+                                                                            <span className="text-xs font-bold text-white truncate shadow-black drop-shadow-md">{item.name}</span>
+                                                                        </div>
+                                                                        <span className="text-[10px] text-white/80 font-medium ml-4">{children.length} itens</span>
+                                                                    </div>
+                                                                </>
+                                                            )
+                                                        }
+                                                    }
+
+                                                    // Default Folder Icon
+                                                    return (
+                                                        <>
+                                                            <Folder size={40} className={`${PROJECT_THEMES.find(t => t.bg === item.color)?.text || 'text-blue-500'} opacity-80`} />
+                                                            <div className="flex flex-col items-center w-full">
+                                                                <span className="text-xs font-medium text-center truncate px-2 text-white max-w-full">{item.name}</span>
+                                                                {item.createdAt && <span className="text-[10px] text-white/40">{new Date(item.createdAt).toLocaleDateString()}</span>}
+                                                            </div>
+                                                        </>
+                                                    )
+                                                })()}
+                                            </Card>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })
+                }
+            </div >
         </>
     )
 }

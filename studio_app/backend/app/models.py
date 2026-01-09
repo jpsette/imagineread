@@ -33,3 +33,14 @@ class ExportRequest(BaseModel):
 
 class FileUpdateData(BaseModel):
     balloons: Optional[List[dict]] = None
+
+class CreateFolderRequest(BaseModel):
+    name: str
+    parentId: str
+    color: Optional[str] = None
+
+class MoveItemRequest(BaseModel):
+    targetParentId: str
+
+class ReorderItemsRequest(BaseModel):
+    orderedIds: List[str]

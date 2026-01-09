@@ -77,6 +77,7 @@ export const PageList = forwardRef<any, PageListProps>(({ pages }, ref) => {
                 ref={ref}
                 data={pages}
                 renderItem={({ item }) => <PageItem page={item} onPress={toggleControls} />}
+                // @ts-ignore
                 estimatedItemSize={readingMode === 'vertical' ? 1200 : SCREEN_WIDTH}
                 horizontal={readingMode === 'horizontal'}
                 pagingEnabled={readingMode === 'horizontal'}

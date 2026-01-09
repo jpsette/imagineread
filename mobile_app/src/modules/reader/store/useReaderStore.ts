@@ -1,142 +1,171 @@
 import { create } from 'zustand';
-import { ReadingMode, ComicPage, FocusPoint } from '../types';
-import { ComicManifest, ComicPageManifest } from '../types/Manifest';
+import { Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { ComicManifest } from '../types/Manifest';
+import { LibraryService } from '../../library/services/LibraryService';
+import { ComicRepository } from '../../library/repositories/ComicRepository';
 
 interface ReaderState {
-    // Settings
-    readingMode: ReadingMode;
-    textSizeMultiplier: number;
-    currentLanguage: string;
-    controlsVisible: boolean;
-    isCinematic: boolean;
-
-    // Haptics Preference
-    isHapticsEnabled: boolean;
-
     // Data
     manifest: ComicManifest | null;
-
-    // Navigation State
     currentPageIndex: number;
-    currentFocusIndex: number;
+    currentFocusIndex: number; // For Cinematic Mode
+
+    // UI/Viewing State
+    controlsVisible: boolean;
+    isCinematic: boolean;
+    scale: number;
+    showGrid: boolean; // For debugging or specialized view
+
+    // Preferences
+    textSize: number; // 0.8 to 1.5
+    language: 'en' | 'pt' | 'es' | 'jp';
+    hapticsEnabled: boolean;
+    isTTSEnabled: boolean;
+
+    // Reading State
+    isBookmarked: boolean;
 
     // Actions
     setManifest: (manifest: ComicManifest) => void;
-    toggleReadingMode: () => void;
-    setTextSizeMultiplier: (size: number) => void;
-    increaseTextSize: () => void;
-    decreaseTextSize: () => void;
-    setLanguage: (lang: string) => void;
-    cycleLanguage: () => void;
     toggleControls: () => void;
-    setControlsVisible: (visible: boolean) => void;
+    setZoom: (scale: number) => void;
     toggleCinematic: () => void;
-    toggleHaptics: () => void;
 
-    // Navigation Actions
-    setCurrentPageIndex: (index: number) => void;
-    setCurrentFocusIndex: (index: number) => void;
+    // Navigation
+    goToPage: (index: number) => void;
+    nextPage: () => void;
+    prevPage: () => void;
+
+    // Cinematic Navigation
     goToNextStep: () => void;
     goToPrevStep: () => void;
+
+    // Prefs Actions
+    toggleHaptics: () => void;
+    setTextSize: (size: number) => void;
+    setLanguage: (lang: 'en' | 'pt' | 'es' | 'jp') => void;
+    toggleTTS: () => void;
+
+    // Bookmark Actions
+    checkBookmarkStatus: (comicId: string) => Promise<void>;
+    toggleBookmark: (comicId: string) => Promise<void>;
 }
 
 export const useReaderStore = create<ReaderState>((set, get) => ({
     // Defaults
-    readingMode: 'vertical',
-    textSizeMultiplier: 1.0,
-    currentLanguage: 'en',
-    controlsVisible: true,
-    isCinematic: false,
-    isHapticsEnabled: true,
     manifest: null,
     currentPageIndex: 0,
     currentFocusIndex: 0,
+    controlsVisible: true,
+    isCinematic: false,
+    scale: 1,
+    showGrid: false,
+    textSize: 1.0,
+    language: 'en',
+    hapticsEnabled: true,
+    isTTSEnabled: false,
+    isBookmarked: false,
 
-    // Setters
     setManifest: (manifest) => set({ manifest }),
-
-    toggleReadingMode: () => set((state) => ({
-        readingMode: state.readingMode === 'vertical' ? 'horizontal' : 'vertical'
-    })),
-    setTextSizeMultiplier: (size) => set({ textSizeMultiplier: size }),
-
-    increaseTextSize: () => set((state) => ({
-        textSizeMultiplier: Math.min(state.textSizeMultiplier + 0.25, 2.0)
-    })),
-    decreaseTextSize: () => set((state) => ({
-        textSizeMultiplier: Math.max(state.textSizeMultiplier - 0.25, 0.5)
-    })),
-
-    setLanguage: (lang) => set({ currentLanguage: lang }),
-
-    cycleLanguage: () => set((state) => {
-        const langs = ['en', 'pt', 'jp'];
-        const currentIndex = langs.indexOf(state.currentLanguage);
-        const nextIndex = (currentIndex + 1) % langs.length;
-        return { currentLanguage: langs[nextIndex] };
-    }),
-
     toggleControls: () => set((state) => ({ controlsVisible: !state.controlsVisible })),
-    setControlsVisible: (visible) => set({ controlsVisible: visible }),
+    setZoom: (scale) => set({ scale }),
 
-    toggleCinematic: () => set((state) => ({
-        isCinematic: !state.isCinematic,
-        currentFocusIndex: 0
-    })),
+    toggleCinematic: () => {
+        const { isCinematic } = get();
+        set({ isCinematic: !isCinematic, currentFocusIndex: 0, scale: 1 });
+        // Auto-hide controls when entering cinematic
+        if (!isCinematic) {
+            set({ controlsVisible: false });
+        }
+    },
 
-    toggleHaptics: () => set((state) => ({ isHapticsEnabled: !state.isHapticsEnabled })),
+    goToPage: (index) => {
+        const { manifest, hapticsEnabled } = get();
+        if (!manifest || index < 0 || index >= manifest.pages.length) return;
 
-    setCurrentPageIndex: (index) => set({ currentPageIndex: index, currentFocusIndex: 0 }),
-    setCurrentFocusIndex: (index) => set({ currentFocusIndex: index }),
-
-    // Smart Navigation Logic
-    goToNextStep: () => {
-        const { manifest, currentPageIndex, currentFocusIndex } = get();
-        if (!manifest || !manifest.pages.length) return;
-
-        const pages = manifest.pages;
-        const currentPage = pages[currentPageIndex];
-        // Access focus points from decoupled layers
-        const focusPoints = currentPage.layers?.focusPoints || [];
-
-        // 1. Try to advance Focus Point on current page
-        if (currentFocusIndex < focusPoints.length - 1) {
-            set({ currentFocusIndex: currentFocusIndex + 1 });
-            return;
+        if (hapticsEnabled && Platform.OS !== 'web') {
+            Haptics.selectionAsync();
         }
 
-        // 2. If at end of focus points, Advance Page
-        if (currentPageIndex < pages.length - 1) {
-            set({
-                currentPageIndex: currentPageIndex + 1,
-                currentFocusIndex: 0
-            });
+        set({ currentPageIndex: index, currentFocusIndex: 0 });
+
+        // Update Progress in DB
+        // Note: Not awaiting here to avoid UI blocking, handling in background
+        LibraryService.updateProgress(manifest.metadata.id, index);
+
+        // Check bookmark status for new page
+        get().checkBookmarkStatus(manifest.metadata.id);
+    },
+
+    nextPage: () => {
+        const { currentPageIndex, goToPage } = get();
+        goToPage(currentPageIndex + 1);
+    },
+
+    prevPage: () => {
+        const { currentPageIndex, goToPage } = get();
+        goToPage(currentPageIndex - 1);
+    },
+
+    goToNextStep: () => {
+        const { currentFocusIndex, manifest, currentPageIndex, nextPage, hapticsEnabled } = get();
+        if (!manifest) return;
+
+        const page = manifest.pages[currentPageIndex];
+        const focusPoints = page.layers?.focusPoints || [];
+
+        if (currentFocusIndex < focusPoints.length - 1) {
+            // Advance Focus
+            if (hapticsEnabled && Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            set({ currentFocusIndex: currentFocusIndex + 1 });
+        } else {
+            // Next Page
+            nextPage();
         }
     },
 
     goToPrevStep: () => {
-        const { manifest, currentPageIndex, currentFocusIndex } = get();
-        if (!manifest || !manifest.pages.length) return;
+        const { currentFocusIndex, prevPage, hapticsEnabled } = get();
 
-        const pages = manifest.pages;
-
-        // 1. Try to go back Focus Point on current page
         if (currentFocusIndex > 0) {
+            if (hapticsEnabled && Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             set({ currentFocusIndex: currentFocusIndex - 1 });
-            return;
+        } else {
+            prevPage();
+        }
+    },
+
+    toggleHaptics: () => set((state) => ({ hapticsEnabled: !state.hapticsEnabled })),
+    setTextSize: (size) => set({ textSize: size }),
+    setLanguage: (lang) => set({ language: lang }),
+    toggleTTS: () => {
+        const { isTTSEnabled, hapticsEnabled } = get();
+        if (hapticsEnabled && Platform.OS !== 'web') Haptics.selectionAsync();
+        set({ isTTSEnabled: !isTTSEnabled });
+    },
+
+    // --- Bookmarks ---
+    checkBookmarkStatus: async (comicId) => {
+        const { currentPageIndex } = get();
+        const isBookmarked = await ComicRepository.isBookmarked(comicId, currentPageIndex);
+        set({ isBookmarked });
+    },
+
+    toggleBookmark: async (comicId) => {
+        const { isBookmarked, currentPageIndex, hapticsEnabled } = get();
+
+        if (hapticsEnabled && Platform.OS !== 'web') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
 
-        // 2. If at start of focus points, Go to Previous Page
-        if (currentPageIndex > 0) {
-            const prevPageIndex = currentPageIndex - 1;
-            const prevPage = pages[prevPageIndex];
-            const prevFocusPoints = prevPage.layers?.focusPoints || [];
-
-            set({
-                currentPageIndex: prevPageIndex,
-                // Set to last focus point of previous page
-                currentFocusIndex: Math.max(0, prevFocusPoints.length - 1)
-            });
+        if (isBookmarked) {
+            await ComicRepository.removeBookmark(comicId, currentPageIndex);
+            set({ isBookmarked: false });
+        } else {
+            await ComicRepository.addBookmark(comicId, currentPageIndex);
+            set({ isBookmarked: true });
         }
     }
+
 }));

@@ -1,5 +1,4 @@
-import { Plus, Search, ArrowDownAZ, ArrowUpZA, Folder, Pin, Pencil, Trash2, ChevronRight, Upload } from 'lucide-react'
-import { useRef } from 'react'
+import { Plus, Search, ArrowDownAZ, ArrowUpZA, Folder, Pin, Pencil, Trash2, ChevronRight } from 'lucide-react'
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Card } from '../../ui/Card';
@@ -31,7 +30,6 @@ interface ProjectManagerProps {
     onDeleteProject: (projectId: string, e: React.MouseEvent) => void
     onSelectProject: (projectId: string) => void
     onTogglePin: (projectId: string) => void
-    onUploadPDF: (file: File) => Promise<void>
 }
 
 export const ProjectManager: React.FC<ProjectManagerProps> = ({
@@ -58,26 +56,17 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     onDeleteProject,
     onSelectProject,
     onTogglePin,
-    onUploadPDF,
 }) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files && files.length > 0) {
-            onUploadPDF(files[0]);
-            // Reset input
-            e.target.value = '';
-        }
-    };
+
     return (
         <>
             {/* Header */}
-            <header className="flex flex-col gap-6 mb-8">
+            <header className="flex flex-col gap-6 mb-8 pt-4 px-2">
                 <div className="flex justify-between items-start">
                     <div>
                         <h2 className="text-3xl font-bold tracking-tight">Projetos</h2>
-                        <p className="text-text-secondary mt-1">Gerencie suas HQs e coleções</p>
+                        <p className="text-text-secondary mt-1">Gerencie suas publicações</p>
                     </div>
 
                     {/* Actions Container */}
@@ -89,7 +78,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                 placeholder="Pesquisar..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-32 !bg-transparent !border-none !p-0 !text-xs"
+                                className="w-48 !bg-transparent !border-none !text-xs !pl-9 !py-1"
                             />
                             <div className="w-[1px] h-4 bg-border-color/50 mx-1" />
                             <Button
@@ -100,35 +89,17 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                             >
                             </Button>
                         </div>
-
-                        {/* Import Button */}
-                        <div className="bg-[#18181b] p-1 rounded-md border border-border-color flex items-center">
-                            <input
-                                type="file"
-                                accept="application/pdf"
-                                ref={fileInputRef}
-                                className="hidden"
-                                onChange={handleFileChange}
-                            />
-                            <Button
-                                onClick={() => fileInputRef.current?.click()}
-                                icon={Upload}
-                                size="sm"
-                            >
-                                Importar PDF
-                            </Button>
-                        </div>
                     </div>
                 </div>
             </header>
 
             {/* Projects Grid */}
-            <div className="grid grid-cols-[repeat(auto-fill,280px)] gap-6 content-start justify-start">
+            <div className="grid grid-cols-[repeat(auto-fill,280px)] gap-6 content-start justify-start p-2">
                 {/* New Project Card */}
                 {!isCreatingProject && (
                     <Card
                         onClick={() => setIsCreatingProject(true)}
-                        className="group relative p-6 border-dashed bg-app-bg hover:border-accent-blue hover:bg-accent-blue/5 flex flex-col items-center justify-center gap-3 min-h-[210px] aspect-[3/2] shadow-sm hover:shadow-md cursor-pointer transition-all"
+                        className="group relative p-6 border-dashed bg-app-bg hover:border-accent-blue hover:bg-accent-blue/5 flex flex-col items-center justify-center gap-3 h-52 shadow-sm hover:shadow-md cursor-pointer transition-all"
                     >
                         <div className="p-3 rounded-full bg-[#27272a] text-text-secondary group-hover:bg-accent-blue group-hover:text-white transition-colors">
                             <Plus size={24} />
@@ -237,7 +208,12 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                             variant="ghost"
                                             size="icon"
                                             className="hover:bg-red-500/10 hover:text-red-400"
-                                            onClick={(e) => onDeleteProject(project.id, e)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm('Tem certeza que deseja excluir este projeto?')) {
+                                                    onDeleteProject(project.id, e);
+                                                }
+                                            }}
                                         >
                                             <Trash2 size={14} />
                                         </Button>
@@ -260,7 +236,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                         <button onClick={() => setIsCreatingProject(true)} className="text-accent-blue hover:underline text-sm mt-2">Criar primeiro projeto</button>
                     </div>
                 )}
-            </div>
+            </div >
         </>
     )
 }

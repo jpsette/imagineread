@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Folder, ChevronRight, ChevronDown, Pencil, Trash2, Check, X, Pin } from 'lucide-react'
+import { Folder, ChevronRight, ChevronDown, Pencil, Trash2, Check, X, Pin, File } from 'lucide-react'
 
 import { Project, FileEntry as FileNode } from '../../types';
 
@@ -183,14 +183,47 @@ export const Explorer: React.FC<ExplorerProps> = ({
 
                                 {/* Sub-libraries */}
                                 {isExpanded && (
-                                    <div className="flex flex-col gap-0.5 ml-9 border-l border-white/10 pl-2 mt-1 mb-1">
+                                    <div className="flex flex-col gap-0.5 ml-4 pl-4 border-l border-white/5 mt-1 mb-1">
                                         {projectLibraries.length === 0 ? (
-                                            <span className="text-[10px] text-text-secondary py-1 italic">Vazio</span>
+                                            <span className="text-[10px] text-zinc-600 py-1 pl-2 italic">Vazio</span>
                                         ) : (
                                             projectLibraries.map(lib => {
                                                 const isLibExpanded = expandedFolders.has(lib.id)
-                                                const libComics = fileSystem.filter(f => f.parentId === lib.id && f.type === 'comic')
+                                                // Check content to determine visual type
+                                                const libFiles = fileSystem.filter(f => f.parentId === lib.id && (f.type === 'comic' || f.type === 'file'))
+                                                const hasSubFolders = fileSystem.some(f => f.parentId === lib.id && f.type === 'folder')
 
+                                                // Heuristic: If it has files but no subfolders, it's likely a Semantic Comic (File)
+                                                // "Ashoka 01" case: Folder containing pages.
+                                                // "Ashoka" case: Empty folder (Library).
+                                                const isLikelyComic = libFiles.length > 0 && !hasSubFolders;
+
+                                                if (isLikelyComic) {
+                                                    // RENDER AS FILE (Comic)
+                                                    return (
+                                                        <div
+                                                            key={lib.id}
+                                                            className={`px-3 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-white/5 group transition-colors ml-5 ${currentFolderId === lib.id ? 'bg-blue-500/20 text-white' : 'text-zinc-400'}`}
+                                                            onClick={() => onSelectFolder(lib.id)}
+                                                        >
+                                                            {/* File Icon White */}
+                                                            <File size={14} className="text-white" />
+                                                            <span className="truncate flex-1 font-medium text-white">{lib.name}</span>
+                                                            <span className="text-[10px] text-zinc-600 group-hover:text-zinc-500">({libFiles.length})</span>
+
+                                                            <div className="hidden group-hover:flex gap-1 ml-auto">
+                                                                <button onClick={(e) => startEditingFolder(lib, e)} className="p-1 hover:text-white text-zinc-600 transition-colors">
+                                                                    <Pencil size={11} />
+                                                                </button>
+                                                                <button onClick={(e) => onDeleteFolder(lib.id, e)} className="p-1 hover:text-red-400 text-zinc-600 transition-colors">
+                                                                    <Trash2 size={11} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                }
+
+                                                // RENDER AS FOLDER (Library)
                                                 return (
                                                     <div key={lib.id} className="flex flex-col">
                                                         {editingFolder?.id === lib.id ? (
@@ -222,7 +255,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
                                                             </div>
                                                         ) : (
                                                             <div
-                                                                className={`px-2 py-1 rounded flex items-center gap-1 cursor-pointer text-[11px] hover:bg-app-bg group ${currentFolderId === lib.id ? 'bg-[#27272a] text-white' : 'text-text-secondary'}`}
+                                                                className={`px-2 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-white/5 group transition-colors ${currentFolderId === lib.id ? 'bg-blue-500/20 text-white' : 'text-zinc-400'}`}
                                                                 onClick={() => onSelectFolder(lib.id)}
                                                             >
                                                                 <button
@@ -230,22 +263,41 @@ export const Explorer: React.FC<ExplorerProps> = ({
                                                                         e.stopPropagation()
                                                                         onToggleFolderExpand(lib.id)
                                                                     }}
-                                                                    className="p-0.5"
+                                                                    className="p-0.5 hover:text-white transition-colors"
                                                                 >
-                                                                    {isLibExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                                                                    {isLibExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                                                                 </button>
-                                                                <Folder size={12} className={`${PROJECT_THEMES.find(t => t.bg === lib.color)?.text || 'text-text-secondary'} fill-current`} />
-                                                                <span className="truncate flex-1">{lib.name}</span>
-                                                                <span className="text-[9px] text-text-secondary">({libComics.length})</span>
+                                                                {/* Folder Icon: Default to Blue if no color set */}
+                                                                <Folder
+                                                                    size={14}
+                                                                    className={`${PROJECT_THEMES.find(t => t.bg === lib.color)?.text || 'text-blue-500'}`}
+                                                                />
+                                                                <span className="truncate flex-1 font-medium text-white">{lib.name}</span>
+                                                                <span className="text-[10px] text-zinc-600 group-hover:text-zinc-500">({libFiles.length})</span>
 
-                                                                <div className="hidden group-hover:flex gap-1">
-                                                                    <button onClick={(e) => startEditingFolder(lib, e)} className="p-0.5 hover:text-white text-gray-500">
-                                                                        <Pencil size={9} />
+                                                                <div className="hidden group-hover:flex gap-1 ml-auto">
+                                                                    <button onClick={(e) => startEditingFolder(lib, e)} className="p-1 hover:text-white text-zinc-600 transition-colors">
+                                                                        <Pencil size={11} />
                                                                     </button>
-                                                                    <button onClick={(e) => onDeleteFolder(lib.id, e)} className="p-0.5 hover:text-red-400 text-gray-500">
-                                                                        <Trash2 size={9} />
+                                                                    <button onClick={(e) => onDeleteFolder(lib.id, e)} className="p-1 hover:text-red-400 text-zinc-600 transition-colors">
+                                                                        <Trash2 size={11} />
                                                                     </button>
                                                                 </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Files inside Library (if expanded) - Usually empty if it's a "Library", but maybe nested comics? */}
+                                                        {isLibExpanded && (
+                                                            <div className="flex flex-col gap-0.5 ml-6 pl-2 border-l border-white/5">
+                                                                {libFiles.map(file => (
+                                                                    <div key={file.id} className="px-2 py-1 rounded flex items-center gap-2 text-[11px] text-zinc-400 hover:bg-white/5 cursor-pointer transition-colors group/file">
+                                                                        <File size={12} className="text-white opacity-80" />
+                                                                        <span className="truncate text-white">{file.name}</span>
+                                                                    </div>
+                                                                ))}
+                                                                {libFiles.length === 0 && (
+                                                                    <span className="text-[10px] text-zinc-700 py-1 pl-1 italic">Vazio</span>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>

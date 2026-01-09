@@ -4,7 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import Animated from 'react-native-reanimated';
 import { useReaderStore } from './store/useReaderStore';
-import { readerService } from './services/MockReaderService';
+import { LibraryService } from '../library/services/LibraryService';
+import { useRenderMetric } from '../../core/monitoring/useRenderMetric';
+import { useTTS } from './hooks/useTTS';
 import { ComicPageManifest } from './types/Manifest';
 import { VectorBubble } from './components/VectorBubble';
 import { ReaderControls } from './components/ReaderControls';
@@ -102,7 +104,7 @@ export function ReaderContainer({ comicId }: { comicId: string }) {
     useEffect(() => {
         const loadComic = async () => {
             try {
-                const data = await readerService.getComicDetails(comicId);
+                const data = await LibraryService.getComicManifest(comicId);
                 setManifest(data);
             } catch (err) {
                 // Handled by SafeBoundary higher up
@@ -172,7 +174,7 @@ export function ReaderContainer({ comicId }: { comicId: string }) {
                 {/* CONTROLS OVERLAY */}
                 {controlsVisible && (
                     <>
-                        <ReaderControls title={manifest.metadata.title} />
+                        <ReaderControls title={manifest.metadata.title} comicId={comicId} />
 
                         {/* CINEMATIC TOGGLE FAB */}
                         <View style={{ position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center' }}>

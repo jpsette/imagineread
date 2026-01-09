@@ -4,6 +4,7 @@ import {
     FileEntry,
     Balloon,
     CreateProjectRequest,
+    CreateFolderRequest,
     FileUpdateData,
     OCRRequest,
     CleanRequest,
@@ -146,6 +147,27 @@ class ApiClient {
         return this.request<{ balloons: DetectedBalloon[] }>(`${API_ENDPOINTS.BASE_URL}/analisar-yolo`, {
             method: 'POST',
             body: JSON.stringify({ image_path: imagePath })
+        });
+    }
+
+    async createFolder(data: CreateFolderRequest): Promise<{ id: string, name: string }> {
+        return this.request<{ id: string, name: string }>(`${API_ENDPOINTS.BASE_URL}/folders`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async moveItem(itemId: string, newParentId: string): Promise<void> {
+        return this.request<void>(`${API_ENDPOINTS.BASE_URL}/files/${itemId}/move`, {
+            method: 'POST',
+            body: JSON.stringify({ targetParentId: newParentId })
+        });
+    }
+
+    async reorderItems(orderedIds: string[]): Promise<void> {
+        return this.request<void>(`${API_ENDPOINTS.BASE_URL}/files/reorder`, {
+            method: 'POST',
+            body: JSON.stringify({ orderedIds })
         });
     }
 }

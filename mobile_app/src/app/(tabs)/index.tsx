@@ -33,9 +33,11 @@ export default function HomeScreen() {
                         {CONTINUE_READING.map((comic) => (
                             <ComicCard
                                 key={comic.id}
+                                id={comic.id}
                                 title={comic.title}
                                 coverUrl={comic.cover}
                                 progress={comic.progress}
+                                description="Continue reading"
                             />
                         ))}
                     </ScrollView>
@@ -48,9 +50,11 @@ export default function HomeScreen() {
                         {RECENTLY_ADDED.map((comic) => (
                             <View key={comic.id} className="w-1/2 mb-6 pr-2">
                                 <ComicCard
+                                    id={comic.id}
                                     title={comic.title}
                                     coverUrl={comic.cover}
                                     className="w-full mr-0"
+                                    description="Recently added"
                                 />
                             </View>
                         ))}

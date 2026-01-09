@@ -13,7 +13,7 @@ from PIL import Image
 from loguru import logger
 from app.config import LIBRARY_DIR, TEMP_DIR
 from app.utils import resolve_local_path
-from app.models import StoreRequest, ExportRequest, FileUpdateData
+from app.models import StoreRequest, ExportRequest, FileUpdateData, CreateFolderRequest
 from app.database import get_db
 from app import crud
 from pdf2image import convert_from_bytes
@@ -36,10 +36,29 @@ def get_filesystem(db: Session = Depends(get_db)):
             "createdAt": e.created_at,
             "isPinned": e.is_pinned,
             "balloons": e.balloons,
-            "order": e.order
+            "isPinned": e.is_pinned,
+            "balloons": e.balloons,
+            "order": e.order,
+            "color": e.color
         }
+
         for e in entries
     ]
+
+@router.post("/folders")
+def create_folder(request: CreateFolderRequest, db: Session = Depends(get_db)):
+    f_id = f"folder-{uuid.uuid4().hex[:8]}"
+    crud.create_filesystem_entry(db, {
+        "id": f_id,
+        "name": request.name,
+        "type": "folder",
+        "parentId": request.parentId,
+        "createdAt": datetime.now().isoformat(),
+        "color": request.color
+    })
+    return {"status": "success", "id": f_id, "name": request.name, "color": request.color}
+
+
 
 @router.post("/upload_pdf")
 async def upload_pdf(file: UploadFile = File(...), parent_id: str = Form(...), db: Session = Depends(get_db)):
@@ -239,6 +258,43 @@ def update_file_data(file_id: str, update_data: FileUpdateData, db: Session = De
         
     return {"status": "success", "message": "No data to update"}
 
+
+from app.models import MoveItemRequest, ReorderItemsRequest
+from app.models_db import FileSystemEntry
+
+@router.post("/files/{item_id}/move")
+def move_item(item_id: str, request: MoveItemRequest, db: Session = Depends(get_db)):
+    item = db.query(FileSystemEntry).filter(FileSystemEntry.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    # Prevent self-containment loop
+    if request.targetParentId == item.id:
+        raise HTTPException(status_code=400, detail="Cannot move folder into itself")
+    
+    # If moving a folder, check if target is a descendant (Cycle Detection)
+    if item.type == 'folder':
+        # Simple BFS or recursive check could work, but for now simple check:
+        # A robust solution would recursively check parents of targetParentId
+        # checking if any matches item.id
+        current = db.query(FileSystemEntry).filter(FileSystemEntry.id == request.targetParentId).first()
+        while current:
+            if current.id == item.id:
+                raise HTTPException(status_code=400, detail="Cannot move folder into its own child")
+            current = db.query(FileSystemEntry).filter(FileSystemEntry.id == current.parent_id).first()
+
+    item.parent_id = request.targetParentId
+    db.commit()
+    return {"status": "success", "message": "Item moved"}
+
+@router.post("/files/reorder")
+def reorder_items(request: ReorderItemsRequest, db: Session = Depends(get_db)):
+    # Update order for each item in list
+    for index, item_id in enumerate(request.orderedIds):
+        db.query(FileSystemEntry).filter(FileSystemEntry.id == item_id).update({"order": index})
+    
+    db.commit()
+    return {"status": "success", "message": "Items reordered"}
 @router.post("/projects/{entity_id}/export")
 def export_project(entity_id: str, request: ExportRequest, db: Session = Depends(get_db)):
     try:

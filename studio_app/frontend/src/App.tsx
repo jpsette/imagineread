@@ -42,6 +42,10 @@ const PROJECT_THEMES = [
 ];
 
 const App: React.FC = () => {
+    // === VISIBILITY STATE (MDI) ===
+    const [showExplorer, setShowExplorer] = useState(true);
+    const [showManager, setShowManager] = useState(true);
+
     // === CORE STATE ===
     const [projects, setProjects] = useState<Project[]>([]);
     const [view, setView] = useState<'dashboard' | 'project'>('dashboard');
@@ -50,7 +54,6 @@ const App: React.FC = () => {
     const [openedComicId, setOpenedComicId] = useState<string | null>(null);
     const [openedPageId, setOpenedPageId] = useState<string | null>(null);
     const [openedPageUrl, setOpenedPageUrl] = useState<string>('');
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [fileSystem, setFileSystem] = useState<FileEntry[]>([]);
 
     // === PROJECT MANAGER STATE ===
@@ -69,6 +72,8 @@ const App: React.FC = () => {
 
     // === PROJECT DETAIL STATE ===
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
+    const [newFolderColor, setNewFolderColor] = useState(PROJECT_THEMES[0].bg);
 
     // === DATA LOADING ===
     const [loading, setLoading] = useState(false);
@@ -100,14 +105,15 @@ const App: React.FC = () => {
         console.log('🔍 DEBUG - Projects:', projects);
         console.log('🔍 DEBUG - FileSystem:', fileSystem);
         console.log('🔍 DEBUG - Current Project:', currentProjectId);
+        console.log('🔍 DEBUG - Current Project:', currentProjectId);
     }, [projects, fileSystem, currentProjectId]);
+
+
 
     // === HANDLERS ===
     const handleUpdate = async (id: string, data: Partial<Project>) => {
         try {
             await api.updateProject(id, data);
-
-            // Optimistic update locally or re-fetch? Re-fetch ensures consistency.
             const newP = await api.getProjects();
             setProjects(newP);
             setEditingProject(null);
@@ -119,7 +125,7 @@ const App: React.FC = () => {
 
     const handleDelete = async (id: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
-        if (!confirm("Tem certeza que deseja excluir este projeto?")) return;
+        // Confirmation is now handled in the UI components (ProjectManager)
 
         try {
             await api.deleteProject(id);
@@ -140,6 +146,10 @@ const App: React.FC = () => {
             const newP = await api.createProject({ name: newItemName, color: newItemColor });
             setProjects(prev => [...prev, newP]);
             setCurrentProjectId(newP.id);
+            // setView('project'); // Don't auto-switch, let them stay in dashboard if created via menu, or switch.
+            // Actually usually creation implies navigating to it.
+            // But if we are in MDI, maybe we just show it.
+            // Let's keep auto-switch for feedback.
             setView('project');
             setIsCreatingProject(false);
             setNewItemName('');
@@ -157,11 +167,6 @@ const App: React.FC = () => {
     // Page/File management handlers
     const handleDeletePages = (pageIds: string[]) => {
         if (confirm('Tem certeza que deseja excluir os itens selecionados?')) {
-            // TODO: Implement API delete for files
-            // For now just local state as before? The original code didn't see an API call for deleting pages?
-            // "setFileSystem(prev => prev.filter..." was just local?
-            // Yes, original code did NOT call backend for page deletion! 
-            // We should stick to behavior but note this for future.
             setFileSystem(prev => prev.filter(f => !pageIds.includes(f.id)));
             console.warn("Deleted pages locally only - Backend implementation pending in original code");
         }
@@ -170,10 +175,38 @@ const App: React.FC = () => {
     const handleDeleteFolder = (folderId: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
         if (confirm('Tem certeza que deseja excluir esta pasta e todo seu conteúdo?')) {
-            // Same as above, original code was local state only?? 
-            // "window.electron.deleteProject" existed but files?
-            // Assuming local for now to respect "Refactor" scope without adding features not present.
             setFileSystem(prev => prev.filter(f => f.id !== folderId && f.parentId !== folderId));
+        }
+    };
+
+    const handleCreateFolder = async () => {
+        if (!newFolderName) return;
+        const targetParentId = currentFolderId || (currentProjectId ? projects.find(p => p.id === currentProjectId)?.rootFolderId : null);
+
+        if (!targetParentId) {
+            console.error("No target parent found for folder creation");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const res = await api.createFolder({ name: newFolderName, parentId: targetParentId });
+
+            // Optimistic update or fetch? Let's just optimistic for now or append to fileSystem
+            // Since backend just returns id/name, we construct the object OR reload.
+            // Let's reload to be safe and consistent with other patterns, OR construct manual entry.
+            // Backend create_folder logic in Step 477 returns {status, id, name}.
+            // It actually inserts into DB. So reloading filesystem is safest.
+            await loadData();
+
+            setIsCreatingFolder(false);
+            setNewFolderName('');
+            setNewFolderColor(PROJECT_THEMES[0].bg);
+        } catch (e) {
+            console.error(e);
+            alert('Erro ao criar pasta');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -193,9 +226,8 @@ const App: React.FC = () => {
             const file = files[i];
             try {
                 const data = await api.uploadPage(file, targetParentId);
-
                 uploadedPages.push({
-                    id: data.id, // Use Backend ID
+                    id: data.id,
                     name: file.name,
                     type: 'file',
                     parentId: targetParentId,
@@ -222,30 +254,25 @@ const App: React.FC = () => {
             return;
         }
 
-        // CRITICAL: Determine parent folder
         const targetParentId = currentFolderId || (currentProjectId ? projects.find(p => p.id === currentProjectId)?.rootFolderId : null) || 'root';
 
         setLoading(true);
         try {
             const data = await api.uploadPDF(file, targetParentId);
-
-            // Create Comic
             const comicId = `comic-${Date.now()}`;
             const newComic: FileEntry = {
                 id: comicId,
                 name: file.name.replace('.pdf', ''),
                 type: 'comic',
-                parentId: targetParentId, // Add to current folder or root
+                parentId: targetParentId,
                 createdAt: new Date().toISOString(),
                 isPinned: false,
                 order: 0,
-                url: '' // Comic folder has no URL
+                url: ''
             };
 
-            // Create Pages
-            // Backend returns { id, url, name } objects now
             const newPages: FileEntry[] = data.pages.map((p, index) => ({
-                id: p.id, // Use ID from Backend
+                id: p.id,
                 name: p.name,
                 type: 'file',
                 parentId: comicId,
@@ -274,70 +301,183 @@ const App: React.FC = () => {
         if (images.length > 0) handleAddPages(images);
     };
 
-
-    const sidebarContent = (
-        <DraggableWindow
-            title="Explorador"
-            onClose={() => setIsSidebarOpen(false)}
-            minimize={false}
-            docked={true}
-            className="h-full border-r border-[#27272a]"
-        >
-            <Explorer
-                projects={projects}
-                fileSystem={fileSystem as any} // Temporary cast until Explorer allows FileEntry exact types
-                currentProjectId={currentProjectId}
-                currentFolderId={currentFolderId}
-                onSelectProject={(id) => {
-                    setCurrentProjectId(id);
-                    setCurrentFolderId(null);
-                    setView('project');
-                }}
-                onSelectFolder={(id) => {
-                    setCurrentFolderId(id);
-                    setView('project');
-                }}
-                onEditProject={(p) => handleUpdate(p.id, { name: p.name, color: p.color })}
-                onDeleteProject={handleDelete}
-                onPinProject={handleTogglePin}
-                onEditFolder={() => { }}
-                onDeleteFolder={handleDeleteFolder}
-                onToggleProjectExpand={(id) => {
-                    const s = new Set(expandedProjects);
-                    if (s.has(id)) s.delete(id);
-                    else s.add(id);
-                    setExpandedProjects(s);
-                }}
-                onToggleFolderExpand={(id) => {
-                    const s = new Set(expandedFolders);
-                    if (s.has(id)) s.delete(id);
-                    else s.add(id);
-                    setExpandedFolders(s);
-                }}
-                expandedProjects={expandedProjects}
-                expandedFolders={expandedFolders}
-                PROJECT_THEMES={PROJECT_THEMES}
-            />
-        </DraggableWindow>
-    );
-
     return (
         <MainLayout
-            isSidebarOpen={isSidebarOpen}
-            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-            onGoHome={() => {
-                setView('dashboard');
-                setOpenedComicId(null);
+            onCreateProject={() => {
+                setShowManager(true); // Ensure manager is open
+                setIsCreatingProject(true); // Trigger creation mode
+                setView('dashboard'); // Switch to dashboard view
             }}
-            sidebar={sidebarContent}
+            showExplorer={showExplorer}
+            onToggleExplorer={() => setShowExplorer(!showExplorer)}
+            showManager={showManager}
+            onToggleManager={() => setShowManager(!showManager)}
+            isInEditor={!!openedPageId}
         >
-            {/* COMIC WORKSTATION - Shows all pages of a comic */}
+            {/* 1. EXPLORER (FLOATING WINDOW) */}
+            {showExplorer && (
+                <DraggableWindow
+                    title="Explorador de Arquivos"
+                    onClose={() => setShowExplorer(false)}
+                    minimize={false}
+                    docked={false}
+                    className="border border-white/10 shadow-2xl bg-[#09090b]"
+                    initialPosition={{ x: 20, y: 80 }}
+                    initialSize={{ width: 300, height: 600 }}
+                >
+                    <Explorer
+                        projects={projects}
+                        fileSystem={fileSystem as any}
+                        currentProjectId={currentProjectId}
+                        currentFolderId={currentFolderId}
+                        onSelectProject={(id) => {
+                            setCurrentProjectId(id);
+                            setCurrentFolderId(null);
+                            setView('project');
+                            if (!showManager) setShowManager(true);
+                        }}
+                        onSelectFolder={(id) => {
+                            setCurrentFolderId(id);
+                            setView('project');
+                            if (!showManager) setShowManager(true);
+                        }}
+                        onEditProject={(p) => handleUpdate(p.id, { name: p.name, color: p.color })}
+                        onDeleteProject={handleDelete}
+                        onPinProject={handleTogglePin}
+                        onEditFolder={() => { }}
+                        onDeleteFolder={handleDeleteFolder}
+                        onToggleProjectExpand={(id) => {
+                            const s = new Set(expandedProjects);
+                            if (s.has(id)) s.delete(id);
+                            else s.add(id);
+                            setExpandedProjects(s);
+                        }}
+                        onToggleFolderExpand={(id) => {
+                            const s = new Set(expandedFolders);
+                            if (s.has(id)) s.delete(id);
+                            else s.add(id);
+                            setExpandedFolders(s);
+                        }}
+                        expandedProjects={expandedProjects}
+                        expandedFolders={expandedFolders}
+                        PROJECT_THEMES={PROJECT_THEMES}
+                    />
+                </DraggableWindow>
+            )}
+
+            {/* 2. PROJECT MANAGER (FLOATING WINDOW) */}
+            {showManager && (
+                <DraggableWindow
+                    title={
+                        view === 'dashboard'
+                            ? 'Gerenciador de Projetos'
+                            : `Projeto: ${projects.find(p => p.id === currentProjectId)?.name || 'Carregando...'}`
+                    }
+                    onClose={() => setShowManager(false)}
+                    minimize={false}
+                    docked={false}
+                    className="border border-white/10 shadow-2xl bg-[#09090b]"
+                    initialPosition={{ x: 340, y: 80 }}
+                    initialSize={{ width: 960, height: 600 }}
+                >
+                    {view === 'dashboard' ? (
+                        <ProjectManager
+                            projects={projects}
+                            searchTerm={searchTerm}
+                            setSearchTerm={setSearchTerm}
+                            sortOrder={sortOrder}
+                            setSortOrder={setSortOrder}
+                            isCreatingProject={isCreatingProject}
+                            setIsCreatingProject={setIsCreatingProject}
+                            newItemName={newItemName}
+                            setNewItemName={setNewItemName}
+                            newItemColor={newItemColor}
+                            setNewItemColor={setNewItemColor}
+                            onCreateProject={handleCreate}
+                            onSelectProject={(id) => {
+                                setCurrentProjectId(id);
+                                setView('project');
+                            }}
+                            onTogglePin={handleTogglePin}
+                            onDeleteProject={handleDelete}
+                            onUpdateProject={() => {
+                                if (editingProject) {
+                                    handleUpdate(editingProject.id, { name: editName, color: editColor });
+                                }
+                            }}
+                            editingProject={editingProject}
+                            setEditingProject={setEditingProject}
+                            editName={editName}
+                            setEditName={setEditName}
+                            editColor={editColor}
+                            setEditColor={setEditColor}
+                            PROJECT_THEMES={PROJECT_THEMES}
+                        />
+                    ) : (
+                        <ProjectDetail
+                            project={projects.find((p: any) => p.id === currentProjectId) || null}
+                            currentFolderId={currentFolderId}
+                            fileSystem={fileSystem}
+                            onOpenItem={(node) => setCurrentFolderId(node.id)}
+                            onOpenComic={setOpenedComicId}
+                            onDeleteFolder={() => { }}
+                            loading={loading}
+                            error={null}
+                            searchTerm=""
+                            sortOrder="az"
+                            isCreatingFolder={isCreatingFolder}
+                            setIsCreatingFolder={setIsCreatingFolder}
+                            newItemName={newFolderName}
+                            setNewItemName={setNewFolderName}
+                            newItemColor={newFolderColor}
+                            setNewItemColor={setNewFolderColor}
+                            editingFolder={null}
+                            setEditingFolder={() => { }}
+                            editName=""
+                            setEditName={() => { }}
+                            editColor=""
+                            setEditColor={() => { }}
+                            PROJECT_THEMES={PROJECT_THEMES}
+                            onCreateFolder={handleCreateFolder}
+                            onUpdateFolder={() => { }}
+                            onStartEditingFolder={() => { }}
+                            onTogglePin={() => { }}
+                            onImportFiles={handleImportFiles}
+                            onDeletePages={handleDeletePages}
+                            onBack={() => {
+                                if (currentFolderId) {
+                                    // Check if we are at the root folder of the current project
+                                    const currentProject = projects.find((p: any) => p.id === currentProjectId);
+                                    if (currentProject && currentFolderId === currentProject.rootFolderId) {
+                                        setView('dashboard');
+                                        return;
+                                    }
+
+                                    const current = fileSystem.find((f: any) => f.id === currentFolderId);
+                                    // If parent is null, we are at root (logically), so exit
+                                    if (!current?.parentId) {
+                                        setView('dashboard');
+                                    } else {
+                                        setCurrentFolderId(current.parentId);
+                                    }
+                                } else {
+                                    setView('dashboard');
+                                }
+                            }}
+                            onRefresh={loadData}
+                        />
+                    )}
+                </DraggableWindow>
+            )}
+
+            {/* 3. COMIC WORKSTATION (FULLSCREEN / MODAL) */}
+            {/* Keep this as a modal/fullscreen overlay for now, but wrapped in EditorLayout */}
             {openedComicId && !openedPageId && (() => {
                 const comic = fileSystem.find((f: any) => f.id === openedComicId);
                 const pages = fileSystem.filter((f: any) => f.parentId === openedComicId);
 
                 return (
-                    <EditorLayout>
+                    <EditorLayout className="z-[200]">
                         <ComicWorkstation
                             comic={{
                                 id: comic?.id || '',
@@ -358,9 +498,9 @@ const App: React.FC = () => {
                 );
             })()}
 
-            {/* PAGE EDITOR - Shows single page editor */}
+            {/* 4. EDITOR VIEW (FULLSCREEN / MODAL) */}
             {openedPageId && (
-                <EditorLayout className="bg-black">
+                <EditorLayout className="bg-black z-[200]">
                     <EditorView
                         imageUrl={openedPageUrl}
                         onBack={() => {
@@ -376,86 +516,6 @@ const App: React.FC = () => {
                     />
                 </EditorLayout>
             )}
-
-            {/* MAIN WINDOW */}
-            <DraggableWindow
-                title={
-                    view === 'dashboard'
-                        ? 'Gerenciador'
-                        : `Projeto: ${projects.find(p => p.id === currentProjectId)?.name || '...'}`
-                }
-                onClose={() => { }}
-                minimize={false}
-                docked={true}
-            >
-                {view === 'dashboard' ? (
-                    <ProjectManager
-                        projects={projects}
-                        searchTerm={searchTerm}
-                        setSearchTerm={setSearchTerm}
-                        sortOrder={sortOrder}
-                        setSortOrder={setSortOrder}
-                        isCreatingProject={isCreatingProject}
-                        setIsCreatingProject={setIsCreatingProject}
-                        newItemName={newItemName}
-                        setNewItemName={setNewItemName}
-                        newItemColor={newItemColor}
-                        setNewItemColor={setNewItemColor}
-                        onCreateProject={handleCreate}
-                        onSelectProject={(id) => {
-                            setCurrentProjectId(id);
-                            setView('project');
-                        }}
-                        onTogglePin={handleTogglePin}
-                        onDeleteProject={handleDelete}
-                        onUpdateProject={() => {
-                            if (editingProject) {
-                                handleUpdate(editingProject.id, { name: editName, color: editColor });
-                            }
-                        }}
-                        editingProject={editingProject}
-                        setEditingProject={setEditingProject}
-                        editName={editName}
-                        setEditName={setEditName}
-                        editColor={editColor}
-                        setEditColor={setEditColor}
-                        PROJECT_THEMES={PROJECT_THEMES}
-                        onUploadPDF={handleUploadPDF}
-                    />
-                ) : (
-                    <ProjectDetail
-                        project={projects.find((p: any) => p.id === currentProjectId) || null}
-                        currentFolderId={currentFolderId}
-                        fileSystem={fileSystem}
-                        onOpenItem={(node) => setCurrentFolderId(node.id)}
-                        onOpenComic={setOpenedComicId}
-                        onDeleteFolder={() => { }}
-                        loading={loading}
-                        error={null}
-                        searchTerm=""
-                        sortOrder="az"
-                        isCreatingFolder={isCreatingFolder}
-                        setIsCreatingFolder={setIsCreatingFolder}
-                        newItemName=""
-                        setNewItemName={() => { }}
-                        newItemColor=""
-                        setNewItemColor={() => { }}
-                        editingFolder={null}
-                        setEditingFolder={() => { }}
-                        editName=""
-                        setEditName={() => { }}
-                        editColor=""
-                        setEditColor={() => { }}
-                        PROJECT_THEMES={PROJECT_THEMES}
-                        onCreateFolder={() => { }}
-                        onUpdateFolder={() => { }}
-                        onStartEditingFolder={() => { }}
-                        onTogglePin={() => { }}
-                        onImportFiles={handleImportFiles}
-                        onDeletePages={handleDeletePages}
-                    />
-                )}
-            </DraggableWindow>
         </MainLayout>
     );
 };
