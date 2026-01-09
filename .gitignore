@@ -1,21 +1,38 @@
-# System Files
+# === SYSTEM ===
 .DS_Store
 Thumbs.db
-*.zip
+*.log
 
-# Frontend
-node_modules/
-dist/
-build/
-.env
+# === PYTHON ===
+**/__pycache__/
+**/*.py[cod]
+**/venv/
+**/.venv/
+*.env
 
-# Backend
-venv/
-__pycache__/
-backend/credentials.json
+# === JAVASCRIPT / NODE ===
+**/node_modules/
+**/dist/
+**/build/
+**/coverage/
+npm-debug.log*
 
-# Application Data (Preserve folders, ignore content)
-backend/library/*
-!backend/library/.gitkeep
-backend/temp/*
-!backend/temp/.gitkeep
+# === DATABASE & SECRETS ===
+*.db
+*.sqlite
+*.sqlite3
+**/credentials.json
+**/service_account.json
+studio_app/backend/imagine_read.db
+
+# === USER CONTENT (Studio App) ===
+# Ignore content but keep folder
+studio_app/backend/library/*
+!studio_app/backend/library/.gitkeep
+studio_app/backend/temp/*
+!studio_app/backend/temp/.gitkeep
+
+# === MOBILE APP ===
+mobile_app/android/app/build/
+mobile_app/ios/Pods/
+mobile_app/.expo/

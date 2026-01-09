@@ -1,0 +1,2360 @@
+{
+  "projects": [
+    {
+      "id": "proj-1767901017870",
+      "name": "Star Wars",
+      "color": "bg-pink-500",
+      "rootFolderId": "folder-1767901017870-root",
+      "createdAt": "2026-01-08T16:36:57.870894",
+      "lastModified": "2026-01-08T16:36:57.870898",
+      "isPinned": false
+    }
+  ],
+  "fileSystem": [
+    {
+      "id": "folder-87a5a066",
+      "name": "Ahsoka 01 - Final Version - PDF - Low Resolution",
+      "type": "folder",
+      "parentId": "root",
+      "createdAt": "2026-01-08T17:18:21.176797"
+    },
+    {
+      "id": "file-d6f72f47",
+      "name": "Page 1",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_1_d6f72f47.jpg",
+      "createdAt": "2026-01-08T17:18:21.189204"
+    },
+    {
+      "id": "file-a08759df",
+      "name": "Page 2",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_2_a08759df.jpg",
+      "createdAt": "2026-01-08T17:18:21.201850"
+    },
+    {
+      "id": "file-47d1498e",
+      "name": "Page 3",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_3_47d1498e.jpg",
+      "createdAt": "2026-01-08T17:18:21.216094"
+    },
+    {
+      "id": "file-3b8cfb7f",
+      "name": "Page 4",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_4_3b8cfb7f.jpg",
+      "createdAt": "2026-01-08T17:18:21.230835"
+    },
+    {
+      "id": "file-39b0c264",
+      "name": "Page 5",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_5_39b0c264.jpg",
+      "createdAt": "2026-01-08T17:18:21.245278"
+    },
+    {
+      "id": "file-08180295",
+      "name": "Page 6",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_6_08180295.jpg",
+      "createdAt": "2026-01-08T17:18:21.259860"
+    },
+    {
+      "id": "file-162982e7",
+      "name": "Page 7",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_7_162982e7.jpg",
+      "createdAt": "2026-01-08T17:18:21.273854"
+    },
+    {
+      "id": "file-d0cd6211",
+      "name": "Page 8",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_8_d0cd6211.jpg",
+      "createdAt": "2026-01-08T17:18:21.288476"
+    },
+    {
+      "id": "file-f14548fe",
+      "name": "Page 9",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_9_f14548fe.jpg",
+      "createdAt": "2026-01-08T17:18:21.302392"
+    },
+    {
+      "id": "file-65574753",
+      "name": "Page 10",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_10_65574753.jpg",
+      "createdAt": "2026-01-08T17:18:21.317462"
+    },
+    {
+      "id": "file-f909e11f",
+      "name": "Page 11",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_11_f909e11f.jpg",
+      "createdAt": "2026-01-08T17:18:21.331923"
+    },
+    {
+      "id": "file-629925aa",
+      "name": "Page 12",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_12_629925aa.jpg",
+      "createdAt": "2026-01-08T17:18:21.345123"
+    },
+    {
+      "id": "file-455df009",
+      "name": "Page 13",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_13_455df009.jpg",
+      "createdAt": "2026-01-08T17:18:21.359331"
+    },
+    {
+      "id": "file-e1fd1973",
+      "name": "Page 14",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_14_e1fd1973.jpg",
+      "createdAt": "2026-01-08T17:18:21.373310"
+    },
+    {
+      "id": "file-b38bb258",
+      "name": "Page 15",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_15_b38bb258.jpg",
+      "createdAt": "2026-01-08T17:18:21.387634"
+    },
+    {
+      "id": "file-7c34786b",
+      "name": "Page 16",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_16_7c34786b.jpg",
+      "createdAt": "2026-01-08T17:18:21.401643"
+    },
+    {
+      "id": "file-1d694957",
+      "name": "Page 17",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_17_1d694957.jpg",
+      "createdAt": "2026-01-08T17:18:21.415973"
+    },
+    {
+      "id": "file-22cccf77",
+      "name": "Page 18",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_18_22cccf77.jpg",
+      "createdAt": "2026-01-08T17:18:21.430648"
+    },
+    {
+      "id": "file-91d4a980",
+      "name": "Page 19",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_19_91d4a980.jpg",
+      "createdAt": "2026-01-08T17:18:21.456156"
+    },
+    {
+      "id": "file-b10e7afb",
+      "name": "Page 20",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_20_b10e7afb.jpg",
+      "createdAt": "2026-01-08T17:18:21.469971"
+    },
+    {
+      "id": "file-adaf705e",
+      "name": "Page 21",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_21_adaf705e.jpg",
+      "createdAt": "2026-01-08T17:18:21.484167"
+    },
+    {
+      "id": "file-48b433e3",
+      "name": "Page 22",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_22_48b433e3.jpg",
+      "createdAt": "2026-01-08T17:18:21.498804"
+    },
+    {
+      "id": "file-de74dfa6",
+      "name": "Page 23",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_23_de74dfa6.jpg",
+      "createdAt": "2026-01-08T17:18:21.513159"
+    },
+    {
+      "id": "file-c352c442",
+      "name": "Page 24",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_24_c352c442.jpg",
+      "createdAt": "2026-01-08T17:18:21.527713"
+    },
+    {
+      "id": "file-863a5255",
+      "name": "Page 25",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_25_863a5255.jpg",
+      "createdAt": "2026-01-08T17:18:21.542556"
+    },
+    {
+      "id": "file-84e81993",
+      "name": "Page 26",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_26_84e81993.jpg",
+      "createdAt": "2026-01-08T17:18:21.556295"
+    },
+    {
+      "id": "file-65cbc52e",
+      "name": "Page 27",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_27_65cbc52e.jpg",
+      "createdAt": "2026-01-08T17:18:21.571196"
+    },
+    {
+      "id": "file-b16c24a7",
+      "name": "Page 28",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_28_b16c24a7.jpg",
+      "createdAt": "2026-01-08T17:18:21.585669"
+    },
+    {
+      "id": "file-bf0ae894",
+      "name": "Page 29",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_29_bf0ae894.jpg",
+      "createdAt": "2026-01-08T17:18:21.599567"
+    },
+    {
+      "id": "file-adad209d",
+      "name": "Page 30",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_30_adad209d.jpg",
+      "createdAt": "2026-01-08T17:18:21.612891"
+    },
+    {
+      "id": "file-0c0004d6",
+      "name": "Page 31",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_31_0c0004d6.jpg",
+      "createdAt": "2026-01-08T17:18:21.627190"
+    },
+    {
+      "id": "file-44613844",
+      "name": "Page 32",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_32_44613844.jpg",
+      "createdAt": "2026-01-08T17:18:21.641120"
+    },
+    {
+      "id": "file-07a96a0e",
+      "name": "Page 33",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_33_07a96a0e.jpg",
+      "createdAt": "2026-01-08T17:18:21.652260"
+    },
+    {
+      "id": "file-7dd714c4",
+      "name": "Page 34",
+      "type": "file",
+      "parentId": "folder-87a5a066",
+      "url": "http://127.0.0.1:8000/library/page_34_7dd714c4.jpg",
+      "createdAt": "2026-01-08T17:18:21.665155"
+    },
+    {
+      "id": "folder-cb3237a5",
+      "name": "Ahsoka 01 - Final Version - PDF - Low Resolution",
+      "type": "folder",
+      "parentId": "root",
+      "createdAt": "2026-01-08T17:21:43.941770"
+    },
+    {
+      "id": "file-fa6867bd",
+      "name": "Page 1",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_1_fa6867bd.jpg",
+      "createdAt": "2026-01-08T17:21:43.953595"
+    },
+    {
+      "id": "file-10cf12de",
+      "name": "Page 2",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_2_10cf12de.jpg",
+      "createdAt": "2026-01-08T17:21:43.965764"
+    },
+    {
+      "id": "file-de73e138",
+      "name": "Page 3",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_3_de73e138.jpg",
+      "createdAt": "2026-01-08T17:21:43.979947"
+    },
+    {
+      "id": "file-db3ab8d8",
+      "name": "Page 4",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_4_db3ab8d8.jpg",
+      "createdAt": "2026-01-08T17:21:43.994107"
+    },
+    {
+      "id": "file-cb00e5dd",
+      "name": "Page 5",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_5_cb00e5dd.jpg",
+      "createdAt": "2026-01-08T17:21:44.008057"
+    },
+    {
+      "id": "file-c0d59c88",
+      "name": "Page 6",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_6_c0d59c88.jpg",
+      "createdAt": "2026-01-08T17:21:44.022708"
+    },
+    {
+      "id": "file-ea88a0f1",
+      "name": "Page 7",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_7_ea88a0f1.jpg",
+      "createdAt": "2026-01-08T17:21:44.036627"
+    },
+    {
+      "id": "file-c4fb1300",
+      "name": "Page 8",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_8_c4fb1300.jpg",
+      "createdAt": "2026-01-08T17:21:44.050441"
+    },
+    {
+      "id": "file-bbed0425",
+      "name": "Page 9",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_9_bbed0425.jpg",
+      "createdAt": "2026-01-08T17:21:44.064635"
+    },
+    {
+      "id": "file-54bdeb64",
+      "name": "Page 10",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_10_54bdeb64.jpg",
+      "createdAt": "2026-01-08T17:21:44.079908"
+    },
+    {
+      "id": "file-9d921d9d",
+      "name": "Page 11",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_11_9d921d9d.jpg",
+      "createdAt": "2026-01-08T17:21:44.094826"
+    },
+    {
+      "id": "file-0467b69e",
+      "name": "Page 12",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_12_0467b69e.jpg",
+      "createdAt": "2026-01-08T17:21:44.108074"
+    },
+    {
+      "id": "file-e3b798ee",
+      "name": "Page 13",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_13_e3b798ee.jpg",
+      "createdAt": "2026-01-08T17:21:44.122106"
+    },
+    {
+      "id": "file-d5fa0ae2",
+      "name": "Page 14",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_14_d5fa0ae2.jpg",
+      "createdAt": "2026-01-08T17:21:44.136195"
+    },
+    {
+      "id": "file-cce18ec1",
+      "name": "Page 15",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_15_cce18ec1.jpg",
+      "createdAt": "2026-01-08T17:21:44.150420"
+    },
+    {
+      "id": "file-8848850f",
+      "name": "Page 16",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_16_8848850f.jpg",
+      "createdAt": "2026-01-08T17:21:44.164700"
+    },
+    {
+      "id": "file-67f0808c",
+      "name": "Page 17",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_17_67f0808c.jpg",
+      "createdAt": "2026-01-08T17:21:44.179142"
+    },
+    {
+      "id": "file-c7df3741",
+      "name": "Page 18",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_18_c7df3741.jpg",
+      "createdAt": "2026-01-08T17:21:44.194415"
+    },
+    {
+      "id": "file-ee6ce047",
+      "name": "Page 19",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_19_ee6ce047.jpg",
+      "createdAt": "2026-01-08T17:21:44.208587"
+    },
+    {
+      "id": "file-2212a344",
+      "name": "Page 20",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_20_2212a344.jpg",
+      "createdAt": "2026-01-08T17:21:44.222463"
+    },
+    {
+      "id": "file-e55f84df",
+      "name": "Page 21",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_21_e55f84df.jpg",
+      "createdAt": "2026-01-08T17:21:44.236475"
+    },
+    {
+      "id": "file-c5eb7b3a",
+      "name": "Page 22",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_22_c5eb7b3a.jpg",
+      "createdAt": "2026-01-08T17:21:44.250611"
+    },
+    {
+      "id": "file-ef2e0ce7",
+      "name": "Page 23",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_23_ef2e0ce7.jpg",
+      "createdAt": "2026-01-08T17:21:44.264837"
+    },
+    {
+      "id": "file-69b96a46",
+      "name": "Page 24",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_24_69b96a46.jpg",
+      "createdAt": "2026-01-08T17:21:44.278977"
+    },
+    {
+      "id": "file-6b3972c3",
+      "name": "Page 25",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_25_6b3972c3.jpg",
+      "createdAt": "2026-01-08T17:21:44.300509"
+    },
+    {
+      "id": "file-4feb3b23",
+      "name": "Page 26",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_26_4feb3b23.jpg",
+      "createdAt": "2026-01-08T17:21:44.314920"
+    },
+    {
+      "id": "file-ea3c687c",
+      "name": "Page 27",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_27_ea3c687c.jpg",
+      "createdAt": "2026-01-08T17:21:44.329315"
+    },
+    {
+      "id": "file-c99daf57",
+      "name": "Page 28",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_28_c99daf57.jpg",
+      "createdAt": "2026-01-08T17:21:44.343436"
+    },
+    {
+      "id": "file-80a68d97",
+      "name": "Page 29",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_29_80a68d97.jpg",
+      "createdAt": "2026-01-08T17:21:44.357267"
+    },
+    {
+      "id": "file-fd6542ad",
+      "name": "Page 30",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_30_fd6542ad.jpg",
+      "createdAt": "2026-01-08T17:21:44.370095"
+    },
+    {
+      "id": "file-ab436629",
+      "name": "Page 31",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_31_ab436629.jpg",
+      "createdAt": "2026-01-08T17:21:44.384165"
+    },
+    {
+      "id": "file-cb0f0825",
+      "name": "Page 32",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_32_cb0f0825.jpg",
+      "createdAt": "2026-01-08T17:21:44.398063"
+    },
+    {
+      "id": "file-11d131b0",
+      "name": "Page 33",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_33_11d131b0.jpg",
+      "createdAt": "2026-01-08T17:21:44.408938"
+    },
+    {
+      "id": "file-bdab6963",
+      "name": "Page 34",
+      "type": "file",
+      "parentId": "folder-cb3237a5",
+      "url": "http://127.0.0.1:8000/library/page_34_bdab6963.jpg",
+      "createdAt": "2026-01-08T17:21:44.421278"
+    },
+    {
+      "id": "folder-e0d31972",
+      "name": "Ahsoka 01 - Final Version - PDF - Low Resolution",
+      "type": "folder",
+      "parentId": "folder-1767901017870-root",
+      "createdAt": "2026-01-08T17:49:52.411587"
+    },
+    {
+      "id": "file-907ac84a",
+      "name": "Page 1",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_1_907ac84a.jpg",
+      "createdAt": "2026-01-08T17:49:52.423288"
+    },
+    {
+      "id": "file-54fe29a4",
+      "name": "Page 2",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_2_54fe29a4.jpg",
+      "createdAt": "2026-01-08T17:49:52.435621"
+    },
+    {
+      "id": "file-5494c75b",
+      "name": "Page 3",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_3_5494c75b.jpg",
+      "createdAt": "2026-01-08T17:49:52.449809",
+      "balloons": [
+        {
+          "id": "balloon-1767915577127-0",
+          "text": "",
+          "box_2d": [
+            559.6013709262879,
+            305.10655188100714,
+            648.9046093953752,
+            474.163155654592
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915577127-1",
+          "text": "",
+          "box_2d": [
+            894.50441609421,
+            638.4905660377359,
+            977.919528949951,
+            775.8490566037736
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915577127-2",
+          "text": "",
+          "box_2d": [
+            660.9421000981355,
+            730.5660377358491,
+            717.369970559372,
+            913.2075471698114
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915577127-3",
+          "text": "",
+          "box_2d": [
+            108.61967541066913,
+            290.28912499710736,
+            166.51957727524228,
+            441.98723820465455
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915577127-4",
+          "text": "",
+          "box_2d": [
+            344.60357526128234,
+            468.20144104062854,
+            375.51623473135106,
+            567.0693655689304
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915577127-5",
+          "text": "",
+          "box_2d": [
+            772.8164867517174,
+            266.41509433962267,
+            817.4681059862611,
+            378.8679245283019
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915577127-6",
+          "text": "",
+          "box_2d": [
+            803.2384690873405,
+            327.54716981132077,
+            855.2502453385672,
+            457.35849056603774
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915577127-7",
+          "text": "",
+          "box_2d": [
+            603.0421982335623,
+            482.26415094339626,
+            644.7497546614328,
+            557.7358490566038
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915577127-8",
+          "text": "",
+          "box_2d": [
+            767.4190382728165,
+            654.3396226415094,
+            801.7664376840039,
+            732.8301886792453
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915577127-9",
+          "text": "",
+          "box_2d": [
+            765.9470068694799,
+            510.94339622641513,
+            813.5426889106968,
+            593.9622641509434
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915577127-10",
+          "text": "ESTÃO ADIANTA- DOS.",
+          "box_2d": [
+            343.96467124631994,
+            302.9672712061663,
+            381.25613346418055,
+            385.9861391306946
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915577127-11",
+          "text": "",
+          "box_2d": [
+            894.0137389597645,
+            183.39622641509436,
+            925.4170755642788,
+            215.0943396226415
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        }
+      ],
+      "cleanUrl": "http://127.0.0.1:8000/temp/clean_page_3_5494c75b.jpg",
+      "isCleaned": true
+    },
+    {
+      "id": "file-6f87b068",
+      "name": "Page 4",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_4_6f87b068.jpg",
+      "createdAt": "2026-01-08T17:49:52.464202",
+      "balloons": [
+        {
+          "id": "balloon-1767913935979-0",
+          "text": "JARKIS, MANDE RD-3 ESCANEAR ESSES IMPOSTORES PARA IDENTIFICAÇÃO.",
+          "box_2d": [
+            780.1766437684004,
+            782.6415094339624,
+            840.5299313052012,
+            964.5283018867925
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 9,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-1",
+          "text": "PEÇA QUE A SEGURANÇA ME ENCONTRE NO HANGAR. O COMANDO É SEU.",
+          "box_2d": [
+            127.45280495845661,
+            472.95231126290105,
+            199.0916665875047,
+            623.140990508184
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 9,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-2",
+          "text": "APOSTO QUE SIM. FIZERAM UM BOM SHOW, MAS, UH... NÃO ME CONVENCERAM.",
+          "box_2d": [
+            591.756624141315,
+            258.8679245283019,
+            661.9234543670265,
+            415.8490566037736
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 9,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-3",
+          "text": "VOCÊS NÃO SÃO JEDI. NÃO PASSAM DE LIXO IMPERIAL COM EXCESSO DE CONFIANÇA QUE CONTARAM DEMAIS COM A SORTE.",
+          "box_2d": [
+            674.1903827281649,
+            821.8867924528303,
+            767.4190382728165,
+            972.8301886792453
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 8,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-4",
+          "text": "VOU VER O BLEFE DELES. PEÇA QUE SUBAM A BORDO. QUERO CONHECER ESSES \"JEDI\".",
+          "box_2d": [
+            76.8704760849489,
+            285.42956596831146,
+            167.1550688229273,
+            420.52390559095295
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 9,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-5",
+          "text": "NOSSA EXISTÊNCIA PERMANECE UM MISTÉRIO PARA A MAIORIA, CAPITÃO HAYLE.",
+          "box_2d": [
+            577.5269872423945,
+            49.05660377358491,
+            631.0107948969578,
+            208.30188679245285
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 8,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-6",
+          "text": "E VOCÊ, SENHOR, DEVERIA TER SE RENDIDO QUANDO O IMPÉRIO ENTROU EM COLAPSO.",
+          "box_2d": [
+            786.5554465161923,
+            216.60377358490567,
+            854.2688910696762,
+            375.09433962264154
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 9,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-7",
+          "text": "OBRIGADO POR NOS DEIXAREM SUBIR A BORDO, CAPITÃO...",
+          "box_2d": [
+            315.01472031403335,
+            205.28301886792454,
+            368.9892051030422,
+            360
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 8,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-8",
+          "text": "HAYLE. SE NÃO SE IMPORTA QUE EU DIGA, É UMA GRANDE SURPRESA ENCONTRAR UM JEDI AQUI.",
+          "box_2d": [
+            364.5731108930324,
+            228.67924528301887,
+            443.081452404318,
+            431.6981132075472
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-9",
+          "text": "ESTÁ COMETENDO UM ERRO.",
+          "box_2d": [
+            787.0461236506379,
+            127.54716981132077,
+            838.0765456329735,
+            222.64150943396228
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-10",
+          "text": "CAPITÃO, QUEM SÃO ELES?",
+          "box_2d": [
+            28.558091718185597,
+            160.35293397383492,
+            81.55122223830337,
+            253.93783963421228
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 7,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-11",
+          "text": "SIM, SENHOR.",
+          "box_2d": [
+            118.83585952160934,
+            718.3058559961194,
+            165.45018729393516,
+            799.0605729772514
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-12",
+          "text": "NÃO ENTENDO.",
+          "box_2d": [
+            585.8684985279687,
+            838.4905660377359,
+            623.6506378802748,
+            987.9245283018869
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 7,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767913935979-13",
+          "text": "NÃO ENTENDO.",
+          "box_2d": [
+            586.3591756624141,
+            840.0000000000001,
+            642.7870461236506,
+            998.4905660377359
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 9,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        }
+      ],
+      "cleanUrl": "http://127.0.0.1:8000/temp/clean_page_4_6f87b068.jpg",
+      "isCleaned": true
+    },
+    {
+      "id": "file-b27d8c86",
+      "name": "Page 5",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_5_b27d8c86.jpg",
+      "createdAt": "2026-01-08T17:49:52.478440"
+    },
+    {
+      "id": "file-439668fe",
+      "name": "Page 6",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_6_439668fe.jpg",
+      "createdAt": "2026-01-08T17:49:52.492830"
+    },
+    {
+      "id": "file-580b47b8",
+      "name": "Page 7",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_7_580b47b8.jpg",
+      "createdAt": "2026-01-08T17:49:52.507232"
+    },
+    {
+      "id": "file-ac3e83bb",
+      "name": "Page 8",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_8_ac3e83bb.jpg",
+      "createdAt": "2026-01-08T17:49:52.521751"
+    },
+    {
+      "id": "file-dd19307f",
+      "name": "Page 9",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_9_dd19307f.jpg",
+      "createdAt": "2026-01-08T17:49:52.536092"
+    },
+    {
+      "id": "file-dc0c9a04",
+      "name": "Page 10",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_10_dc0c9a04.jpg",
+      "createdAt": "2026-01-08T17:49:52.551376"
+    },
+    {
+      "id": "file-cdadc22c",
+      "name": "Page 11",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_11_cdadc22c.jpg",
+      "createdAt": "2026-01-08T17:49:52.566072"
+    },
+    {
+      "id": "file-b3d1d12f",
+      "name": "Page 12",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_12_b3d1d12f.jpg",
+      "createdAt": "2026-01-08T17:49:52.579006"
+    },
+    {
+      "id": "file-3201d095",
+      "name": "Page 13",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_13_3201d095.jpg",
+      "createdAt": "2026-01-08T17:49:52.592654"
+    },
+    {
+      "id": "file-2722f146",
+      "name": "Page 14",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_14_2722f146.jpg",
+      "createdAt": "2026-01-08T17:49:52.606686"
+    },
+    {
+      "id": "file-bb43234c",
+      "name": "Page 15",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_15_bb43234c.jpg",
+      "createdAt": "2026-01-08T17:49:52.620839"
+    },
+    {
+      "id": "file-82be0b2b",
+      "name": "Page 16",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_16_82be0b2b.jpg",
+      "createdAt": "2026-01-08T17:49:52.634978"
+    },
+    {
+      "id": "file-b885ca24",
+      "name": "Page 17",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_17_b885ca24.jpg",
+      "createdAt": "2026-01-08T17:49:52.649286"
+    },
+    {
+      "id": "file-3b96a898",
+      "name": "Page 18",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_18_3b96a898.jpg",
+      "createdAt": "2026-01-08T17:49:52.664379"
+    },
+    {
+      "id": "file-dc3c8e81",
+      "name": "Page 19",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_19_dc3c8e81.jpg",
+      "createdAt": "2026-01-08T17:49:52.678410"
+    },
+    {
+      "id": "file-ba38780a",
+      "name": "Page 20",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_20_ba38780a.jpg",
+      "createdAt": "2026-01-08T17:49:52.691853"
+    },
+    {
+      "id": "file-86f38597",
+      "name": "Page 21",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_21_86f38597.jpg",
+      "createdAt": "2026-01-08T17:49:52.705737",
+      "balloons": [
+        {
+          "id": "balloon-1767915995435-0",
+          "text": "NÃO SOBROU MUITA COISA\nLÁ ATRÁS. OU A JEDI ESTÁ\nCOM O MAPA, OU ELE\nFOI VAPORIZADO.",
+          "box_2d": [
+            412.16879293424927,
+            87.54716981132076,
+            470.0686947988224,
+            290.5660377358491
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 9,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-1",
+          "text": "UM TEMPLO\nANTIGO CONSTRUÍDO\nPELAS MINHAS\nANCESTRAIS. AS\nIRMÃS DA NOITE\nDE DATHOMIR.",
+          "box_2d": [
+            61.253431027830494,
+            477.9367405602524,
+            132.40161552243305,
+            635.6725896168562
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 9,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-2",
+          "text": "POR QUE\nLOTHAI? QUE\nFIO ELA ESTÁ\nTECENDO?",
+          "box_2d": [
+            741.4131501472032,
+            310.188679245283,
+            808.1452404317959,
+            436.98113207547175
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 9,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-3",
+          "text": "FAÇA\nO QUE ELA\nDISSE.",
+          "box_2d": [
+            430.3238469087341,
+            838.4905660377359,
+            479.39156035328756,
+            935.8490566037736
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-4",
+          "text": "ENVIE\nESSA AÍ PARA\nO PLANETA\nLOTHAI.",
+          "box_2d": [
+            425.4170755642787,
+            530.5660377358491,
+            501.96270853778213,
+            646.0377358490566
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 9,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-5",
+          "text": "NÃO, ISSO NÃO É\nBRUXARIA. A ANTIGA\nAPRENDIZ DE ASHOKA\nTHANO ESTÁ EM LOTHAI.\nPROCURE POR\nSABINE WREN.",
+          "box_2d": [
+            878.3120706575073,
+            712.4528301886793,
+            959.7644749754662,
+            924.5283018867925
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-6",
+          "text": "MESTRE?",
+          "box_2d": [
+            444.062806673209,
+            710.1886792452831,
+            491.6584887144259,
+            802.2641509433963
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-7",
+          "text": "SOU UMA\nSOBREVIVENTE.",
+          "box_2d": [
+            94.70068694798823,
+            828.6792452830189,
+            132.48282630029442,
+            926.7924528301887
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-8",
+          "text": "SORTE\nNÃO TEM NADA A\nVER COM ISSO. O\nDESTINO DECIDIU\nNOSSO PRÓXIMO\nPASSO.",
+          "box_2d": [
+            500,
+            336.6037735849057,
+            571.638861629048,
+            473.96226415094344
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 8,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-9",
+          "text": "SE ESTIVER,\nVOCÊ ESTÁ\nCOM SORTE.",
+          "box_2d": [
+            452.89499509322866,
+            341.8867924528302,
+            505.3974484789009,
+            438.4905660377359
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-10",
+          "text": "O QUE ERA ESSE\nLUGAR?",
+          "box_2d": [
+            41.036850595218986,
+            113.48445990855306,
+            86.1791469642082,
+            246.31464858779836
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 7,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-11",
+          "text": "ESTÁ\nCOM ELA.",
+          "box_2d": [
+            445.53483807654567,
+            258.8679245283019,
+            491.16781157998037,
+            331.3207547169811
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767915995435-12",
+          "text": "VOCÊ\nÉ UMA\nBRUXA?",
+          "box_2d": [
+            62.31599607458293,
+            750.9433962264152,
+            98.6261040235525,
+            836.2264150943397
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        }
+      ],
+      "cleanUrl": "http://127.0.0.1:8000/temp/clean_page_21_86f38597.jpg",
+      "isCleaned": true
+    },
+    {
+      "id": "file-28c57762",
+      "name": "Page 22",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_22_28c57762.jpg",
+      "createdAt": "2026-01-08T17:49:52.719698"
+    },
+    {
+      "id": "file-5762b0d5",
+      "name": "Page 23",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_23_5762b0d5.jpg",
+      "createdAt": "2026-01-08T17:49:52.734112"
+    },
+    {
+      "id": "file-855b0ec5",
+      "name": "Page 24",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_24_855b0ec5.jpg",
+      "createdAt": "2026-01-08T17:49:52.749261"
+    },
+    {
+      "id": "file-904ad560",
+      "name": "Page 25",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_25_904ad560.jpg",
+      "createdAt": "2026-01-08T17:49:52.764183"
+    },
+    {
+      "id": "file-a26d550f",
+      "name": "Page 26",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_26_a26d550f.jpg",
+      "createdAt": "2026-01-08T17:49:52.778944"
+    },
+    {
+      "id": "file-dc00af70",
+      "name": "Page 27",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_27_dc00af70.jpg",
+      "createdAt": "2026-01-08T17:49:52.794420"
+    },
+    {
+      "id": "file-9413a8d6",
+      "name": "Page 28",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_28_9413a8d6.jpg",
+      "createdAt": "2026-01-08T17:49:52.809163"
+    },
+    {
+      "id": "file-e145cf23",
+      "name": "Page 29",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_29_e145cf23.jpg",
+      "createdAt": "2026-01-08T17:49:52.823301"
+    },
+    {
+      "id": "file-9eb2e3e4",
+      "name": "Page 30",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_30_9eb2e3e4.jpg",
+      "createdAt": "2026-01-08T17:49:52.836437"
+    },
+    {
+      "id": "file-e21c8125",
+      "name": "Page 31",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_31_e21c8125.jpg",
+      "createdAt": "2026-01-08T17:49:52.850396"
+    },
+    {
+      "id": "file-664d7ecc",
+      "name": "Page 32",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_32_664d7ecc.jpg",
+      "createdAt": "2026-01-08T17:49:52.865048"
+    },
+    {
+      "id": "file-1425ab26",
+      "name": "Page 33",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_33_1425ab26.jpg",
+      "createdAt": "2026-01-08T17:49:52.876060"
+    },
+    {
+      "id": "file-41c92967",
+      "name": "Page 34",
+      "type": "file",
+      "parentId": "folder-e0d31972",
+      "url": "http://127.0.0.1:8000/library/page_34_41c92967.jpg",
+      "createdAt": "2026-01-08T17:49:52.888600"
+    },
+    {
+      "id": "folder-3bdc3f97",
+      "name": "Ahsoka 02 - Final Version - PDF - High Resolution_compressed",
+      "type": "folder",
+      "parentId": "folder-1767901017870-root",
+      "createdAt": "2026-01-08T17:51:29.068847"
+    },
+    {
+      "id": "file-3b7e1253",
+      "name": "Page 1",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_1_3b7e1253.jpg",
+      "createdAt": "2026-01-08T17:51:29.080399"
+    },
+    {
+      "id": "file-953684cd",
+      "name": "Page 2",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_2_953684cd.jpg",
+      "createdAt": "2026-01-08T17:51:29.091528"
+    },
+    {
+      "id": "file-952b78e1",
+      "name": "Page 3",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_3_952b78e1.jpg",
+      "createdAt": "2026-01-08T17:51:29.105643",
+      "balloons": [
+        {
+          "id": "balloon-1767916657542-0",
+          "text": "VOCÊ NÃO ENTENDE.\nEU DESBLOQUEEI. HAVIA\nDUAS GALÁXIAS. E ENTÃO\nUM CAMINHO APARECEU\nENTRE ELAS.",
+          "box_2d": [
+            384.6908734052993,
+            67.9245283018868,
+            453.87634936211975,
+            255.09433962264154
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 10,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-1",
+          "text": "NÃO SE TRATA\nAPENAS DE ACHAR\nO EZRA. SE TRATA\nDE PREVENIR OUTRA\nGUERRA.",
+          "box_2d": [
+            94.70068694798823,
+            153.9622641509434,
+            161.43277723258097,
+            313.96226415094344
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 9,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-2",
+          "text": "VOCÊ MANTEVE\nUM REGISTRO DO\nQUE DESCOBRIU?",
+          "box_2d": [
+            594.2100098135427,
+            76.22641509433963,
+            649.6565260058882,
+            215.0943396226415
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 7,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-3",
+          "text": "ESTÁVAMOS\nPROCURANDO\nPOR ISTO.",
+          "box_2d": [
+            83.43271999822413,
+            341.81077121773706,
+            132.0097563083321,
+            448.9805825384918
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-4",
+          "text": "OS DROIDES\nDESTRUÍRAM.",
+          "box_2d": [
+            694.3081452404318,
+            96.60377358490567,
+            743.8665358194309,
+            205.28301886792454
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 7,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-5",
+          "text": "LEVARAM\nO MAPA ANTES\nQUE EU PUDESSE\nDECIFRAR.",
+          "box_2d": [
+            433.26790971540726,
+            448.3018867924529,
+            487.73307163886165,
+            585.6603773584906
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 7,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-6",
+          "text": "ESPERA.\nVOCÊ PRECISA DA\nMINHA AJUDA.",
+          "box_2d": [
+            843.9646712463199,
+            743.3962264150944,
+            891.5603532875368,
+            861.1320754716982
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-7",
+          "text": "ESTOU\nCONTANDO\nCOM VOCÊ PARA\nCUIDAR DISSO.",
+          "box_2d": [
+            35.328753680078506,
+            73.9622641509434,
+            90.77526987242395,
+            211.32075471698116
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 7,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-8",
+          "text": "QUANTOS\nDROIDES\nERAM?",
+          "box_2d": [
+            679.0971540726202,
+            411.3207547169812,
+            729.6368989205104,
+            529.811320754717
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 7,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-9",
+          "text": "ONDE COMEÇA O\nCAMINHO NA NOSSA\nGALÁXIA? QUAL\nPLANETA?",
+          "box_2d": [
+            384.2001962708538,
+            341.8867924528302,
+            435.2306182531894,
+            513.2075471698114
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 8,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-10",
+          "text": "OS DROIDES.\nELES LEVARAM\nO MAPA.",
+          "box_2d": [
+            234.54367026496567,
+            388.6792452830189,
+            283.1207065750736,
+            506.41509433962267
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-11",
+          "text": "DES-\nCANSE.",
+          "box_2d": [
+            659.4700686947988,
+            818.1132075471698,
+            705.5937193326791,
+            888.3018867924529
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-12",
+          "text": "DOIS.\nCUIDEI\nDE UM.",
+          "box_2d": [
+            760.0588812561335,
+            424.9056603773585,
+            809.6172718351324,
+            525.2830188679245
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 7,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-13",
+          "text": "SABINE.",
+          "box_2d": [
+            216.8792934249264,
+            355.4716981132076,
+            246.3199214916585,
+            435.4716981132076
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-14",
+          "text": "RELAXE.",
+          "box_2d": [
+            278.7046123650638,
+            395.4716981132076,
+            308.14524043179586,
+            473.20754716981133
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        },
+        {
+          "id": "balloon-1767916657542-15",
+          "text": "AHSOKA...",
+          "box_2d": [
+            612.855740922473,
+            803.7735849056604,
+            643.2777232580962,
+            899.6226415094341
+          ],
+          "shape": "rectangle",
+          "type": "speech",
+          "customFontSize": 6,
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "tailWidth": 40,
+          "roughness": 1,
+          "tailTip": null
+        }
+      ],
+      "cleanUrl": "http://127.0.0.1:8000/temp/clean_page_3_952b78e1.jpg",
+      "isCleaned": true
+    },
+    {
+      "id": "file-7a746207",
+      "name": "Page 4",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_4_7a746207.jpg",
+      "createdAt": "2026-01-08T17:51:29.118676"
+    },
+    {
+      "id": "file-7b1b1193",
+      "name": "Page 5",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_5_7b1b1193.jpg",
+      "createdAt": "2026-01-08T17:51:29.131797"
+    },
+    {
+      "id": "file-b67d532f",
+      "name": "Page 6",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_6_b67d532f.jpg",
+      "createdAt": "2026-01-08T17:51:29.146255"
+    },
+    {
+      "id": "file-210daf87",
+      "name": "Page 7",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_7_210daf87.jpg",
+      "createdAt": "2026-01-08T17:51:29.161231"
+    },
+    {
+      "id": "file-16ce7a83",
+      "name": "Page 8",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_8_16ce7a83.jpg",
+      "createdAt": "2026-01-08T17:51:29.175032"
+    },
+    {
+      "id": "file-462f833f",
+      "name": "Page 9",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_9_462f833f.jpg",
+      "createdAt": "2026-01-08T17:51:29.188369"
+    },
+    {
+      "id": "file-d6dbb682",
+      "name": "Page 10",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_10_d6dbb682.jpg",
+      "createdAt": "2026-01-08T17:51:29.202320"
+    },
+    {
+      "id": "file-e708ce0e",
+      "name": "Page 11",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_11_e708ce0e.jpg",
+      "createdAt": "2026-01-08T17:51:29.216145"
+    },
+    {
+      "id": "file-665aa991",
+      "name": "Page 12",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_12_665aa991.jpg",
+      "createdAt": "2026-01-08T17:51:29.230450"
+    },
+    {
+      "id": "file-1130addd",
+      "name": "Page 13",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_13_1130addd.jpg",
+      "createdAt": "2026-01-08T17:51:29.245612"
+    },
+    {
+      "id": "file-d450b7f0",
+      "name": "Page 14",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_14_d450b7f0.jpg",
+      "createdAt": "2026-01-08T17:51:29.259554"
+    },
+    {
+      "id": "file-eab099e2",
+      "name": "Page 15",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_15_eab099e2.jpg",
+      "createdAt": "2026-01-08T17:51:29.273423"
+    },
+    {
+      "id": "file-59b0fd2d",
+      "name": "Page 16",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_16_59b0fd2d.jpg",
+      "createdAt": "2026-01-08T17:51:29.286933"
+    },
+    {
+      "id": "file-d0582907",
+      "name": "Page 17",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_17_d0582907.jpg",
+      "createdAt": "2026-01-08T17:51:29.300052"
+    },
+    {
+      "id": "file-008ff848",
+      "name": "Page 18",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_18_008ff848.jpg",
+      "createdAt": "2026-01-08T17:51:29.313977"
+    },
+    {
+      "id": "file-0204e18e",
+      "name": "Page 19",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_19_0204e18e.jpg",
+      "createdAt": "2026-01-08T17:51:29.334190"
+    },
+    {
+      "id": "file-91155edb",
+      "name": "Page 20",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_20_91155edb.jpg",
+      "createdAt": "2026-01-08T17:51:29.347958"
+    },
+    {
+      "id": "file-c36c1d72",
+      "name": "Page 21",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_21_c36c1d72.jpg",
+      "createdAt": "2026-01-08T17:51:29.359823"
+    },
+    {
+      "id": "file-b7c1a7a0",
+      "name": "Page 22",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_22_b7c1a7a0.jpg",
+      "createdAt": "2026-01-08T17:51:29.372865"
+    },
+    {
+      "id": "file-30e0d588",
+      "name": "Page 23",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_23_30e0d588.jpg",
+      "createdAt": "2026-01-08T17:51:29.386748"
+    },
+    {
+      "id": "file-429d9953",
+      "name": "Page 24",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_24_429d9953.jpg",
+      "createdAt": "2026-01-08T17:51:29.400055"
+    },
+    {
+      "id": "file-55de6744",
+      "name": "Page 25",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_25_55de6744.jpg",
+      "createdAt": "2026-01-08T17:51:29.414132"
+    },
+    {
+      "id": "file-cb411300",
+      "name": "Page 26",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_26_cb411300.jpg",
+      "createdAt": "2026-01-08T17:51:29.426540"
+    },
+    {
+      "id": "file-1c153eb5",
+      "name": "Page 27",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_27_1c153eb5.jpg",
+      "createdAt": "2026-01-08T17:51:29.439475"
+    },
+    {
+      "id": "file-ae149dc8",
+      "name": "Page 28",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_28_ae149dc8.jpg",
+      "createdAt": "2026-01-08T17:51:29.453382"
+    },
+    {
+      "id": "file-6b1d57f1",
+      "name": "Page 29",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_29_6b1d57f1.jpg",
+      "createdAt": "2026-01-08T17:51:29.467377"
+    },
+    {
+      "id": "file-20f535f2",
+      "name": "Page 30",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_30_20f535f2.jpg",
+      "createdAt": "2026-01-08T17:51:29.480355"
+    },
+    {
+      "id": "file-e7dd42a3",
+      "name": "Page 31",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_31_e7dd42a3.jpg",
+      "createdAt": "2026-01-08T17:51:29.494656"
+    },
+    {
+      "id": "file-80419a36",
+      "name": "Page 32",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_32_80419a36.jpg",
+      "createdAt": "2026-01-08T17:51:29.507290"
+    },
+    {
+      "id": "file-bbcdba10",
+      "name": "Page 33",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_33_bbcdba10.jpg",
+      "createdAt": "2026-01-08T17:51:29.518839"
+    },
+    {
+      "id": "file-154aa0c2",
+      "name": "Page 34",
+      "type": "file",
+      "parentId": "folder-3bdc3f97",
+      "url": "http://127.0.0.1:8000/library/page_34_154aa0c2.jpg",
+      "createdAt": "2026-01-08T17:51:29.530720"
+    },
+    {
+      "id": "folder-f668e675",
+      "name": "The High Republic - Fear of the Jedi 01 - PDF - High Resolution_compressed",
+      "type": "folder",
+      "parentId": "folder-1767901017870-root",
+      "createdAt": "2026-01-08T20:57:08.142824"
+    },
+    {
+      "id": "file-98c218c0",
+      "name": "Page 1",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_1_98c218c0.jpg",
+      "createdAt": "2026-01-08T20:57:08.155325"
+    },
+    {
+      "id": "file-e6402bca",
+      "name": "Page 2",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_2_e6402bca.jpg",
+      "createdAt": "2026-01-08T20:57:08.164963"
+    },
+    {
+      "id": "file-c49d4a8b",
+      "name": "Page 3",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_3_c49d4a8b.jpg",
+      "createdAt": "2026-01-08T20:57:08.176749"
+    },
+    {
+      "id": "file-014348f4",
+      "name": "Page 4",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_4_014348f4.jpg",
+      "createdAt": "2026-01-08T20:57:08.190867"
+    },
+    {
+      "id": "file-82ef6968",
+      "name": "Page 5",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_5_82ef6968.jpg",
+      "createdAt": "2026-01-08T20:57:08.214265"
+    },
+    {
+      "id": "file-08de1b46",
+      "name": "Page 6",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_6_08de1b46.jpg",
+      "createdAt": "2026-01-08T20:57:08.227611"
+    },
+    {
+      "id": "file-b764d762",
+      "name": "Page 7",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_7_b764d762.jpg",
+      "createdAt": "2026-01-08T20:57:08.241565"
+    },
+    {
+      "id": "file-135cb58d",
+      "name": "Page 8",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_8_135cb58d.jpg",
+      "createdAt": "2026-01-08T20:57:08.255390"
+    },
+    {
+      "id": "file-3f2ec4f6",
+      "name": "Page 9",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_9_3f2ec4f6.jpg",
+      "createdAt": "2026-01-08T20:57:08.270188"
+    },
+    {
+      "id": "file-2381b5bf",
+      "name": "Page 10",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_10_2381b5bf.jpg",
+      "createdAt": "2026-01-08T20:57:08.285274"
+    },
+    {
+      "id": "file-32e5e64a",
+      "name": "Page 11",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_11_32e5e64a.jpg",
+      "createdAt": "2026-01-08T20:57:08.299733"
+    },
+    {
+      "id": "file-c81447c2",
+      "name": "Page 12",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_12_c81447c2.jpg",
+      "createdAt": "2026-01-08T20:57:08.313262"
+    },
+    {
+      "id": "file-2c63efa7",
+      "name": "Page 13",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_13_2c63efa7.jpg",
+      "createdAt": "2026-01-08T20:57:08.327813"
+    },
+    {
+      "id": "file-7117742d",
+      "name": "Page 14",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_14_7117742d.jpg",
+      "createdAt": "2026-01-08T20:57:08.341207"
+    },
+    {
+      "id": "file-c2687926",
+      "name": "Page 15",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_15_c2687926.jpg",
+      "createdAt": "2026-01-08T20:57:08.355333"
+    },
+    {
+      "id": "file-2410fb22",
+      "name": "Page 16",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_16_2410fb22.jpg",
+      "createdAt": "2026-01-08T20:57:08.380154"
+    },
+    {
+      "id": "file-e4e937b7",
+      "name": "Page 17",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_17_e4e937b7.jpg",
+      "createdAt": "2026-01-08T20:57:08.395093"
+    },
+    {
+      "id": "file-a2e1a2c2",
+      "name": "Page 18",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_18_a2e1a2c2.jpg",
+      "createdAt": "2026-01-08T20:57:08.409037"
+    },
+    {
+      "id": "file-a2a83170",
+      "name": "Page 19",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_19_a2a83170.jpg",
+      "createdAt": "2026-01-08T20:57:08.422899"
+    },
+    {
+      "id": "file-ce765386",
+      "name": "Page 20",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_20_ce765386.jpg",
+      "createdAt": "2026-01-08T20:57:08.436856"
+    },
+    {
+      "id": "file-41b1343a",
+      "name": "Page 21",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_21_41b1343a.jpg",
+      "createdAt": "2026-01-08T20:57:08.449833"
+    },
+    {
+      "id": "file-f2b1b4ab",
+      "name": "Page 22",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_22_f2b1b4ab.jpg",
+      "createdAt": "2026-01-08T20:57:08.462797"
+    },
+    {
+      "id": "file-d0b39b9d",
+      "name": "Page 23",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_23_d0b39b9d.jpg",
+      "createdAt": "2026-01-08T20:57:08.477132"
+    },
+    {
+      "id": "file-7b03879e",
+      "name": "Page 24",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_24_7b03879e.jpg",
+      "createdAt": "2026-01-08T20:57:08.491059"
+    },
+    {
+      "id": "file-4b112b19",
+      "name": "Page 25",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_25_4b112b19.jpg",
+      "createdAt": "2026-01-08T20:57:08.515571"
+    },
+    {
+      "id": "file-1cc41285",
+      "name": "Page 26",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_26_1cc41285.jpg",
+      "createdAt": "2026-01-08T20:57:08.527796"
+    },
+    {
+      "id": "file-b40b552e",
+      "name": "Page 27",
+      "type": "file",
+      "parentId": "folder-f668e675",
+      "url": "http://127.0.0.1:8000/library/page_27_b40b552e.jpg",
+      "createdAt": "2026-01-08T20:57:08.540195"
+    }
+  ]
+}
