@@ -5,7 +5,7 @@ import { yoloToBalloons } from '../utils/balloonConverter';
 
 export const useEditorLogic = (
     fileId: string,
-    initialBalloons: Balloon[] | undefined,
+    initialBalloons: Balloon[] | null | undefined,
     imageUrl: string,
     onBack: () => void
 ) => {

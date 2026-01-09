@@ -5,18 +5,19 @@ import { FlashList } from '@shopify/flash-list';
 import Animated from 'react-native-reanimated';
 import { useReaderStore } from './store/useReaderStore';
 import { readerService } from './services/MockReaderService';
-import { ComicPage, ComicDetails } from './types';
+import { ComicPageManifest } from './types/Manifest';
 import { VectorBubble } from './components/VectorBubble';
 import { ReaderControls } from './components/ReaderControls';
 import { PageList } from './components/PageList';
 import { useCinematicViewport } from './hooks/useCinematicViewport';
 import { MonitorPlay, Minimize2 } from 'lucide-react-native';
+import { CacheService } from '../../core/services/CacheService';
+import { SafeBoundary } from '../../core/wrappers/SafeBoundary';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // --- CINEMATIC VIEW WRAPPER ---
-// Renders the CURRENT PAGE in the store
-const CinematicView = ({ page }: { page: ComicPage }) => {
+const CinematicView = ({ page }: { page: ComicPageManifest }) => {
     const {
         currentFocusIndex,
         isCinematic,
@@ -25,7 +26,8 @@ const CinematicView = ({ page }: { page: ComicPage }) => {
         toggleControls
     } = useReaderStore();
 
-    const focusPoint = page.focusPoints?.[currentFocusIndex];
+    // Access via LAYERS
+    const focusPoint = page.layers?.focusPoints?.[currentFocusIndex];
 
     const { animatedStyle } = useCinematicViewport({
         currentFocusIndex,
@@ -55,11 +57,11 @@ const CinematicView = ({ page }: { page: ComicPage }) => {
             <TouchableOpacity activeOpacity={1} onPress={handleTouch} style={{ flex: 1 }}>
                 <Animated.View style={[{ width: SCREEN_WIDTH, height: displayHeight }, animatedStyle]}>
                     <Image
-                        source={{ uri: page.imageUrl }}
+                        source={{ uri: page.imageUri }} // Updated to imageUri
                         style={{ width: '100%', height: '100%' }}
                         resizeMode="contain"
                     />
-                    {page.balloons.map((bubble) => (
+                    {page.layers?.balloons?.map((bubble, index) => (
                         <VectorBubble
                             key={bubble.id}
                             {...bubble}
@@ -67,6 +69,10 @@ const CinematicView = ({ page }: { page: ComicPage }) => {
                             y={bubble.y * scaleFactor}
                             width={bubble.width * scaleFactor}
                             height={bubble.height * scaleFactor}
+                            // Logic: In Cinematic, highlight if index matches focus index.
+                            // Note: This assumes Balloons and FocusPoints are aligned or mapped 1:1, 
+                            // which is a simplification for this contract.
+                            isFocused={index === currentFocusIndex}
                         />
                     ))}
                 </Animated.View>
@@ -82,46 +88,65 @@ export function ReaderContainer({ comicId }: { comicId: string }) {
         controlsVisible,
         isCinematic,
         toggleCinematic,
-        setPages,
+        setManifest,
         currentPageIndex,
-        pages
+        manifest
     } = useReaderStore();
 
     const [loading, setLoading] = useState(true);
-    const [comicTitle, setComicTitle] = useState('');
 
     // List Ref for programmatic scrolling
-    const listRef = useRef<FlashList<ComicPage>>(null);
+    const listRef = useRef<any>(null);
 
     // 1. Load Data
     useEffect(() => {
         const loadComic = async () => {
-            const data = await readerService.getComicDetails(comicId);
-            setComicTitle(data.title);
-            setPages(data.pages);
-            setLoading(false);
+            try {
+                const data = await readerService.getComicDetails(comicId);
+                setManifest(data);
+            } catch (err) {
+                // Handled by SafeBoundary higher up
+                throw err;
+            } finally {
+                setLoading(false);
+            }
         };
         loadComic();
-    }, [comicId, setPages]);
+    }, [comicId, setManifest]);
 
     // 2. Sync Cinematic Page Changes to Scroll Position
     useEffect(() => {
-        // When currentPageIndex changes (e.g. via Cinematic Next Step), scroll the list
-        // Check if ref exists
         if (listRef.current) {
-            // We use scrollToIndex. Note: For FlashList vertical, this works reliably if estimated sizes are good.
-            // For Horizontal, it works well.
-
-            // Wrap in try/catch or check bounds potentially, but FlashList is robust.
             try {
                 listRef.current.scrollToIndex({ index: currentPageIndex, animated: true });
             } catch (e) {
-                // Ignore scroll errors (e.g. if list not ready)
+                // Ignore
             }
         }
     }, [currentPageIndex]);
 
-    if (loading || !pages.length) {
+    // 3. PREFETCHING STRATEGY
+    useEffect(() => {
+        if (!manifest?.pages?.length) return;
+        const pages = manifest.pages;
+
+        // Prefetch X next pages
+        const PREFETCH_WINDOW = 3;
+        const urlsToPrefetch: string[] = [];
+
+        for (let i = 1; i <= PREFETCH_WINDOW; i++) {
+            const nextIndex = currentPageIndex + i;
+            if (nextIndex < pages.length) {
+                urlsToPrefetch.push(pages[nextIndex].imageUri);
+            }
+        }
+
+        if (urlsToPrefetch.length > 0) {
+            CacheService.prefetch(urlsToPrefetch);
+        }
+    }, [currentPageIndex, manifest]);
+
+    if (loading || !manifest) {
         return (
             <View style={{ flex: 1, backgroundColor: 'black', justifyContent: 'center', alignItems: 'center' }}>
                 <ActivityIndicator size="large" color="#3B82F6" />
@@ -129,48 +154,50 @@ export function ReaderContainer({ comicId }: { comicId: string }) {
         );
     }
 
+    const pages = manifest.pages;
     const currentPage = pages[currentPageIndex] || pages[0];
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: 'black' }} edges={['top', 'bottom']}>
-            <RNStatusBar hidden={!controlsVisible} barStyle="light-content" />
+            <SafeBoundary>
+                <RNStatusBar hidden={!controlsVisible} barStyle="light-content" />
 
-            {/* VIEWER AREA */}
-            {isCinematic ? (
-                // In Cinematic Mode, render the Active Page
-                <CinematicView page={currentPage} />
-            ) : (
-                <PageList ref={listRef} pages={pages} />
-            )}
+                {/* VIEWER AREA */}
+                {isCinematic ? (
+                    <CinematicView page={currentPage} />
+                ) : (
+                    <PageList ref={listRef} pages={pages} />
+                )}
 
-            {/* CONTROLS OVERLAY */}
-            {controlsVisible && (
-                <>
-                    <ReaderControls title={comicTitle} />
+                {/* CONTROLS OVERLAY */}
+                {controlsVisible && (
+                    <>
+                        <ReaderControls title={manifest.metadata.title} />
 
-                    {/* CINEMATIC TOGGLE FAB */}
-                    <View style={{ position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center' }}>
-                        <TouchableOpacity
-                            onPress={toggleCinematic}
-                            style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                backgroundColor: isCinematic ? '#3B82F6' : '#2A2A2A',
-                                paddingHorizontal: 20,
-                                paddingVertical: 12,
-                                borderRadius: 30,
-                                borderWidth: 1,
-                                borderColor: 'rgba(255,255,255,0.1)'
-                            }}
-                        >
-                            {isCinematic ? <Minimize2 size={20} color="white" style={{ marginRight: 8 }} /> : <MonitorPlay size={20} color="white" style={{ marginRight: 8 }} />}
-                            <Text style={{ color: 'white', fontWeight: 'bold' }}>
-                                {isCinematic ? 'Exit Cinematic' : 'Enter Cinematic'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </>
-            )}
+                        {/* CINEMATIC TOGGLE FAB */}
+                        <View style={{ position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center' }}>
+                            <TouchableOpacity
+                                onPress={toggleCinematic}
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    backgroundColor: isCinematic ? '#3B82F6' : '#2A2A2A',
+                                    paddingHorizontal: 20,
+                                    paddingVertical: 12,
+                                    borderRadius: 30,
+                                    borderWidth: 1,
+                                    borderColor: 'rgba(255,255,255,0.1)'
+                                }}
+                            >
+                                {isCinematic ? <Minimize2 size={20} color="white" style={{ marginRight: 8 }} /> : <MonitorPlay size={20} color="white" style={{ marginRight: 8 }} />}
+                                <Text style={{ color: 'white', fontWeight: 'bold' }}>
+                                    {isCinematic ? 'Exit Cinematic' : 'Enter Cinematic'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                )}
+            </SafeBoundary>
         </SafeAreaView>
     );
 }

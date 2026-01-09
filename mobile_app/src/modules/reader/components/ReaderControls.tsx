@@ -1,48 +1,174 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ArrowLeft, Columns, Rows, Type, X } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context'; // Fixed Import
+import {
+    ArrowLeft,
+    Settings,
+    Type,
+    Globe,
+    Vibrate,
+    VibrateOff,
+    Minimize2,
+    Maximize2
+} from 'lucide-react-native';
+import { router } from 'expo-router';
 import { useReaderStore } from '../store/useReaderStore';
+import { useHaptics } from '@/core/hooks/useHaptics';
 
 interface ReaderControlsProps {
     title: string;
 }
 
 export function ReaderControls({ title }: ReaderControlsProps) {
-    const router = useRouter();
     const {
-        readingMode,
-        toggleReadingMode,
         textSizeMultiplier,
-        setTextSizeMultiplier
+        currentLanguage,
+        readingMode,
+        isHapticsEnabled,
+        increaseTextSize,
+        toggleReadingMode,
+        cycleLanguage,
+        toggleHaptics
     } = useReaderStore();
 
+    const haptics = useHaptics();
+
+    const handleBack = () => {
+        haptics.selection();
+        router.back();
+    };
+
+    const handleTextSize = () => {
+        haptics.selection();
+        increaseTextSize();
+    };
+
+    const handleLanguage = () => {
+        haptics.selection();
+        cycleLanguage();
+    };
+
+    const handleHaptics = () => {
+        haptics.selection();
+        toggleHaptics();
+    };
+
+    const handleReadingMode = () => {
+        haptics.selection();
+        toggleReadingMode();
+    };
+
     return (
-        <Animated.View entering={FadeIn} exiting={FadeOut} style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
-            <BlurView intensity={80} tint="dark" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 60 }}>
+        <View style={styles.container} pointerEvents="box-none">
+            {/* Top Bar */}
+            <BlurView intensity={80} tint="dark" style={styles.topBar}>
+                <SafeAreaView edges={['top']}>
+                    <View style={styles.headerContent}>
+                        <TouchableOpacity onPress={handleBack} style={styles.iconButton}>
+                            <ArrowLeft color="white" size={24} />
+                        </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20 }}>
-                    <ArrowLeft size={24} color="#FFF" />
-                </TouchableOpacity>
+                        <Text style={styles.title} numberOfLines={1}>{title}</Text>
 
-                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>{title}</Text>
-
-                <View style={{ flexDirection: 'row', gap: 12 }}>
-                    <TouchableOpacity onPress={toggleReadingMode} style={{ padding: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20 }}>
-                        {readingMode === 'vertical' ? <Rows size={20} color="#FFF" /> : <Columns size={20} color="#FFF" />}
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        onPress={() => setTextSizeMultiplier(textSizeMultiplier > 1.4 ? 1.0 : textSizeMultiplier + 0.2)}
-                        style={{ padding: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20 }}
-                    >
-                        <Type size={20} color="#FFF" />
-                    </TouchableOpacity>
-                </View>
-
+                        <TouchableOpacity style={styles.iconButton}>
+                            <Settings color="white" size={24} />
+                        </TouchableOpacity>
+                    </View>
+                </SafeAreaView>
             </BlurView>
-        </Animated.View>
+
+            {/* Bottom Bar */}
+            <BlurView intensity={80} tint="dark" style={styles.bottomBar}>
+                <SafeAreaView edges={['bottom']}>
+                    <View style={styles.controlsContent}>
+
+                        {/* Reading Mode */}
+                        <TouchableOpacity onPress={handleReadingMode} style={styles.controlItem}>
+                            {readingMode === 'vertical' ? (
+                                <Minimize2 color="white" size={24} />
+                            ) : (
+                                <Maximize2 color="white" size={24} />
+                            )}
+                            <Text style={styles.controlLabel}>{readingMode === 'vertical' ? 'Vertical' : 'Horizontal'}</Text>
+                        </TouchableOpacity>
+
+                        {/* Text Size */}
+                        <TouchableOpacity onPress={handleTextSize} style={styles.controlItem}>
+                            <Type color="white" size={24} />
+                            <Text style={styles.controlLabel}>{Math.round(textSizeMultiplier * 100)}%</Text>
+                        </TouchableOpacity>
+
+                        {/* Language */}
+                        <TouchableOpacity onPress={handleLanguage} style={styles.controlItem}>
+                            <Globe color="white" size={24} />
+                            <Text style={styles.controlLabel}>{currentLanguage.toUpperCase()}</Text>
+                        </TouchableOpacity>
+
+                        {/* Haptics */}
+                        <TouchableOpacity onPress={handleHaptics} style={styles.controlItem}>
+                            {isHapticsEnabled ? (
+                                <Vibrate color="#3B82F6" size={24} />
+                            ) : (
+                                <VibrateOff color="gray" size={24} />
+                            )}
+                            <Text style={[styles.controlLabel, isHapticsEnabled && { color: '#3B82F6' }]}>
+                                {isHapticsEnabled ? 'On' : 'Off'}
+                            </Text>
+                        </TouchableOpacity>
+
+                    </View>
+                </SafeAreaView>
+            </BlurView>
+        </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'space-between',
+        zIndex: 100,
+    },
+    topBar: {
+        // remove padding top android, safe area handles it
+    },
+    bottomBar: {
+        // 
+    },
+    headerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+        paddingTop: 8,
+        height: 60,
+    },
+    title: {
+        flex: 1,
+        color: 'white',
+        fontSize: 18,
+        fontWeight: '600',
+        textAlign: 'center',
+        marginHorizontal: 16,
+    },
+    iconButton: {
+        padding: 8,
+    },
+    controlsContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingVertical: 16,
+        paddingHorizontal: 8,
+    },
+    controlItem: {
+        alignItems: 'center',
+        gap: 4,
+        minWidth: 60,
+    },
+    controlLabel: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: '500',
+    }
+});

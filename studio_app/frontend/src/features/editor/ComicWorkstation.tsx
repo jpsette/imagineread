@@ -1,22 +1,14 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Plus, Trash2, Check, Edit3, Download } from 'lucide-react';
 import { ExportModal } from './ExportModal';
-
-interface Page {
-    id: string;
-    name: string;
-    url?: string; // Made optional to match FileSystemNode
-    parentId: string;
-    order?: number;
-    createdAt?: string; // Added to match FileSystemNode
-}
+import { FileEntry } from '../../types';
 
 interface ComicWorkstationProps {
     comic: {
         id: string;
         name: string;
     };
-    pages: Page[];
+    pages: FileEntry[];
     onClose: () => void;
     onSelectPage: (pageId: string, pageUrl: string) => void;
     onDeletePages?: (pageIds: string[]) => void;
@@ -252,7 +244,7 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
 
 // Memoized Page Card for performance
 const PageCard = React.memo<{
-    page: Page;
+    page: FileEntry;
     isSelected: boolean;
     onClick: (e: React.MouseEvent) => void;
     onEdit: () => void;

@@ -1,6 +1,9 @@
 import React, { useState } from 'react'
 import { Folder, Plus, Pin, Pencil, Trash2, LayoutGrid } from 'lucide-react'
-import { Project, FileEntry } from '../types';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { Card } from '../../ui/Card';
+import { Project, FileEntry } from '../../types';
 
 interface ProjectDetailProps {
     project: Project | null
@@ -77,17 +80,12 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
     const handleBulkDelete = () => {
         if (selectedItems.size === 0) return;
-        // Separate folders and files if needed, but for now assuming we pass IDs to onDeletePages 
-        // Logic specific: onDeletePages handles files. onDeleteFolder handles folders.
-        // We need to separate.
         const items = getCurrentItems().filter(i => selectedItems.has(i.id));
         const folders = items.filter(i => i.type === 'folder');
         const files = items.filter(i => i.type !== 'folder');
 
         if (files.length > 0) onDeletePages(files.map(f => f.id));
         if (folders.length > 0) {
-            // Delete folders one by one or create bulk handler?
-            // For now, let's just delete files primarily or warn about folders.
             folders.forEach(f => onDeleteFolder(f.id, {} as any));
         }
         setSelectedItems(new Set());
@@ -108,10 +106,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 </div>
             )}
 
-
-
-
-
             {error && (
                 <div className="mb-6 p-4 rounded-lg bg-red-900/20 border border-red-900/50 text-red-200 text-sm">
                     <strong>Erro:</strong> {error}
@@ -123,12 +117,14 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
             {selectedItems.size > 0 && (
                 <div className="mb-4 p-2 bg-red-900/20 border border-red-900/50 rounded-lg flex items-center justify-between">
                     <span className="text-sm font-medium text-red-200 ml-2">{selectedItems.size} item(s) selecionado(s)</span>
-                    <button
+                    <Button
                         onClick={handleBulkDelete}
-                        className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold flex items-center gap-2 transition-colors"
+                        variant="danger"
+                        size="sm"
+                        icon={Trash2}
                     >
-                        <Trash2 size={14} /> Excluir Selecionados
-                    </button>
+                        Excluir Selecionados
+                    </Button>
                 </div>
             )}
 
@@ -160,35 +156,34 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         </label>
 
                         {/* Create Folder Button */}
-                        <button
+                        <Card
                             onClick={() => setIsCreatingFolder(true)}
-                            className="group aspect-square p-4 rounded-xl border border-dashed border-border-color bg-app-bg hover:border-accent-blue hover:bg-accent-blue/5 transition-all flex flex-col items-center justify-center gap-2"
+                            className="group aspect-square p-4 border-dashed bg-app-bg hover:border-accent-blue hover:bg-accent-blue/5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
                         >
                             <div className="p-3 rounded-full bg-[#27272a] text-text-secondary group-hover:bg-accent-blue group-hover:text-white transition-colors">
                                 <Folder size={24} />
                             </div>
                             <span className="text-sm font-medium text-text-secondary group-hover:text-accent-blue">Nova Biblioteca</span>
-                        </button>
+                        </Card>
                     </>
                 )}
 
                 {/* Inline Creator for Folder */}
                 {isCreatingFolder && (
-                    <div className="flex flex-col gap-2 p-3 rounded-xl border border-accent-blue bg-app-bg animate-pulse">
+                    <Card className="flex flex-col gap-2 p-3 border-accent-blue bg-app-bg animate-pulse">
                         <div className="aspect-square rounded-xl bg-[#27272a] flex items-center justify-center mb-1">
                             <Folder size={32} className="text-accent-blue" />
                         </div>
-                        <input
+                        <Input
                             autoFocus
-                            type="text"
                             placeholder="Nome da biblioteca..."
-                            className="w-full bg-[#18181b] border border-[#3f3f46] rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-accent-blue mb-2"
                             value={newItemName}
                             onChange={(e) => setNewItemName(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') onCreateFolder();
                                 if (e.key === 'Escape') setIsCreatingFolder(false);
                             }}
+                            className="mb-2 !text-xs !py-1"
                         />
                         <div className="grid grid-cols-8 gap-1 mb-2">
                             {PROJECT_THEMES.map(theme => (
@@ -200,10 +195,10 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                             ))}
                         </div>
                         <div className="flex gap-2">
-                            <button onClick={onCreateFolder} className="flex-1 bg-accent-blue text-white py-1 rounded-[4px] text-[10px] font-bold">Criar</button>
-                            <button onClick={() => setIsCreatingFolder(false)} className="px-2 bg-[#27272a] text-gray-400 py-1 rounded-[4px] text-[10px]">Cancel</button>
+                            <Button onClick={onCreateFolder} size="sm" className="flex-1 text-[10px] py-1 h-auto">Criar</Button>
+                            <Button variant="secondary" size="sm" onClick={() => setIsCreatingFolder(false)} className="px-2 text-[10px] py-1 h-auto">Cancel</Button>
                         </div>
-                    </div>
+                    </Card>
                 )}
 
                 {getCurrentItems()
@@ -219,18 +214,17 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                     })
                     .map(item => (
                         editingFolder?.id === item.id ? (
-                            <div key={item.id} className="p-4 rounded-xl border border-accent-blue bg-app-bg shadow-xl cursor-default flex flex-col gap-2">
+                            <Card key={item.id} className="p-4 border-accent-blue bg-app-bg shadow-xl cursor-default flex flex-col gap-2">
                                 <h3 className="text-xs font-bold text-accent-blue">Editar Biblioteca</h3>
-                                <input
+                                <Input
                                     autoFocus
-                                    type="text"
-                                    className="w-full bg-[#18181b] border border-[#3f3f46] rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-accent-blue"
                                     value={editName}
                                     onChange={(e) => setEditName(e.target.value)}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') onUpdateFolder();
                                         if (e.key === 'Escape') setEditingFolder(null);
                                     }}
+                                    className="!text-xs !py-1"
                                 />
                                 {item.type === 'folder' && (
                                     <div className="grid grid-cols-8 gap-1">
@@ -244,10 +238,10 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                     </div>
                                 )}
                                 <div className="flex gap-2 mt-1">
-                                    <button onClick={onUpdateFolder} className="flex-1 bg-accent-blue text-white py-1 rounded-[4px] text-[10px] font-bold">Salvar</button>
-                                    <button onClick={() => setEditingFolder(null)} className="px-2 bg-[#27272a] text-gray-400 py-1 rounded-[4px] text-[10px]">Cancel</button>
+                                    <Button onClick={onUpdateFolder} size="sm" className="flex-1 text-[10px] py-1 h-auto">Salvar</Button>
+                                    <Button variant="secondary" size="sm" onClick={() => setEditingFolder(null)} className="px-2 text-[10px] py-1 h-auto">Cancel</Button>
                                 </div>
-                            </div>
+                            </Card>
                         ) : (
                             <div
                                 key={item.id}
@@ -275,15 +269,17 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                 className="group cursor-pointer relative"
                             >
                                 {/* Pin Button */}
-                                <button
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onTogglePin(item.id);
                                     }}
-                                    className={`absolute top-2 right-2 p-1.5 rounded-full hover:bg-white/20 transition-all z-20 ${item.isPinned ? 'opacity-100 bg-white/20' : 'opacity-0 group-hover:opacity-100'}`}
+                                    className={`absolute top-2 right-2 z-20 hover:bg-white/20 !p-1.5 h-auto w-auto ${item.isPinned ? 'opacity-100 bg-white/20' : 'opacity-0 group-hover:opacity-100'}`}
                                 >
                                     <Pin size={14} className={item.isPinned ? "fill-white text-white" : "text-white"} />
-                                </button>
+                                </Button>
 
                                 {/* Checkbox for Selection */}
                                 <div
@@ -365,31 +361,37 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-10">
                                         {item.type === 'folder' && (
                                             <>
-                                                <button
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
                                                     onClick={(e) => onStartEditingFolder(item, e)}
-                                                    className="p-1.5 bg-black/50 hover:bg-black/80 rounded-full text-white backdrop-blur-sm transition-colors"
+                                                    className="bg-black/50 hover:bg-black/80 text-white backdrop-blur-sm !p-1.5 h-auto w-auto"
                                                 >
                                                     <Pencil size={12} />
-                                                </button>
-                                                <button
+                                                </Button>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
                                                     onClick={(e) => onDeleteFolder(item.id, e)}
-                                                    className="p-1.5 bg-black/50 hover:bg-red-900/80 rounded-full text-red-300 backdrop-blur-sm transition-colors"
+                                                    className="bg-black/50 hover:bg-red-900/80 text-red-300 backdrop-blur-sm !p-1.5 h-auto w-auto"
                                                 >
                                                     <Trash2 size={12} />
-                                                </button>
+                                                </Button>
                                             </>
                                         )}
                                         {/* File/Comic Delete Button */}
                                         {item.type !== 'folder' && (
-                                            <button
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     onDeletePages([item.id]);
                                                 }}
-                                                className="p-1.5 bg-black/50 hover:bg-red-900/80 rounded-full text-red-300 backdrop-blur-sm transition-colors"
+                                                className="bg-black/50 hover:bg-red-900/80 text-red-300 backdrop-blur-sm !p-1.5 h-auto w-auto"
                                             >
                                                 <Trash2 size={12} />
-                                            </button>
+                                            </Button>
                                         )}
                                     </div>
                                 </div>

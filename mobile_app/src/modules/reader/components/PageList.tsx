@@ -2,26 +2,31 @@ import React, { useCallback, useMemo, forwardRef } from 'react';
 import { View, Image, Dimensions, TouchableOpacity } from 'react-native';
 import { FlashList, ViewToken } from '@shopify/flash-list';
 import { useReaderStore } from '../store/useReaderStore';
-import { ComicPage } from '../types';
+import { ComicPageManifest } from '../types/Manifest';
 import { VectorBubble } from './VectorBubble';
+import { CachedImage } from '../../../core/components/CachedImage';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
-const PageItem = React.memo(({ page, onPress }: { page: ComicPage; onPress: () => void }) => {
+const PageItem = React.memo(({ page, onPress }: { page: ComicPageManifest; onPress: () => void }) => {
     const scaleFactor = SCREEN_WIDTH / page.width;
+    // Handle optional fields safety 
+    // const displayHeight = page.height * scaleFactor; 
+    // Wait, width/height are required in manifest V1 but standard `ComicPage` had them too. 
+    // Let's assume strict V1.
     const displayHeight = page.height * scaleFactor;
 
     return (
         <TouchableOpacity activeOpacity={1} onPress={onPress}>
             <View style={{ width: SCREEN_WIDTH, height: displayHeight, position: 'relative' }}>
-                <Image
-                    source={{ uri: page.imageUrl }}
+                <CachedImage
+                    source={{ uri: page.imageUri }}
                     style={{ width: '100%', height: '100%' }}
                     resizeMode="contain"
                     fadeDuration={0}
                 />
-                {page.balloons.map((bubble) => (
+                {page.layers?.balloons?.map((bubble) => (
                     <VectorBubble
                         key={bubble.id}
                         {...bubble}
@@ -29,6 +34,7 @@ const PageItem = React.memo(({ page, onPress }: { page: ComicPage; onPress: () =
                         y={bubble.y * scaleFactor}
                         width={bubble.width * scaleFactor}
                         height={bubble.height * scaleFactor}
+                        isFocused={true} // Always focused in standard mode
                     />
                 ))}
             </View>
@@ -37,11 +43,10 @@ const PageItem = React.memo(({ page, onPress }: { page: ComicPage; onPress: () =
 });
 
 interface PageListProps {
-    pages: ComicPage[];
+    pages: ComicPageManifest[];
 }
 
-// Forward Ref to allow parent to control scrolling
-export const PageList = forwardRef<FlashList<ComicPage>, PageListProps>(({ pages }, ref) => {
+export const PageList = forwardRef<any, PageListProps>(({ pages }, ref) => {
 
     const readingMode = useReaderStore((state) => state.readingMode);
     const textSizeMultiplier = useReaderStore((state) => state.textSizeMultiplier);
@@ -49,18 +54,11 @@ export const PageList = forwardRef<FlashList<ComicPage>, PageListProps>(({ pages
     const setCurrentPageIndex = useReaderStore((state) => state.setCurrentPageIndex);
     const currentPageIndex = useReaderStore((state) => state.currentPageIndex);
 
-    const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken<ComicPage>[] }) => {
+    // @ts-ignore - ViewToken typing is tricky
+    const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: any[] }) => {
         if (viewableItems.length > 0 && viewableItems[0].index !== null) {
             const newIndex = viewableItems[0].index;
-            // Only update if different to avoid loops, and verify strictness
-            // We use getState to check current? Or just trust callback?
             if (newIndex !== undefined) {
-                // Optimization: We could check if (newIndex !== currentPageIndex) but 
-                // we need to be careful about not blocking legitimate updates.
-                // For now, simply dispatch.
-                // We specifically use the action that sets index ONLY (doesn't reset focus if we scroll?)
-                // Actually the store says `setCurrentPageIndex` resets focus to 0. 
-                // If user scrolls manually, we probably DO want to reset focus to 0 (start of page).
                 setCurrentPageIndex(newIndex);
             }
         }
@@ -74,7 +72,7 @@ export const PageList = forwardRef<FlashList<ComicPage>, PageListProps>(({ pages
 
     return (
         <View style={{ flex: 1, width: '100%', height: '100%' }}>
-            {/* @ts-ignore - FlashList Ref type compatibility */}
+            {/* @ts-ignore - FlashList strict typing issues with forwardRef */}
             <FlashList
                 ref={ref}
                 data={pages}

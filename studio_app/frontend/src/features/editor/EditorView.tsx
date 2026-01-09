@@ -1,15 +1,15 @@
 import React, { useRef } from 'react'
 import { ZoomIn, ZoomOut, X, MessageSquare, Cloud, Zap, Circle, MousePointer2, Wand2, Plus, Trash2 } from 'lucide-react'
-import { useEditorLogic } from '../hooks/useEditorLogic';
-import { VectorBubble } from './editor/VectorBubble';
-import { Balloon } from '../types';
-import { DebouncedTextarea } from './DebouncedTextarea';
+import { useEditorLogic } from '../../hooks/useEditorLogic';
+import { VectorBubble } from './VectorBubble';
+import { Balloon } from '../../types';
+import { DebouncedTextarea } from '../../ui/DebouncedTextarea';
 
 interface EditorViewProps {
     imageUrl: string
     fileId: string
-    initialBalloons?: Balloon[]
-    cleanUrl?: string
+    initialBalloons?: Balloon[] | null
+    cleanUrl?: string | null
     onBack: () => void
     comicName?: string
     pageName?: string

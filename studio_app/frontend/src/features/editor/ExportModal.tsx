@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, FileJson, Image, FileText, Download, Loader2 } from 'lucide-react';
-import { API_ENDPOINTS } from '../config';
+import { API_ENDPOINTS } from '../../config';
 
 interface ExportModalProps {
     isOpen: boolean;

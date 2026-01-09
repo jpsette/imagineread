@@ -1,25 +1,7 @@
 import { useState } from 'react'
 import { Folder, ChevronRight, ChevronDown, Pencil, Trash2, Check, X, Pin } from 'lucide-react'
 
-// Types (matching App.tsx)
-interface Project {
-    id: string
-    name: string
-    color: string
-    rootFolderId: string
-    createdAt: string
-    isPinned?: boolean
-}
-
-interface FileNode {
-    id: string
-    name: string
-    type: 'folder' | 'file' | 'comic'
-    parentId: string | null
-    path?: string
-    url?: string
-    color?: string
-}
+import { Project, FileEntry as FileNode } from '../../types';
 
 interface ExplorerProps {
     projects: Project[]

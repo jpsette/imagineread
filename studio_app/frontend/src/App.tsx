@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import DraggableWindow from './components/DraggableWindow';
-import Explorer from './components/Explorer';
-import ProjectManager from './components/ProjectManager';
-import ProjectDetail from './components/ProjectDetail';
-import EditorView from './components/EditorView';
-import ComicWorkstation from './components/ComicWorkstation';
+import DraggableWindow from './ui/DraggableWindow';
+import Explorer from './features/dashboard/Explorer';
+import ProjectManager from './features/dashboard/ProjectManager';
+import ProjectDetail from './features/dashboard/ProjectDetail';
+import EditorView from './features/editor/EditorView';
+import ComicWorkstation from './features/editor/ComicWorkstation';
 import { api } from './services/api';
-import { electronBridge } from './services/electronBridge';
+// electronBridge removed
 import { Project, FileEntry } from './types';
+import { MainLayout } from './layouts/MainLayout';
+import { EditorLayout } from './layouts/EditorLayout';
 
 // --- THEMES CONSTANT ---
 const PROJECT_THEMES = [
+    // ... (omitting lines for brevity in tool call, focusing on target content)
+    // Actually I will do two separate replaces to avoid matching the large block of constants which I don't want to list.
+    // Edit 1: Add import
+    // Edit 2: Replace ComicWorkstation wrapper
+    // Edit 3: Replace EditorView wrapper
+    // Wait, I can do it in one go if I use multi_replace. Or just be smart about chunks.
+    // I'll stick to replace_file_content but do it in chunks? No, replace_file_content is single contiguous.
+    // I'll use separate calls or list a larger chunk if they are close. They are not close (import is at top).
+    // I will use multi_replace_file_content.
+
     { bg: 'bg-blue-500', text: 'text-blue-400', lightText: 'text-blue-300' },
     { bg: 'bg-purple-500', text: 'text-purple-400', lightText: 'text-purple-300' },
     { bg: 'bg-pink-500', text: 'text-pink-400', lightText: 'text-pink-300' },
@@ -263,216 +275,188 @@ const App: React.FC = () => {
     };
 
 
+    const sidebarContent = (
+        <DraggableWindow
+            title="Explorador"
+            onClose={() => setIsSidebarOpen(false)}
+            minimize={false}
+            docked={true}
+            className="h-full border-r border-[#27272a]"
+        >
+            <Explorer
+                projects={projects}
+                fileSystem={fileSystem as any} // Temporary cast until Explorer allows FileEntry exact types
+                currentProjectId={currentProjectId}
+                currentFolderId={currentFolderId}
+                onSelectProject={(id) => {
+                    setCurrentProjectId(id);
+                    setCurrentFolderId(null);
+                    setView('project');
+                }}
+                onSelectFolder={(id) => {
+                    setCurrentFolderId(id);
+                    setView('project');
+                }}
+                onEditProject={(p) => handleUpdate(p.id, { name: p.name, color: p.color })}
+                onDeleteProject={handleDelete}
+                onPinProject={handleTogglePin}
+                onEditFolder={() => { }}
+                onDeleteFolder={handleDeleteFolder}
+                onToggleProjectExpand={(id) => {
+                    const s = new Set(expandedProjects);
+                    if (s.has(id)) s.delete(id);
+                    else s.add(id);
+                    setExpandedProjects(s);
+                }}
+                onToggleFolderExpand={(id) => {
+                    const s = new Set(expandedFolders);
+                    if (s.has(id)) s.delete(id);
+                    else s.add(id);
+                    setExpandedFolders(s);
+                }}
+                expandedProjects={expandedProjects}
+                expandedFolders={expandedFolders}
+                PROJECT_THEMES={PROJECT_THEMES}
+            />
+        </DraggableWindow>
+    );
+
     return (
-        <div className="w-screen h-screen bg-[#09090b] text-zinc-100 overflow-hidden flex flex-col">
-            {/* === HEADER === */}
-            <div className="h-10 border-b border-white/10 flex items-center justify-between px-4 bg-[#09090b] z-50 shrink-0 select-none">
-                <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                    <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                    <span className="ml-4 text-xs font-medium text-zinc-400">Imagine Read Studio</span>
-                </div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="text-xs px-2 py-1 bg-white/5 rounded hover:bg-white/10 transition"
-                    >
-                        Sidebar
-                    </button>
-                    <button
-                        onClick={() => {
-                            setView('dashboard');
-                            setOpenedComicId(null);
+        <MainLayout
+            isSidebarOpen={isSidebarOpen}
+            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            onGoHome={() => {
+                setView('dashboard');
+                setOpenedComicId(null);
+            }}
+            sidebar={sidebarContent}
+        >
+            {/* COMIC WORKSTATION - Shows all pages of a comic */}
+            {openedComicId && !openedPageId && (() => {
+                const comic = fileSystem.find((f: any) => f.id === openedComicId);
+                const pages = fileSystem.filter((f: any) => f.parentId === openedComicId);
+
+                return (
+                    <EditorLayout>
+                        <ComicWorkstation
+                            comic={{
+                                id: comic?.id || '',
+                                name: comic?.name || 'Comic'
+                            }}
+                            pages={pages}
+                            onClose={() => {
+                                setOpenedComicId(null);
+                            }}
+                            onSelectPage={(pageId, pageUrl) => {
+                                setOpenedPageId(pageId);
+                                setOpenedPageUrl(pageUrl);
+                            }}
+                            onAddPages={handleAddPages}
+                            onDeletePages={handleDeletePages}
+                        />
+                    </EditorLayout>
+                );
+            })()}
+
+            {/* PAGE EDITOR - Shows single page editor */}
+            {openedPageId && (
+                <EditorLayout className="bg-black">
+                    <EditorView
+                        imageUrl={openedPageUrl}
+                        onBack={() => {
+                            setOpenedPageId(null);
+                            setOpenedPageUrl('');
+                            loadData();
                         }}
-                        className="text-xs px-2 py-1 bg-white/5 rounded hover:bg-white/10 transition"
-                    >
-                        Home
-                    </button>
-                </div>
-            </div>
+                        comicName={fileSystem.find((f: any) => f.id === openedComicId)?.name || 'Comic'}
+                        pageName={fileSystem.find((f: any) => f.id === openedPageId)?.name || 'Page'}
+                        fileId={openedPageId}
+                        initialBalloons={fileSystem.find((f: any) => f.id === openedPageId)?.balloons}
+                        cleanUrl={fileSystem.find((f: any) => f.id === openedPageId)?.cleanUrl}
+                    />
+                </EditorLayout>
+            )}
 
-            {/* === MAIN CONTENT === */}
-            <main className="flex-1 flex overflow-hidden p-2 gap-2 relative bg-[#0c0c0e]">
-                {/* SIDEBAR */}
-                {isSidebarOpen && (
-                    <div className="w-[320px] h-full flex flex-col shrink-0">
-                        <DraggableWindow
-                            title="Explorador"
-                            onClose={() => setIsSidebarOpen(false)}
-                            minimize={false}
-                            docked={true}
-                            className="h-full border-r border-[#27272a]"
-                        >
-                            <Explorer
-                                projects={projects}
-                                fileSystem={fileSystem as any} // Temporary cast until Explorer allows FileEntry exact types
-                                currentProjectId={currentProjectId}
-                                currentFolderId={currentFolderId}
-                                onSelectProject={(id) => {
-                                    setCurrentProjectId(id);
-                                    setCurrentFolderId(null);
-                                    setView('project');
-                                }}
-                                onSelectFolder={(id) => {
-                                    setCurrentFolderId(id);
-                                    setView('project');
-                                }}
-                                onEditProject={(p) => handleUpdate(p.id, { name: p.name, color: p.color })}
-                                onDeleteProject={handleDelete}
-                                onPinProject={handleTogglePin}
-                                onEditFolder={() => { }}
-                                onDeleteFolder={handleDeleteFolder}
-                                onToggleProjectExpand={(id) => {
-                                    const s = new Set(expandedProjects);
-                                    if (s.has(id)) s.delete(id);
-                                    else s.add(id);
-                                    setExpandedProjects(s);
-                                }}
-                                onToggleFolderExpand={(id) => {
-                                    const s = new Set(expandedFolders);
-                                    if (s.has(id)) s.delete(id);
-                                    else s.add(id);
-                                    setExpandedFolders(s);
-                                }}
-                                expandedProjects={expandedProjects}
-                                expandedFolders={expandedFolders}
-                                PROJECT_THEMES={PROJECT_THEMES}
-                            />
-                        </DraggableWindow>
-                    </div>
+            {/* MAIN WINDOW */}
+            <DraggableWindow
+                title={
+                    view === 'dashboard'
+                        ? 'Gerenciador'
+                        : `Projeto: ${projects.find(p => p.id === currentProjectId)?.name || '...'}`
+                }
+                onClose={() => { }}
+                minimize={false}
+                docked={true}
+            >
+                {view === 'dashboard' ? (
+                    <ProjectManager
+                        projects={projects}
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        sortOrder={sortOrder}
+                        setSortOrder={setSortOrder}
+                        isCreatingProject={isCreatingProject}
+                        setIsCreatingProject={setIsCreatingProject}
+                        newItemName={newItemName}
+                        setNewItemName={setNewItemName}
+                        newItemColor={newItemColor}
+                        setNewItemColor={setNewItemColor}
+                        onCreateProject={handleCreate}
+                        onSelectProject={(id) => {
+                            setCurrentProjectId(id);
+                            setView('project');
+                        }}
+                        onTogglePin={handleTogglePin}
+                        onDeleteProject={handleDelete}
+                        onUpdateProject={() => {
+                            if (editingProject) {
+                                handleUpdate(editingProject.id, { name: editName, color: editColor });
+                            }
+                        }}
+                        editingProject={editingProject}
+                        setEditingProject={setEditingProject}
+                        editName={editName}
+                        setEditName={setEditName}
+                        editColor={editColor}
+                        setEditColor={setEditColor}
+                        PROJECT_THEMES={PROJECT_THEMES}
+                        onUploadPDF={handleUploadPDF}
+                    />
+                ) : (
+                    <ProjectDetail
+                        project={projects.find((p: any) => p.id === currentProjectId) || null}
+                        currentFolderId={currentFolderId}
+                        fileSystem={fileSystem}
+                        onOpenItem={(node) => setCurrentFolderId(node.id)}
+                        onOpenComic={setOpenedComicId}
+                        onDeleteFolder={() => { }}
+                        loading={loading}
+                        error={null}
+                        searchTerm=""
+                        sortOrder="az"
+                        isCreatingFolder={isCreatingFolder}
+                        setIsCreatingFolder={setIsCreatingFolder}
+                        newItemName=""
+                        setNewItemName={() => { }}
+                        newItemColor=""
+                        setNewItemColor={() => { }}
+                        editingFolder={null}
+                        setEditingFolder={() => { }}
+                        editName=""
+                        setEditName={() => { }}
+                        editColor=""
+                        setEditColor={() => { }}
+                        PROJECT_THEMES={PROJECT_THEMES}
+                        onCreateFolder={() => { }}
+                        onUpdateFolder={() => { }}
+                        onStartEditingFolder={() => { }}
+                        onTogglePin={() => { }}
+                        onImportFiles={handleImportFiles}
+                        onDeletePages={handleDeletePages}
+                    />
                 )}
-
-                {/* MAIN AREA */}
-                <div className="flex-1 h-full relative flex flex-col min-w-0">
-                    {/* COMIC WORKSTATION - Shows all pages of a comic */}
-                    {openedComicId && !openedPageId && (() => {
-                        const comic = fileSystem.find((f: any) => f.id === openedComicId);
-                        const pages = fileSystem.filter((f: any) => f.parentId === openedComicId);
-
-                        return (
-                            <div className="absolute inset-0 z-50">
-                                <ComicWorkstation
-                                    comic={{
-                                        id: comic?.id || '',
-                                        name: comic?.name || 'Comic'
-                                    }}
-                                    pages={pages}
-                                    onClose={() => {
-                                        setOpenedComicId(null);
-                                    }}
-                                    onSelectPage={(pageId, pageUrl) => {
-                                        setOpenedPageId(pageId);
-                                        setOpenedPageUrl(pageUrl);
-                                    }}
-                                    onAddPages={handleAddPages}
-                                    onDeletePages={handleDeletePages}
-                                />
-                            </div>
-                        );
-                    })()}
-
-                    {/* PAGE EDITOR - Shows single page editor */}
-                    {openedPageId && (
-                        <div className="absolute inset-0 z-50 bg-black">
-                            <EditorView
-                                imageUrl={openedPageUrl}
-                                onBack={() => {
-                                    setOpenedPageId(null);
-                                    setOpenedPageUrl('');
-                                    loadData();
-                                }}
-                                comicName={fileSystem.find((f: any) => f.id === openedComicId)?.name || 'Comic'}
-                                pageName={fileSystem.find((f: any) => f.id === openedPageId)?.name || 'Page'}
-                                fileId={openedPageId}
-                                initialBalloons={fileSystem.find((f: any) => f.id === openedPageId)?.balloons}
-                                cleanUrl={fileSystem.find((f: any) => f.id === openedPageId)?.cleanUrl}
-                            />
-                        </div>
-                    )}
-
-                    {/* MAIN WINDOW */}
-                    <DraggableWindow
-                        title={
-                            view === 'dashboard'
-                                ? 'Gerenciador'
-                                : `Projeto: ${projects.find(p => p.id === currentProjectId)?.name || '...'}`
-                        }
-                        onClose={() => { }}
-                        minimize={false}
-                        docked={true}
-                    >
-                        {view === 'dashboard' ? (
-                            <ProjectManager
-                                projects={projects}
-                                searchTerm={searchTerm}
-                                setSearchTerm={setSearchTerm}
-                                sortOrder={sortOrder}
-                                setSortOrder={setSortOrder}
-                                isCreatingProject={isCreatingProject}
-                                setIsCreatingProject={setIsCreatingProject}
-                                newItemName={newItemName}
-                                setNewItemName={setNewItemName}
-                                newItemColor={newItemColor}
-                                setNewItemColor={setNewItemColor}
-                                onCreateProject={handleCreate}
-                                onSelectProject={(id) => {
-                                    setCurrentProjectId(id);
-                                    setView('project');
-                                }}
-                                onTogglePin={handleTogglePin}
-                                onDeleteProject={handleDelete}
-                                onUpdateProject={() => {
-                                    if (editingProject) {
-                                        handleUpdate(editingProject.id, { name: editName, color: editColor });
-                                    }
-                                }}
-                                editingProject={editingProject}
-                                setEditingProject={setEditingProject}
-                                editName={editName}
-                                setEditName={setEditName}
-                                editColor={editColor}
-                                setEditColor={setEditColor}
-                                PROJECT_THEMES={PROJECT_THEMES}
-                                onUploadPDF={handleUploadPDF}
-                            />
-                        ) : (
-                            <ProjectDetail
-                                project={projects.find((p: any) => p.id === currentProjectId) || null}
-                                currentFolderId={currentFolderId}
-                                fileSystem={fileSystem}
-                                onOpenItem={(node) => setCurrentFolderId(node.id)}
-                                onOpenComic={setOpenedComicId}
-                                onDeleteFolder={() => { }}
-                                loading={loading}
-                                error={null}
-                                searchTerm=""
-                                sortOrder="az"
-                                isCreatingFolder={isCreatingFolder}
-                                setIsCreatingFolder={setIsCreatingFolder}
-                                newItemName=""
-                                setNewItemName={() => { }}
-                                newItemColor=""
-                                setNewItemColor={() => { }}
-                                editingFolder={null}
-                                setEditingFolder={() => { }}
-                                editName=""
-                                setEditName={() => { }}
-                                editColor=""
-                                setEditColor={() => { }}
-                                PROJECT_THEMES={PROJECT_THEMES}
-                                onCreateFolder={() => { }}
-                                onUpdateFolder={() => { }}
-                                onStartEditingFolder={() => { }}
-                                onTogglePin={() => { }}
-                                onImportFiles={handleImportFiles}
-                                onDeletePages={handleDeletePages}
-                            />
-                        )}
-                    </DraggableWindow>
-                </div>
-            </main>
-        </div>
+            </DraggableWindow>
+        </MainLayout>
     );
 };
 

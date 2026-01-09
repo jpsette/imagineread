@@ -1,32 +1,46 @@
-export type ReadingMode = 'horizontal' | 'vertical';
+// Export legacy types if needed, or update them to map to Manifest
+// For now, let's re-export specific sub-types or aliases to avoid breaking too many imports instantly, 
+// OR we just deprecate them.
 
-export type FocusPointType = 'panel' | 'balloon';
+export type ReadingMode = 'vertical' | 'horizontal';
 
-export interface FocusPoint {
+export interface Balloon {
     id: string;
-    type: FocusPointType;
+    text: string;
     x: number;
     y: number;
     width: number;
     height: number;
+    type?: 'speech' | 'thought' | 'scream';
+    tail?: {
+        x: number;
+        y: number;
+    };
 }
 
-export interface Balloon extends FocusPoint {
-    type: 'balloon';
-    shape: 'ellipse' | 'rect' | 'cloud';
-    text: string;
+export interface FocusPoint {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    type: 'panel' | 'balloon';
+    order?: number;
 }
+
+// Deprecating strict 'ComicPage' in favor of ComicPageManifest logic, 
+// but for component compatibility we might keep a similar shape or alias it.
+// To minimize refactors, we can alias ComicPage to ComicPageManifest (mostly)
+// BUT ComicPageManifest has 'layers'. The old one had direct 'balloons' array.
+// We must update components to access 'layers.balloons'.
 
 export interface ComicPage {
     id: string;
-    imageUrl: string;
+    imageUrl: string; // The Manifest calls it imageUri. We need to unify.
     width: number;
     height: number;
+    // Legacy support via mapping or strict update
     balloons: Balloon[];
-    // Panels are just focus points without text, usually.
-    // We can treat balloons as focus points, or have a separate list.
-    // For the script, we want an ordered list of "Steps".
-    focusPoints: FocusPoint[];
+    focusPoints?: FocusPoint[];
 }
 
 export interface ComicDetails {
@@ -36,5 +50,5 @@ export interface ComicDetails {
 }
 
 export interface IReaderService {
-    getComicDetails(id: string): Promise<ComicDetails>;
+    getComicDetails(id: string): Promise<any>; // Relaxed temporarily
 }
