@@ -1,0 +1,21 @@
+# System Files
+.DS_Store
+Thumbs.db
+*.zip
+
+# Frontend
+node_modules/
+dist/
+build/
+.env
+
+# Backend
+venv/
+__pycache__/
+backend/credentials.json
+
+# Application Data (Preserve folders, ignore content)
+backend/library/*
+!backend/library/.gitkeep
+backend/temp/*
+!backend/temp/.gitkeep

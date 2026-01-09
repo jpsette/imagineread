@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-comic: "Comic Neue", cursive;
+}
+
+@theme {
+  --color-app-bg: #09090b;
+  --color-panel-bg: #141416;
+  --color-border-color: #27272a;
+  --color-accent-blue: #3b82f6;
+  --color-text-primary: #e4e4e7;
+  --color-text-secondary: #a1a1aa;
+}
+
+body {
+  background-color: var(--color-app-bg);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-color);
+  border-radius: 9999px;
+}
