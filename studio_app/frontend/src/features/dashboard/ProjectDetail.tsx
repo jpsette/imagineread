@@ -352,28 +352,39 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                     <>
                                         {isImage ? (
                                             // --- CASE A: IT IS AN IMAGE (Show Thumbnail) ---
-                                            <div className="aspect-[2/3] relative overflow-hidden rounded-none border border-white/5 bg-gray-900 group-hover:border-accent-blue transition-colors">
+                                            <div className="group relative w-full aspect-[2/3] bg-gray-900 border border-gray-800 hover:border-blue-500 transition-all duration-200 cursor-pointer rounded-none border-white/5">
+                                                {/* --- STATUS BADGE (Top Right, High Z-Index) --- */}
+                                                {isEdited && (
+                                                    <div className="absolute top-0 right-0 bg-black text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1 flex items-center gap-1.5 z-50 border-b border-l border-gray-700 shadow-lg">
+                                                        <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                                                        EM EDIÇÃO
+                                                    </div>
+                                                )}
+
+                                                {/* --- PAGE NUMBER (Top Left) --- */}
+                                                {(item.name.match(/\d+/) || [])[0] && (
+                                                    <div className="absolute top-0 left-0 bg-black/80 text-white text-xs px-2 py-1 z-40">
+                                                        #{(item.name.match(/\d+/) || [])[0]}
+                                                    </div>
+                                                )}
+
+                                                {/* --- IMAGE (Full Cover, No Radius) --- */}
                                                 <img
-                                                    src={item.url || (item as any).thumbnailUrl} // Prioritize URL, fallback to thumbnail if exists
+                                                    src={item.url || (item as any).thumbnailUrl}
                                                     alt={item.name}
-                                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    className="w-full h-full object-cover select-none"
+                                                    loading="lazy"
                                                 />
+
+                                                {/* --- HOVER OVERLAY --- */}
+                                                <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
                                                 {/* Name overlay */}
-                                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-6">
+                                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-6 pointer-events-none">
                                                     <span className="text-xs text-white font-medium truncate block shadow-sm pr-4">
                                                         {item.name}
                                                     </span>
                                                 </div>
-
-                                                {/* STATUS BADGE: EM EDIÇÃO */}
-                                                {isEdited && (
-                                                    <div className="absolute top-2 right-2 bg-black/90 backdrop-blur-sm px-2 py-1 flex items-center gap-2 z-20 shadow-sm border border-white/10">
-                                                        <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                                                        <span className="text-[10px] uppercase tracking-wider font-bold text-white leading-none">
-                                                            EM EDIÇÃO
-                                                        </span>
-                                                    </div>
-                                                )}
                                             </div>
                                         ) : (
                                             // --- CASE B: IT IS A FOLDER/OTHER (Show Icon) ---
