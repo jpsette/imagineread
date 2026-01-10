@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react'
-import { Folder, Pin, Pencil, Trash2, ChevronRight, ArrowLeft, Upload, File } from 'lucide-react'
+import { Folder, Pin, Pencil, Trash2, ChevronRight, ArrowLeft, Upload } from 'lucide-react'
 
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Card } from '../../ui/Card';
 import { Project, FileEntry } from '../../types';
-import { api } from '../../services/api';
+
 
 interface ProjectDetailProps {
     project: Project | null
@@ -45,8 +45,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     project,
     currentFolderId,
     fileSystem,
-    loading,
-    error,
     searchTerm,
     sortOrder,
     isCreatingFolder,
@@ -72,7 +70,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     onImportFiles,
     onDeletePages,
     onBack,
-    onRefresh
 }) => {
 
     // Selection State
@@ -151,7 +148,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                     <div className="flex items-center gap-3">
                         {selectedItems.size > 0 && (
                             <Button
-                                variant="destructive"
+                                variant="danger"
                                 onClick={handleBulkDelete}
                                 className="flex items-center gap-2"
                             >
@@ -248,7 +245,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         // Check both mime_type AND file extension to be safe
                         // Also check item.type === 'file' as a base
                         const isImage = (item.type === 'file') && (
-                            (item.mimeType && item.mimeType.startsWith('image/')) ||
+                            ((item as any).mimeType && (item as any).mimeType.startsWith('image/')) ||
                             (item.name && item.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/)) ||
                             item.url // Fallback if url exists it's likely a renderable file in this context
                         );
@@ -288,7 +285,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         return (
                             <div
                                 key={item.id}
-                                className={`relative group cursor-pointer transition-all ${selectedItems.has(item.id) ? 'ring-2 ring-accent-blue rounded-lg' : ''}`}
+                                className={`relative group cursor-pointer transition-all ${isSelected ? 'ring-2 ring-accent-blue rounded-lg' : ''}`}
                                 onClick={handleClick}
                             >
                                 {/* ACTION OVERLAY (Pin, Edit, Delete) - Common for both */}
@@ -350,7 +347,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                             // --- CASE A: IT IS AN IMAGE (Show Thumbnail) ---
                                             <div className="aspect-[3/4] relative overflow-hidden rounded-lg border border-white/5 bg-gray-900 group-hover:border-accent-blue transition-colors">
                                                 <img
-                                                    src={item.url || item.thumbnailUrl} // Prioritize URL, fallback to thumbnail if exists
+                                                    src={item.url || (item as any).thumbnailUrl} // Prioritize URL, fallback to thumbnail if exists
                                                     alt={item.name}
                                                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                                 />

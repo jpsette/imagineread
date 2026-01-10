@@ -190,7 +190,7 @@ const App: React.FC = () => {
 
         try {
             setLoading(true);
-            const res = await api.createFolder({ name: newFolderName, parentId: targetParentId });
+            await api.createFolder({ name: newFolderName, parentId: targetParentId });
 
             // Optimistic update or fetch? Let's just optimistic for now or append to fileSystem
             // Since backend just returns id/name, we construct the object OR reload.

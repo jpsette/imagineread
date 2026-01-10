@@ -14,7 +14,6 @@ export const VectorBubble: React.FC<VectorProps> = React.memo(({
     balloon,
     containerRef,
     isSelected,
-    zoom,
     onSelect,
     onUpdate
 }) => {

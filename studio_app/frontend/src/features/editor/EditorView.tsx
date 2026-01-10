@@ -22,7 +22,7 @@ const EditorView: React.FC<EditorViewProps> = ({ imageUrl, fileId, initialBalloo
     const isPanning = useRef(false);
 
     // Logic Hook
-    const editor = useEditorLogic(fileId, initialBalloons, imageUrl, onBack);
+    const editor = useEditorLogic(fileId, initialBalloons, imageUrl);
 
     // Initial Scroll Center (Should ideally be in hook or purely layout effect?)
     // Keeping here as it touches DOM directly

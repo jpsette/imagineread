@@ -1,7 +1,7 @@
-# === SYSTEM ===
 .DS_Store
 Thumbs.db
 *.log
+_backups/
 
 # === PYTHON ===
 **/__pycache__/
@@ -31,6 +31,7 @@ studio_app/backend/library/*
 !studio_app/backend/library/.gitkeep
 studio_app/backend/temp/*
 !studio_app/backend/temp/.gitkeep
+**/temp/
 
 # === MOBILE APP ===
 mobile_app/android/app/build/
