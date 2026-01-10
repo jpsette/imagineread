@@ -1,19 +1,14 @@
 import React from 'react';
-import { DraggableWindow } from '../../ui/DraggableWindow';
-import { useAppStore, HistoryItem } from '../../store/useAppStore';
+import { useAppStore } from '../../store/useAppStore';
 import { History, RotateCcw, RotateCw, CheckCircle2 } from 'lucide-react';
-import { Balloon } from '../../types';
 
 interface HistoryPanelProps {
     onClose: () => void;
-    currentBalloons: Balloon[];
-    // We need a way to restore history. The store has the function, but it returns the state.
-    // The parent/hook needs to handle the state update.
-    // Ideally, we pass a callback "onRestore(balloons)"
-    onRestore: (balloons: Balloon[]) => void;
+    currentBalloons: any[]; // Or strict type
+    onRestore: (balloons: any[]) => void;
 }
 
-export const HistoryPanel: React.FC<HistoryPanelProps> = ({ onClose, currentBalloons, onRestore }) => {
+export const HistoryPanel: React.FC<HistoryPanelProps> = ({ /* onClose */ currentBalloons, onRestore }) => {
     const { historyPast, historyFuture, jumpToHistory, undo, redo } = useAppStore();
 
     const handleJump = (index: number) => {
@@ -54,7 +49,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ onClose, currentBall
                 {/* PAST */}
                 {historyPast.map((item, idx) => (
                     <button
-                        key={`past-${idx}`}
+                        key={`past - ${idx} `}
                         onClick={() => handleJump(idx)}
                         className="w-full text-left px-3 py-2 hover:bg-[#27272a] text-gray-400 flex items-center gap-2 rounded select-none transition-colors"
                     >
@@ -72,7 +67,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ onClose, currentBall
                 {/* FUTURE */}
                 {historyFuture.map((item, idx) => (
                     <button
-                        key={`future-${idx}`}
+                        key={`future - ${idx} `}
                         onClick={() => handleJumpFuture(idx)}
                         className="w-full text-left px-3 py-2 text-gray-500 flex items-center gap-2 rounded select-none hover:bg-[#27272a] hover:text-gray-300 cursor-pointer transition-colors opacity-60 hover:opacity-100"
                     >

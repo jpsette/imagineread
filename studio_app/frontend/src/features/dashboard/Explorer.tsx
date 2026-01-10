@@ -1,51 +1,75 @@
 import { useState } from 'react'
 import { Folder, ChevronRight, ChevronDown, Pencil, Trash2, Check, X, Pin, File } from 'lucide-react'
+import { useNavigate } from 'react-router-dom';
 
 import { Project, FileEntry as FileNode } from '../../types';
+import { useProjectStore } from '../../store/useProjectStore';
+import { useFileSystemStore } from '../../store/useFileSystemStore';
+import { useProjectActions } from '../../hooks/useProjectActions';
+import { useFileActions } from '../../hooks/useFileActions';
+import { useUIStore } from '../../store/useUIStore';
 
-interface ExplorerProps {
-    projects: Project[]
-    fileSystem: FileNode[]
-    currentProjectId: string | null
-    currentFolderId: string | null
-    expandedProjects: Set<string>
-    expandedFolders: Set<string>
-    PROJECT_THEMES: Array<{ bg: string; text: string; lightText?: string }>
-    onSelectProject: (projectId: string) => void
-    onSelectFolder: (folderId: string) => void
-    onToggleProjectExpand: (projectId: string) => void
-    onToggleFolderExpand: (folderId: string) => void
-    onEditProject: (project: Project) => void
-    onDeleteProject: (projectId: string, e: React.MouseEvent) => void
-    onEditFolder: (folder: FileNode) => void
-    onDeleteFolder: (folderId: string, e: React.MouseEvent) => void
-    onPinProject: (projectId: string) => void
-}
+// Note: PROJECT_THEMES should probably be imported or kept in a constant file
+import { PROJECT_THEMES } from '../../constants/theme';
 
-export const Explorer: React.FC<ExplorerProps> = ({
-    projects,
-    fileSystem,
-    currentProjectId,
-    currentFolderId,
-    expandedProjects,
-    expandedFolders,
-    PROJECT_THEMES,
-    onSelectProject,
-    onSelectFolder,
-    onToggleProjectExpand,
-    onToggleFolderExpand,
-    onEditProject,
-    onDeleteProject,
-    onEditFolder,
-    onDeleteFolder,
-    onPinProject,
-}) => {
+export const Explorer: React.FC = () => {
+    const navigate = useNavigate();
+
+    // === STORE ACCESS ===
+    const { projects, currentProjectId, setCurrentProjectId } = useProjectStore();
+    const { fileSystem, currentFolderId, setCurrentFolderId } = useFileSystemStore();
+    const { setShowManager, showManager } = useUIStore(); // Determine if we open manager on select
+
+    // === ACTIONS ===
+    const { updateProject, deleteProject, togglePin } = useProjectActions();
+    const { deleteFolder } = useFileActions();
+
+    // === LOCAL UI STATE (Specific to Explorer) ===
+    const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
     // Local edit state
     const [editingProject, setEditingProject] = useState<Project | null>(null)
     const [editingFolder, setEditingFolder] = useState<FileNode | null>(null)
     const [editName, setEditName] = useState('')
     const [editColor, setEditColor] = useState('')
 
+    // === HANDLERS ===
+    const handleSelectProject = (id: string) => {
+        setCurrentProjectId(id);
+        setCurrentFolderId(null);
+        navigate(`/project/${id}`);
+        if (!showManager) setShowManager(true);
+    };
+
+    const handleSelectFolder = (id: string) => {
+        setCurrentFolderId(id);
+        if (!currentProjectId) {
+            // Find project for this folder?
+            // Not strictly necessary if we are just navigating, but good for context.
+            const folder = fileSystem.find(f => f.id === id);
+            if (folder && folder.projectId) {
+                setCurrentProjectId(folder.projectId);
+            }
+        }
+        navigate(`/project/${currentProjectId || ''}`); // Re-navigates to ensure view
+    };
+
+    const onToggleProjectExpand = (id: string) => {
+        const s = new Set(expandedProjects);
+        if (s.has(id)) s.delete(id);
+        else s.add(id);
+        setExpandedProjects(s);
+    };
+
+    const onToggleFolderExpand = (id: string) => {
+        const s = new Set(expandedFolders);
+        if (s.has(id)) s.delete(id);
+        else s.add(id);
+        setExpandedFolders(s);
+    };
+
+    // Project Editing
     const startEditingProject = (project: Project, e: React.MouseEvent) => {
         e.stopPropagation()
         setEditingProject(project)
@@ -58,12 +82,13 @@ export const Explorer: React.FC<ExplorerProps> = ({
             setEditingProject(null)
             return
         }
-        onEditProject({ ...editingProject, name: editName, color: editColor })
+        updateProject(editingProject.id, { name: editName, color: editColor })
         setEditingProject(null)
         setEditName('')
         setEditColor('')
     }
 
+    // Folder Editing
     const startEditingFolder = (folder: FileNode, e: React.MouseEvent) => {
         e.stopPropagation()
         setEditingFolder(folder)
@@ -76,7 +101,20 @@ export const Explorer: React.FC<ExplorerProps> = ({
             setEditingFolder(null)
             return
         }
-        onEditFolder({ ...editingFolder, name: editName, color: editColor })
+        // Assuming updateFolder action exists? Or generic file update?
+        // useFileActions does NOT seem to have updateFolder exposed based on my memory?
+        // Let's check logic: Wrapper usually handles it.
+        // Wait, onEditFolder was passed as () => {} in DesktopEnvironment?
+        // Checking previous file content...
+        // onEditFolder={() => { }}
+        // So editing folder was NOT implemented in DesktopEnvironment!
+        // We need to implement it here if we want it.
+        // Assuming we want to support it, we should add updateFolder to useFileActions or directly import api.
+        // For now, I will placeholder it or try api.rename?
+        // api.ts does NOT have updateFolder/rename.
+        // I'll comment it out or leave as TODO to be safe, or just use console log.
+        console.log("Update folder not implemented yet in backend/actions", editingFolder, editName, editColor);
+
         setEditingFolder(null)
         setEditName('')
         setEditColor('')
@@ -142,7 +180,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
                                     // NORMAL VIEW
                                     <div
                                         className={`px-3 py-2 rounded-lg flex items-center gap-2 cursor-pointer transition-colors text-sm group ${currentProjectId === project.id ? 'bg-[#27272a] text-white' : 'text-text-secondary hover:text-text-primary hover:bg-app-bg'}`}
-                                        onClick={() => onSelectProject(project.id)}
+                                        onClick={() => handleSelectProject(project.id)}
                                     >
                                         <button
                                             onClick={(e) => {
@@ -159,7 +197,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
 
                                         <div className="hidden group-hover:flex gap-1">
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); onPinProject(project.id); }}
+                                                onClick={(e) => { e.stopPropagation(); togglePin(project.id); }}
                                                 className={`p-1 hover:text-white ${project.isPinned ? 'text-accent-blue' : 'text-gray-500'}`}
                                                 title={project.isPinned ? 'Desafixar' : 'Fixar'}
                                             >
@@ -172,7 +210,10 @@ export const Explorer: React.FC<ExplorerProps> = ({
                                                 <Pencil size={12} />
                                             </button>
                                             <button
-                                                onClick={(e) => onDeleteProject(project.id, e)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    deleteProject(project.id);
+                                                }}
                                                 className="p-1 hover:text-red-400 text-gray-500"
                                             >
                                                 <Trash2 size={12} />
@@ -194,8 +235,6 @@ export const Explorer: React.FC<ExplorerProps> = ({
                                                 const hasSubFolders = fileSystem.some(f => f.parentId === lib.id && f.type === 'folder')
 
                                                 // Heuristic: If it has files but no subfolders, it's likely a Semantic Comic (File)
-                                                // "Ashoka 01" case: Folder containing pages.
-                                                // "Ashoka" case: Empty folder (Library).
                                                 const isLikelyComic = libFiles.length > 0 && !hasSubFolders;
 
                                                 if (isLikelyComic) {
@@ -204,7 +243,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
                                                         <div
                                                             key={lib.id}
                                                             className={`px-3 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-white/5 group transition-colors ml-5 ${currentFolderId === lib.id ? 'bg-blue-500/20 text-white' : 'text-zinc-400'}`}
-                                                            onClick={() => onSelectFolder(lib.id)}
+                                                            onClick={() => handleSelectFolder(lib.id)}
                                                         >
                                                             {/* File Icon White */}
                                                             <File size={14} className="text-white" />
@@ -215,7 +254,10 @@ export const Explorer: React.FC<ExplorerProps> = ({
                                                                 <button onClick={(e) => startEditingFolder(lib, e)} className="p-1 hover:text-white text-zinc-600 transition-colors">
                                                                     <Pencil size={11} />
                                                                 </button>
-                                                                <button onClick={(e) => onDeleteFolder(lib.id, e)} className="p-1 hover:text-red-400 text-zinc-600 transition-colors">
+                                                                <button onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (confirm('Tem certeza que deseja excluir esta pasta e todo seu conteúdo?')) deleteFolder(lib.id);
+                                                                }} className="p-1 hover:text-red-400 text-zinc-600 transition-colors">
                                                                     <Trash2 size={11} />
                                                                 </button>
                                                             </div>
@@ -256,7 +298,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
                                                         ) : (
                                                             <div
                                                                 className={`px-2 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-white/5 group transition-colors ${currentFolderId === lib.id ? 'bg-blue-500/20 text-white' : 'text-zinc-400'}`}
-                                                                onClick={() => onSelectFolder(lib.id)}
+                                                                onClick={() => handleSelectFolder(lib.id)}
                                                             >
                                                                 <button
                                                                     onClick={(e) => {
@@ -279,7 +321,10 @@ export const Explorer: React.FC<ExplorerProps> = ({
                                                                     <button onClick={(e) => startEditingFolder(lib, e)} className="p-1 hover:text-white text-zinc-600 transition-colors">
                                                                         <Pencil size={11} />
                                                                     </button>
-                                                                    <button onClick={(e) => onDeleteFolder(lib.id, e)} className="p-1 hover:text-red-400 text-zinc-600 transition-colors">
+                                                                    <button onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (confirm('Tem certeza que deseja excluir esta pasta e todo seu conteúdo?')) deleteFolder(lib.id);
+                                                                    }} className="p-1 hover:text-red-400 text-zinc-600 transition-colors">
                                                                         <Trash2 size={11} />
                                                                     </button>
                                                                 </div>
@@ -300,7 +345,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
                                                                             <div
                                                                                 key={subFolder.id}
                                                                                 className={`px-2 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-white/5 group transition-colors ${currentFolderId === subFolder.id ? 'bg-blue-500/20 text-white' : 'text-zinc-400'}`}
-                                                                                onClick={() => onSelectFolder(subFolder.id)}
+                                                                                onClick={() => handleSelectFolder(subFolder.id)}
                                                                             >
                                                                                 <File size={14} className="text-white" />
                                                                                 <span className="truncate flex-1 font-medium text-white">{subFolder.name}</span>

@@ -2,52 +2,51 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Plus, Trash2, Check, Edit3, Download } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import { ExportModal } from './ExportModal';
 import { FileEntry } from '../../types';
 import { SortableItem } from '../../ui/SortableItem';
-import { api } from '../../services/api';
+import { useFileActions } from '../../hooks/useFileActions';
+import { useFileSystemStore } from '../../store/useFileSystemStore';
 
-interface ComicWorkstationProps {
-    comic: {
-        id: string;
-        name: string;
-    };
-    pages: FileEntry[];
-    onClose: () => void;
-    onSelectPage: (pageId: string, pageUrl: string) => void;
-    onDeletePages?: (pageIds: string[]) => void;
-    onAddPages?: (files: File[]) => void;
-}
+export const ComicWorkstation: React.FC = () => {
+    const { comicId } = useParams<{ comicId: string }>();
+    const navigate = useNavigate();
 
-export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
-    comic,
-    pages,
-    onClose,
-    onSelectPage,
-    onDeletePages,
-    onAddPages,
-}) => {
-    // Local state for optimistic UI reordering
-    const [orderedPages, setOrderedPages] = useState<FileEntry[]>([]);
+    // === GLOBAL STORE ===
+    const { fileSystem, setOpenedPageId } = useFileSystemStore();
+    const { deletePages, uploadPages, reorderItems } = useFileActions();
+
+    // Derived Data
+    const comic = fileSystem.find(f => f.id === comicId);
+    const pages = React.useMemo(() => fileSystem
+        .filter(f => f.parentId === comicId && f.type === 'file')
+        .sort((a, b) => {
+            if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
+            // Fallback to name sort
+            return a.name.localeCompare(b.name, undefined, { numeric: true });
+        }), [fileSystem, comicId]);
+
+    // === LOCAL STATE ===
+    const [orderedPages, setOrderedPages] = useState<FileEntry[]>([]);  // Optimistic UI
     const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
     const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Sync props to local state
-    // We sort initially by 'order' or 'name' to ensure consistent start
+    // Sync store -> local state
+    // We update orderedPages when the list of IDs changes (files added/removed)
+    // or when the component mounts.
+    const pagesHash = pages.map(p => p.id).join(',');
+
     useEffect(() => {
-        const sorted = [...pages].sort((a, b) => {
-            if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
-            return a.name.localeCompare(b.name, undefined, { numeric: true });
-        });
-        setOrderedPages(sorted);
-    }, [pages]);
+        setOrderedPages(pages);
+    }, [pagesHash, pages]); // pages is now stable via useMemo
 
     // Sensors for DnD
     const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), // Distance prevents accidental drags on click
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
@@ -58,32 +57,34 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
         setOrderedPages((items) => {
             const oldIndex = items.findIndex((item) => item.id === active.id);
             const newIndex = items.findIndex((item) => item.id === over.id);
-
             const reordered = arrayMove(items, oldIndex, newIndex);
 
-            // Background save
-            api.reorderItems(reordered.map(p => p.id)).catch(err => console.error("Reorder failed", err));
-
+            // Call Action to save
+            if (reorderItems) {
+                reorderItems(reordered.map(p => p.id));
+            }
             return reordered;
         });
     };
 
+    // Actions Wrapper
+    const handleClose = () => {
+        navigate('/');
+    };
+
+    const handleSelectPage = (pageId: string) => {
+        setOpenedPageId(pageId); // Triggers overlay in EditorPage or Nav to /editor/:id/page/:pid
+    };
+
     // Multi-selection handler
     const handlePageClick = useCallback((pageId: string, e: React.MouseEvent) => {
-        // Prevent selection if we just finished a drag (handled by sensors/click separation usually but good to be safe)
-        // ... handled by PointerSensor distance constraint.
-
         const newSet = new Set(selectedPageIds);
-
         if (e.shiftKey && lastSelectedId) {
-            // Finding index in current VISIBLE order
             const lastIndex = orderedPages.findIndex(p => p.id === lastSelectedId);
             const currIndex = orderedPages.findIndex(p => p.id === pageId);
-
             if (lastIndex !== -1 && currIndex !== -1) {
                 const start = Math.min(lastIndex, currIndex);
                 const end = Math.max(lastIndex, currIndex);
-
                 for (let i = start; i <= end; i++) {
                     newSet.add(orderedPages[i].id);
                 }
@@ -101,45 +102,35 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
             newSet.add(pageId);
             setLastSelectedId(pageId);
         }
-
         setSelectedPageIds(newSet);
     }, [selectedPageIds, lastSelectedId, orderedPages]);
 
     // Bulk delete handler
     const handleBulkDelete = useCallback(() => {
-        if (selectedPageIds.size === 0 || !onDeletePages) return;
-
+        if (selectedPageIds.size === 0) return;
         if (confirm(`Excluir ${selectedPageIds.size} página(s)?`)) {
-            onDeletePages(Array.from(selectedPageIds));
+            deletePages(Array.from(selectedPageIds));
             setSelectedPageIds(new Set());
             setLastSelectedId(null);
         }
-    }, [selectedPageIds, onDeletePages]);
+    }, [selectedPageIds, deletePages]);
 
-    // Edit single page
+    // Edit single page (Trigger overlay)
     const handleEditPage = useCallback(() => {
         if (selectedPageIds.size !== 1) return;
-
         const pageId = Array.from(selectedPageIds)[0];
-        const page = orderedPages.find(p => p.id === pageId);
-
-        if (page) {
-            onSelectPage(pageId, page.url || '');
-        }
-    }, [selectedPageIds, orderedPages, onSelectPage]);
+        handleSelectPage(pageId);
+    }, [selectedPageIds]);
 
     // Add pages handler
     const handleAddPages = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (!files || files.length === 0 || !onAddPages) return;
-
-        onAddPages(Array.from(files));
-
-        // Reset input
+        if (!files || files.length === 0 || !comicId) return;
+        uploadPages(Array.from(files), comicId);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
-    }, [onAddPages]);
+    }, [uploadPages, comicId]);
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -159,6 +150,11 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [selectedPageIds, handleBulkDelete, handleEditPage]);
+
+
+    if (!comic) {
+        return <div className="text-white p-10">Loading Comic...</div>;
+    }
 
     return (
         <>
@@ -199,22 +195,20 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
                         </button>
 
                         {/* Bulk Delete Button */}
-                        {onDeletePages && (
-                            <button
-                                onClick={handleBulkDelete}
-                                disabled={selectedPageIds.size === 0}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedPageIds.size > 0
-                                    ? 'bg-red-900/50 text-red-100 hover:bg-red-800'
-                                    : 'bg-white/5 text-text-secondary opacity-50 cursor-not-allowed'
-                                    }`}
-                            >
-                                <Trash2 size={12} />
-                                Excluir {selectedPageIds.size > 0 ? `(${selectedPageIds.size})` : ''}
-                            </button>
-                        )}
+                        <button
+                            onClick={handleBulkDelete}
+                            disabled={selectedPageIds.size === 0}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedPageIds.size > 0
+                                ? 'bg-red-900/50 text-red-100 hover:bg-red-800'
+                                : 'bg-white/5 text-text-secondary opacity-50 cursor-not-allowed'
+                                }`}
+                        >
+                            <Trash2 size={12} />
+                            Excluir {selectedPageIds.size > 0 ? `(${selectedPageIds.size})` : ''}
+                        </button>
 
                         <button
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                         >
                             <X size={20} className="text-white/60" />
@@ -243,41 +237,41 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
                                                 page={page}
                                                 isSelected={isSelected}
                                                 onClick={(e) => handlePageClick(page.id, e)}
-                                                onEdit={() => onSelectPage(page.id, page.url || '')}
+                                                onEdit={() => handleSelectPage(page.id)}
                                             />
                                         </SortableItem>
                                     );
                                 })}
 
                                 {/* Add Page Button */}
-                                {onAddPages && (
-                                    <div className="aspect-[3/4] rounded-xl border border-dashed border-border-color bg-app-bg/50 flex flex-col items-center justify-center gap-3 hover:border-accent-blue hover:bg-accent-blue/5 transition-all cursor-pointer relative">
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            multiple
-                                            accept="image/*"
-                                            onChange={handleAddPages}
-                                            className="absolute inset-0 opacity-0 cursor-pointer"
-                                        />
-                                        <div className="p-4 rounded-full bg-white/5 pointer-events-none">
-                                            <Plus size={32} className="text-white/40" />
-                                        </div>
-                                        <span className="text-sm text-white/40 pointer-events-none">Adicionar Página</span>
+                                <div className="aspect-[3/4] rounded-xl border border-dashed border-border-color bg-app-bg/50 flex flex-col items-center justify-center gap-3 hover:border-accent-blue hover:bg-accent-blue/5 transition-all cursor-pointer relative">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={handleAddPages}
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                    />
+                                    <div className="p-4 rounded-full bg-white/5 pointer-events-none">
+                                        <Plus size={32} className="text-white/40" />
                                     </div>
-                                )}
+                                    <span className="text-sm text-white/40 pointer-events-none">Adicionar Página</span>
+                                </div>
                             </div>
                         </SortableContext>
                     </DndContext>
                 </div>
             </div>
 
-            <ExportModal
-                isOpen={isExportModalOpen}
-                onClose={() => setIsExportModalOpen(false)}
-                projectId={comic.id}
-                projectName={comic.name}
-            />
+            {comic && (
+                <ExportModal
+                    isOpen={isExportModalOpen}
+                    onClose={() => setIsExportModalOpen(false)}
+                    projectId={comic.id}
+                    projectName={comic.name}
+                />
+            )}
         </>
     );
 };

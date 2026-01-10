@@ -301,7 +301,7 @@ export const BalloonInspector: React.FC<BalloonInspectorProps> = ({
                                         if (selectedBalloon.tailTip) {
                                             update({ tailTip: null });
                                         } else {
-                                            const [ymin, xmin, ymax, xmax] = selectedBalloon.box_2d;
+                                            const [/* ymin */, xmin, ymax, xmax] = selectedBalloon.box_2d;
                                             const cx = xmin + (xmax - xmin) / 2;
                                             const cy = ymax;
                                             update({ tailTip: { x: cx + 50, y: cy + 50 } });

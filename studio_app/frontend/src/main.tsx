@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
 
@@ -13,11 +14,13 @@ try {
 
     console.log('Main.tsx: Root element found, mounting React...');
 
-    ReactDOM.createRoot(rootElement).render(
+    ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <React.StrictMode>
-            <App />
+            <BrowserRouter>
+                <App />
+            </BrowserRouter>
         </React.StrictMode>,
-    )
+    );
     console.log('Main.tsx: React mounted successfully');
 } catch (error) {
     console.error('FATAL ERROR IN MAIN.TSX:', error);

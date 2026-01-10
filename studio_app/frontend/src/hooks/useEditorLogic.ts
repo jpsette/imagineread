@@ -41,12 +41,21 @@ export const useEditorLogic = (
     const [yoloDetections, setYoloDetections] = useState<DetectedBalloon[]>([]);
 
     // --- AUTO SAVE ---
+    // --- AUTO SAVE ---
+    // Track last saved state to prevent save loops or save-on-mount
+    const lastSavedRef = useRef<string>(JSON.stringify(balloons));
+
     useEffect(() => {
         if (!fileId) return;
+
+        const currentString = JSON.stringify(balloons);
+        if (currentString === lastSavedRef.current) return;
+
         const timer = setTimeout(async () => {
             try {
                 await api.updateFileBalloons(fileId, balloons);
                 console.log("💾 Auto-saved balloons");
+                lastSavedRef.current = currentString;
             } catch (e) {
                 console.error("Auto-save error", e);
             }

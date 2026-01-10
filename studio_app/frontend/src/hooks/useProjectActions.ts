@@ -22,9 +22,7 @@ export const useProjectActions = () => {
             setCurrentProjectId(newP.id);
             setView('project');
             setIsCreatingProject(false);
-            // Ensure manager is shown if in dashboard? 
-            // Original code: setView('project'); setIsCreatingProject(false); setNewItemName('');
-            // It didn't explicitly set showManager, but usually creates from dashboard.
+            return newP;
         } catch (e) {
             console.error("Failed to create project", e);
             alert("Erro ao criar projeto");

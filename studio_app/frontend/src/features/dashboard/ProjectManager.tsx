@@ -1,63 +1,57 @@
+import { useState } from 'react'
 import { Plus, Search, ArrowDownAZ, ArrowUpZA, Folder, Pin, Pencil, Trash2, ChevronRight } from 'lucide-react'
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Card } from '../../ui/Card';
-
-// Types
 import { Project } from '../../types';
+import { useProjectStore } from '../../store/useProjectStore';
+import { useProjectActions } from '../../hooks/useProjectActions';
+import { PROJECT_THEMES } from '../../constants/theme';
+import { useNavigate } from 'react-router-dom';
 
-interface ProjectManagerProps {
-    projects: Project[]
-    searchTerm: string
-    setSearchTerm: (term: string) => void
-    sortOrder: 'az' | 'za'
-    setSortOrder: (order: 'az' | 'za') => void
-    isCreatingProject: boolean
-    setIsCreatingProject: (creating: boolean) => void
-    newItemName: string
-    setNewItemName: (name: string) => void
-    newItemColor: string
-    setNewItemColor: (color: string) => void
-    editingProject: Project | null
-    setEditingProject: (project: Project | null) => void
-    editName: string
-    setEditName: (name: string) => void
-    editColor: string
-    setEditColor: (color: string) => void
-    PROJECT_THEMES: Array<{ bg: string; text: string; lightText?: string }>
-    onCreateProject: () => void
-    onUpdateProject: () => void
-    onDeleteProject: (projectId: string, e: React.MouseEvent) => void
-    onSelectProject: (projectId: string) => void
-    onTogglePin: (projectId: string) => void
-}
+export const ProjectManager: React.FC = () => {
+    const navigate = useNavigate();
 
-export const ProjectManager: React.FC<ProjectManagerProps> = ({
-    projects,
-    searchTerm,
-    setSearchTerm,
-    sortOrder,
-    setSortOrder,
-    isCreatingProject,
-    setIsCreatingProject,
-    newItemName,
-    setNewItemName,
-    newItemColor,
-    setNewItemColor,
-    editingProject,
-    setEditingProject,
-    editName,
-    setEditName,
-    editColor,
-    setEditColor,
-    PROJECT_THEMES,
-    onCreateProject,
-    onUpdateProject,
-    onDeleteProject,
-    onSelectProject,
-    onTogglePin,
-}) => {
+    // === STORE ACCESS ===
+    const { projects } = useProjectStore();
+    const { createProject, updateProject, deleteProject, togglePin } = useProjectActions();
 
+    // === LOCAL UI STATE ===
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOrder, setSortOrder] = useState<'az' | 'za'>('az');
+
+    // Creation State
+    const [isCreatingProject, setIsCreatingProject] = useState(false);
+    const [newItemName, setNewItemName] = useState('');
+    const [newItemColor, setNewItemColor] = useState(PROJECT_THEMES[0].bg);
+
+    // Editing State
+    const [editingProject, setEditingProject] = useState<Project | null>(null);
+    const [editName, setEditName] = useState('');
+    const [editColor, setEditColor] = useState('');
+
+    // === HANDLERS ===
+    const handleCreateProject = async () => {
+        if (!newItemName.trim()) return;
+        const newProject = await createProject(newItemName, newItemColor);
+        setIsCreatingProject(false);
+        setNewItemName('');
+        setNewItemColor(PROJECT_THEMES[0].bg);
+        // Navigate to the new project immediately
+        if (newProject) {
+            navigate(`/project/${newProject.id}`);
+        }
+    };
+
+    const handleUpdateProject = () => {
+        if (!editingProject || !editName.trim()) return;
+        updateProject(editingProject.id, { name: editName, color: editColor });
+        setEditingProject(null);
+    };
+
+    const handleSelectProject = (projectId: string) => {
+        navigate(`/project/${projectId}`);
+    };
 
     return (
         <>
@@ -119,7 +113,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                 value={newItemName}
                                 onChange={(e) => setNewItemName(e.target.value)}
                                 onKeyDown={(e) => {
-                                    if (e.key === 'Enter') onCreateProject();
+                                    if (e.key === 'Enter') handleCreateProject();
                                     if (e.key === 'Escape') setIsCreatingProject(false);
                                 }}
                                 className="mb-3"
@@ -135,7 +129,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <Button onClick={onCreateProject} className="flex-1">Criar</Button>
+                            <Button onClick={handleCreateProject} className="flex-1">Criar</Button>
                             <Button variant="secondary" onClick={() => setIsCreatingProject(false)}>Cancel</Button>
                         </div>
                     </Card>
@@ -163,7 +157,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                             value={editName}
                                             onChange={(e) => setEditName(e.target.value)}
                                             onKeyDown={(e) => {
-                                                if (e.key === 'Enter') onUpdateProject();
+                                                if (e.key === 'Enter') handleUpdateProject();
                                                 if (e.key === 'Escape') setEditingProject(null);
                                             }}
                                             className="mb-3"
@@ -179,19 +173,19 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button onClick={onUpdateProject} className="flex-1">Salvar</Button>
+                                        <Button onClick={handleUpdateProject} className="flex-1">Salvar</Button>
                                         <Button variant="secondary" onClick={() => setEditingProject(null)}>Cancel</Button>
                                     </div>
                                 </div>
                             ) : (
-                                <Card onClick={() => onSelectProject(project.id)} hoverEffect className="h-52 p-6 flex flex-col justify-between relative group">
+                                <Card onClick={() => handleSelectProject(project.id)} hoverEffect className="h-52 p-6 flex flex-col justify-between relative group">
                                     <div className={`absolute top-0 right-0 p-4 transition-opacity flex gap-2 ${project.isPinned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                onTogglePin(project.id);
+                                                togglePin(project.id);
                                             }}
                                             className={`${project.isPinned ? 'text-accent-blue' : ''}`}
                                         >
@@ -211,7 +205,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (confirm('Tem certeza que deseja excluir este projeto?')) {
-                                                    onDeleteProject(project.id, e);
+                                                    deleteProject(project.id);
                                                 }
                                             }}
                                         >

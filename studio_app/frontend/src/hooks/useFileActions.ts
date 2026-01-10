@@ -119,11 +119,38 @@ export const useFileActions = () => {
         }
     };
 
+    const reorderItems = async (itemIds: string[]) => {
+        try {
+            await api.reorderItems(itemIds);
+
+            // Update local store order
+            // We need to update the 'order' field of the items in fileSystem
+            // itemIds is the list of IDs in the new order.
+
+            // Map of id -> order index
+            const orderMap = new Map<string, number>();
+            itemIds.forEach((id, index) => orderMap.set(id, index));
+
+            const newFs = fileSystem.map(item => {
+                if (orderMap.has(item.id)) {
+                    return { ...item, order: orderMap.get(item.id)! };
+                }
+                return item;
+            });
+
+            setFileSystem(newFs);
+
+        } catch (e) {
+            console.error("Failed to reorder items", e);
+        }
+    };
+
     return {
         createFolder,
         deleteFolder,
         deletePages,
         uploadPages,
-        uploadPDF
+        uploadPDF,
+        reorderItems
     };
 };

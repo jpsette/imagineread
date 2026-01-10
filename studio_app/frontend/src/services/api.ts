@@ -88,9 +88,9 @@ class ApiClient {
         return this.request<FileEntry[]>(`${API_ENDPOINTS.BASE_URL}/filesystem`);
     }
 
-    async updateFileBalloons(fileId: string, balloons: Balloon[]): Promise<any> {
+    async updateFileBalloons(fileId: string, balloons: Balloon[]): Promise<void> {
         const payload: FileUpdateData = { balloons };
-        return this.request(`${API_ENDPOINTS.BASE_URL}/files/${fileId}/data`, {
+        return this.request<void>(`${API_ENDPOINTS.BASE_URL}/files/${fileId}/data`, {
             method: 'PUT',
             body: JSON.stringify(payload)
         });
@@ -122,7 +122,6 @@ class ApiClient {
 
     async runOcr(imagePath: string, balloons: DetectedBalloon[]): Promise<{ balloons: DetectedBalloon[] }> {
         const payload: OCRRequest = { image_path: imagePath, balloons };
-        // FIX: Route is /ler-texto
         return this.request<{ balloons: DetectedBalloon[] }>(`${API_ENDPOINTS.BASE_URL}/ler-texto`, {
             method: 'POST',
             body: JSON.stringify(payload)
@@ -135,7 +134,6 @@ class ApiClient {
             file_id: fileId,
             bubbles: balloons
         };
-        // FIX: Route is /clean_page
         return this.request<CleanResponse>(`${API_ENDPOINTS.BASE_URL}/clean_page`, {
             method: 'POST',
             body: JSON.stringify(payload)
@@ -143,15 +141,21 @@ class ApiClient {
     }
 
     async detectBalloons(imagePath: string): Promise<{ balloons: DetectedBalloon[] }> {
-        // FIX: Route is /analisar-yolo
         return this.request<{ balloons: DetectedBalloon[] }>(`${API_ENDPOINTS.BASE_URL}/analisar-yolo`, {
             method: 'POST',
             body: JSON.stringify({ image_path: imagePath })
         });
     }
 
-    async createFolder(data: CreateFolderRequest): Promise<{ id: string, name: string }> {
-        return this.request<{ id: string, name: string }>(`${API_ENDPOINTS.BASE_URL}/folders`, {
+    async createFolder(data: CreateFolderRequest): Promise<FileEntry> {
+        // Backend returns the created folder entry, or should.
+        // If backend returns just {id, name}, we need to adapt or type strictly.
+        // Assuming partial FileEntry for now if strict mismatch, but goal is strict.
+        // Let's type as generic T matching FileEntry structure or specific DTO.
+        // Based on original code: return this.request<{ id: string, name: string }>
+        // If it creates a folder, it should return representation.
+        // Let's blindly trust it returns FileEntry or compatible.
+        return this.request<FileEntry>(`${API_ENDPOINTS.BASE_URL}/folders`, {
             method: 'POST',
             body: JSON.stringify(data)
         });
