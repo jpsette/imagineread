@@ -1,0 +1,18 @@
+export const PROJECT_THEMES = [
+    { bg: 'bg-blue-500', text: 'text-blue-400', lightText: 'text-blue-300' },
+    { bg: 'bg-purple-500', text: 'text-purple-400', lightText: 'text-purple-300' },
+    { bg: 'bg-pink-500', text: 'text-pink-400', lightText: 'text-pink-300' },
+    { bg: 'bg-red-500', text: 'text-red-400', lightText: 'text-red-300' },
+    { bg: 'bg-orange-500', text: 'text-orange-400', lightText: 'text-orange-300' },
+    { bg: 'bg-amber-500', text: 'text-amber-400', lightText: 'text-amber-300' },
+    { bg: 'bg-yellow-500', text: 'text-yellow-400', lightText: 'text-yellow-300' },
+    { bg: 'bg-lime-500', text: 'text-lime-400', lightText: 'text-lime-300' },
+    { bg: 'bg-green-500', text: 'text-green-400', lightText: 'text-green-300' },
+    { bg: 'bg-emerald-500', text: 'text-emerald-400', lightText: 'text-emerald-300' },
+    { bg: 'bg-teal-500', text: 'text-teal-400', lightText: 'text-teal-300' },
+    { bg: 'bg-cyan-500', text: 'text-cyan-400', lightText: 'text-cyan-300' },
+    { bg: 'bg-sky-500', text: 'text-sky-400', lightText: 'text-sky-300' },
+    { bg: 'bg-indigo-500', text: 'text-indigo-400', lightText: 'text-indigo-300' },
+    { bg: 'bg-violet-500', text: 'text-violet-400', lightText: 'text-violet-300' },
+    { bg: 'bg-fuchsia-500', text: 'text-fuchsia-400', lightText: 'text-fuchsia-300' },
+];

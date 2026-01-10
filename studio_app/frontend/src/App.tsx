@@ -7,22 +7,17 @@ import EditorView from './features/editor/EditorView';
 import ComicWorkstation from './features/editor/ComicWorkstation';
 import { api } from './services/api';
 // electronBridge removed
-import { Project, FileEntry } from './types';
+import { Project } from './types';
 import { MainLayout } from './layouts/MainLayout';
 import { EditorLayout } from './layouts/EditorLayout';
+import { useUIStore } from './store/useUIStore';
+import { useProjectStore } from './store/useProjectStore';
+import { useFileSystemStore } from './store/useFileSystemStore';
+import { useProjectActions } from './hooks/useProjectActions';
+import { useFileActions } from './hooks/useFileActions';
 
 // --- THEMES CONSTANT ---
 const PROJECT_THEMES = [
-    // ... (omitting lines for brevity in tool call, focusing on target content)
-    // Actually I will do two separate replaces to avoid matching the large block of constants which I don't want to list.
-    // Edit 1: Add import
-    // Edit 2: Replace ComicWorkstation wrapper
-    // Edit 3: Replace EditorView wrapper
-    // Wait, I can do it in one go if I use multi_replace. Or just be smart about chunks.
-    // I'll stick to replace_file_content but do it in chunks? No, replace_file_content is single contiguous.
-    // I'll use separate calls or list a larger chunk if they are close. They are not close (import is at top).
-    // I will use multi_replace_file_content.
-
     { bg: 'bg-blue-500', text: 'text-blue-400', lightText: 'text-blue-300' },
     { bg: 'bg-purple-500', text: 'text-purple-400', lightText: 'text-purple-300' },
     { bg: 'bg-pink-500', text: 'text-pink-400', lightText: 'text-pink-300' },
@@ -42,24 +37,39 @@ const PROJECT_THEMES = [
 ];
 
 const App: React.FC = () => {
-    // === VISIBILITY STATE (MDI) ===
-    const [showExplorer, setShowExplorer] = useState(true);
-    const [showManager, setShowManager] = useState(true);
+    // === UI STATE (Zustand) ===
+    const {
+        showExplorer, setShowExplorer,
+        showManager, setShowManager,
+        view, setView,
+        isCreatingProject, setIsCreatingProject
+    } = useUIStore();
 
-    // === CORE STATE ===
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [view, setView] = useState<'dashboard' | 'project'>('dashboard');
-    const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
-    const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-    const [openedComicId, setOpenedComicId] = useState<string | null>(null);
-    const [openedPageId, setOpenedPageId] = useState<string | null>(null);
-    const [openedPageUrl, setOpenedPageUrl] = useState<string>('');
-    const [fileSystem, setFileSystem] = useState<FileEntry[]>([]);
+    // === DATA STATE (Zustand) ===
+    const {
+        projects, setProjects,
+        currentProjectId, setCurrentProjectId
+    } = useProjectStore();
+
+    const {
+        fileSystem, setFileSystem,
+        currentFolderId, setCurrentFolderId,
+        openedComicId, setOpenedComicId,
+        openedPageId, setOpenedPageId
+    } = useFileSystemStore();
+
+    // === ACTIONS (Hooks) ===
+    const { createProject, updateProject, deleteProject, togglePin } = useProjectActions();
+    const { createFolder, deleteFolder, deletePages, uploadPages, uploadPDF } = useFileActions();
+
+    // Derived state for openedPageUrl (to avoid duplicating state)
+    const openedPageUrl = openedPageId
+        ? fileSystem.find(f => f.id === openedPageId)?.url || ''
+        : '';
 
     // === PROJECT MANAGER STATE ===
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState<'az' | 'za'>('az');
-    const [isCreatingProject, setIsCreatingProject] = useState(false);
     const [newItemName, setNewItemName] = useState('');
     const [newItemColor, setNewItemColor] = useState(PROJECT_THEMES[0].bg);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -105,215 +115,78 @@ const App: React.FC = () => {
         console.log('🔍 DEBUG - Projects:', projects);
         console.log('🔍 DEBUG - FileSystem:', fileSystem);
         console.log('🔍 DEBUG - Current Project:', currentProjectId);
-        console.log('🔍 DEBUG - Current Project:', currentProjectId);
     }, [projects, fileSystem, currentProjectId]);
 
 
+    // === GLUE HANDLERS (Connect UI state to Actions) ===
 
-    // === HANDLERS ===
-    const handleUpdate = async (id: string, data: Partial<Project>) => {
-        try {
-            await api.updateProject(id, data);
-            const newP = await api.getProjects();
-            setProjects(newP);
-            setEditingProject(null);
-        } catch (e) {
-            console.error("Failed to update project", e);
-            alert("Erro ao atualizar projeto");
-        }
-    };
-
-    const handleDelete = async (id: string, e?: React.MouseEvent) => {
-        e?.stopPropagation();
-        // Confirmation is now handled in the UI components (ProjectManager)
-
-        try {
-            await api.deleteProject(id);
-            setProjects(prev => prev.filter(p => p.id !== id));
-            if (currentProjectId === id) {
-                setCurrentProjectId(null);
-                setView('dashboard');
-            }
-        } catch (e) {
-            console.error("Failed to delete project", e);
-            alert("Erro ao deletar projeto");
-        }
-    };
-
-    const handleCreate = async () => {
+    const handleWrapperCreateProject = async () => {
         if (!newItemName) return;
-        try {
-            const newP = await api.createProject({ name: newItemName, color: newItemColor });
-            setProjects(prev => [...prev, newP]);
-            setCurrentProjectId(newP.id);
-            // setView('project'); // Don't auto-switch, let them stay in dashboard if created via menu, or switch.
-            // Actually usually creation implies navigating to it.
-            // But if we are in MDI, maybe we just show it.
-            // Let's keep auto-switch for feedback.
-            setView('project');
-            setIsCreatingProject(false);
-            setNewItemName('');
-        } catch (e) {
-            console.error("Failed to create project", e);
-            alert("Erro ao criar projeto");
+        await createProject(newItemName, newItemColor);
+        setNewItemName('');
+    };
+
+    const handleWrapperUpdateProject = async () => {
+        if (editingProject) {
+            await updateProject(editingProject.id, { name: editName, color: editColor });
+            setEditingProject(null);
         }
     };
 
-    const handleTogglePin = (id: string) => {
-        const p = projects.find(x => x.id === id);
-        if (p) handleUpdate(id, { isPinned: !p.isPinned });
-    };
-
-    // Page/File management handlers
-    const handleDeletePages = (pageIds: string[]) => {
-        if (confirm('Tem certeza que deseja excluir os itens selecionados?')) {
-            setFileSystem(prev => prev.filter(f => !pageIds.includes(f.id)));
-            console.warn("Deleted pages locally only - Backend implementation pending in original code");
-        }
-    };
-
-    const handleDeleteFolder = (folderId: string, e?: React.MouseEvent) => {
-        e?.stopPropagation();
-        if (confirm('Tem certeza que deseja excluir esta pasta e todo seu conteúdo?')) {
-            setFileSystem(prev => prev.filter(f => f.id !== folderId && f.parentId !== folderId));
-        }
-    };
-
-    const handleCreateFolder = async () => {
+    const handleWrapperCreateFolder = async () => {
         if (!newFolderName) return;
-        const targetParentId = currentFolderId || (currentProjectId ? projects.find(p => p.id === currentProjectId)?.rootFolderId : null);
 
+        const targetParentId = currentFolderId || (currentProjectId ? projects.find(p => p.id === currentProjectId)?.rootFolderId : null);
         if (!targetParentId) {
             console.error("No target parent found for folder creation");
             return;
         }
 
+        setLoading(true);
         try {
-            setLoading(true);
-            await api.createFolder({ name: newFolderName, parentId: targetParentId });
-
-            // Optimistic update or fetch? Let's just optimistic for now or append to fileSystem
-            // Since backend just returns id/name, we construct the object OR reload.
-            // Let's reload to be safe and consistent with other patterns, OR construct manual entry.
-            // Backend create_folder logic in Step 477 returns {status, id, name}.
-            // It actually inserts into DB. So reloading filesystem is safest.
-            await loadData();
-
+            await createFolder(newFolderName, targetParentId);
             setIsCreatingFolder(false);
             setNewFolderName('');
             setNewFolderColor(PROJECT_THEMES[0].bg);
         } catch (e) {
-            console.error(e);
-            alert('Erro ao criar pasta');
+            // Error handling done in hook
         } finally {
             setLoading(false);
         }
     };
 
-
-    const handleAddPages = async (files: File[]) => {
+    const handleWrapperAddPages = async (files: File[]) => {
         const targetParentId = openedComicId || currentFolderId || (currentProjectId ? projects.find(p => p.id === currentProjectId)?.rootFolderId : null);
-
         if (!targetParentId) {
             console.error("No target parent ID found for upload");
             return;
         }
 
         setLoading(true);
-        const uploadedPages: FileEntry[] = [];
-
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            try {
-                const data = await api.uploadPage(file, targetParentId);
-                uploadedPages.push({
-                    id: data.id,
-                    name: file.name,
-                    type: 'file',
-                    parentId: targetParentId,
-                    url: data.url,
-                    createdAt: new Date().toISOString(),
-                    order: 9999 + i,
-                    isPinned: false
-                });
-            } catch (e) {
-                console.error(e);
-                alert(`Erro ao enviar imagem ${file.name}`);
-            }
-        }
-
-        if (uploadedPages.length > 0) {
-            setFileSystem(prev => [...prev, ...uploadedPages]);
-        }
+        await uploadPages(files, targetParentId);
         setLoading(false);
     };
 
-    const handleUploadPDF = async (file: File) => {
-        if (!file || file.type !== 'application/pdf') {
-            alert('Por favor, selecione um arquivo PDF.');
-            return;
-        }
-
+    const handleWrapperUploadPDF = async (file: File) => {
         const targetParentId = currentFolderId || (currentProjectId ? projects.find(p => p.id === currentProjectId)?.rootFolderId : null) || 'root';
 
         setLoading(true);
-        try {
-            const data = await api.uploadPDF(file, targetParentId);
-            const comicId = `comic-${Date.now()}`;
-            const newComic: FileEntry = {
-                id: comicId,
-                name: file.name.replace('.pdf', ''),
-                type: 'comic',
-                parentId: targetParentId,
-                createdAt: new Date().toISOString(),
-                isPinned: false,
-                order: 0,
-                url: ''
-            };
-
-            const newPages: FileEntry[] = data.pages.map((p, index) => ({
-                id: p.id,
-                name: p.name,
-                type: 'file',
-                parentId: comicId,
-                url: p.url,
-                createdAt: new Date().toISOString(),
-                order: index,
-                isPinned: false
-            }));
-
-            setFileSystem(prev => [...prev, newComic, ...newPages]);
-            alert('Quadrinho importado com sucesso!');
-
-        } catch (error) {
-            console.error(error);
-            alert('Erro ao importar PDF.');
-        } finally {
-            setLoading(false);
-        }
+        await uploadPDF(file, targetParentId);
+        setLoading(false);
     };
 
+    // Import files combines both
     const handleImportFiles = (files: File[]) => {
         const pdfs = files.filter(f => f.type === 'application/pdf');
         const images = files.filter(f => f.type.startsWith('image/'));
 
-        pdfs.forEach(f => handleUploadPDF(f));
-        if (images.length > 0) handleAddPages(images);
+        pdfs.forEach(f => handleWrapperUploadPDF(f));
+        if (images.length > 0) handleWrapperAddPages(images);
     };
 
+
     return (
-        <MainLayout
-            onCreateProject={() => {
-                setShowManager(true); // Ensure manager is open
-                setIsCreatingProject(true); // Trigger creation mode
-                setView('dashboard'); // Switch to dashboard view
-            }}
-            showExplorer={showExplorer}
-            onToggleExplorer={() => setShowExplorer(!showExplorer)}
-            showManager={showManager}
-            onToggleManager={() => setShowManager(!showManager)}
-            isInEditor={!!openedPageId}
-        >
+        <MainLayout isInEditor={!!openedPageId}>
             {/* 1. EXPLORER (FLOATING WINDOW) */}
             {showExplorer && (
                 <DraggableWindow
@@ -341,11 +214,19 @@ const App: React.FC = () => {
                             setView('project');
                             if (!showManager) setShowManager(true);
                         }}
-                        onEditProject={(p) => handleUpdate(p.id, { name: p.name, color: p.color })}
-                        onDeleteProject={handleDelete}
-                        onPinProject={handleTogglePin}
+                        onEditProject={(p) => updateProject(p.id, { name: p.name, color: p.color })}
+                        onDeleteProject={(id, e) => {
+                            e?.stopPropagation();
+                            deleteProject(id);
+                        }}
+                        onPinProject={togglePin}
                         onEditFolder={() => { }}
-                        onDeleteFolder={handleDeleteFolder}
+                        onDeleteFolder={(id, e) => {
+                            e?.stopPropagation();
+                            if (confirm('Tem certeza que deseja excluir esta pasta e todo seu conteúdo?')) {
+                                deleteFolder(id);
+                            }
+                        }}
                         onToggleProjectExpand={(id) => {
                             const s = new Set(expandedProjects);
                             if (s.has(id)) s.delete(id);
@@ -393,18 +274,17 @@ const App: React.FC = () => {
                             setNewItemName={setNewItemName}
                             newItemColor={newItemColor}
                             setNewItemColor={setNewItemColor}
-                            onCreateProject={handleCreate}
+                            onCreateProject={handleWrapperCreateProject}
                             onSelectProject={(id) => {
                                 setCurrentProjectId(id);
                                 setView('project');
                             }}
-                            onTogglePin={handleTogglePin}
-                            onDeleteProject={handleDelete}
-                            onUpdateProject={() => {
-                                if (editingProject) {
-                                    handleUpdate(editingProject.id, { name: editName, color: editColor });
-                                }
+                            onTogglePin={togglePin}
+                            onDeleteProject={(id, e) => {
+                                e?.stopPropagation();
+                                deleteProject(id);
                             }}
+                            onUpdateProject={handleWrapperUpdateProject}
                             editingProject={editingProject}
                             setEditingProject={setEditingProject}
                             editName={editName}
@@ -438,12 +318,16 @@ const App: React.FC = () => {
                             editColor=""
                             setEditColor={() => { }}
                             PROJECT_THEMES={PROJECT_THEMES}
-                            onCreateFolder={handleCreateFolder}
+                            onCreateFolder={handleWrapperCreateFolder}
                             onUpdateFolder={() => { }}
                             onStartEditingFolder={() => { }}
                             onTogglePin={() => { }}
                             onImportFiles={handleImportFiles}
-                            onDeletePages={handleDeletePages}
+                            onDeletePages={(ids) => {
+                                if (confirm('Tem certeza que deseja excluir os itens selecionados?')) {
+                                    deletePages(ids);
+                                }
+                            }}
                             onBack={() => {
                                 if (currentFolderId) {
                                     // Check if we are at the root folder of the current project
@@ -487,12 +371,15 @@ const App: React.FC = () => {
                             onClose={() => {
                                 setOpenedComicId(null);
                             }}
-                            onSelectPage={(pageId, pageUrl) => {
+                            onSelectPage={(pageId) => {
                                 setOpenedPageId(pageId);
-                                setOpenedPageUrl(pageUrl);
                             }}
-                            onAddPages={handleAddPages}
-                            onDeletePages={handleDeletePages}
+                            onAddPages={handleWrapperAddPages}
+                            onDeletePages={(ids) => {
+                                if (confirm('Tem certeza que deseja excluir os itens selecionados?')) {
+                                    deletePages(ids);
+                                }
+                            }}
                         />
                     </EditorLayout>
                 );
@@ -505,7 +392,6 @@ const App: React.FC = () => {
                         imageUrl={openedPageUrl}
                         onBack={() => {
                             setOpenedPageId(null);
-                            setOpenedPageUrl('');
                             loadData();
                         }}
                         comicName={fileSystem.find((f: any) => f.id === openedComicId)?.name || 'Comic'}

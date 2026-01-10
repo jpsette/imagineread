@@ -1,27 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useUIStore } from '../store/useUIStore';
 
 interface MainLayoutProps {
     children: React.ReactNode;
-    // Actions
-    onCreateProject: () => void;
-    // Toggles
-    showExplorer: boolean;
-    onToggleExplorer: () => void;
-    showManager: boolean;
-    onToggleManager: () => void;
     // Navigation/State
     isInEditor: boolean;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
     children,
-    onCreateProject,
-    showExplorer,
-    onToggleExplorer,
-    showManager,
-    onToggleManager,
     isInEditor
 }) => {
+    // Connect to Store
+    const {
+        showExplorer,
+        setShowExplorer,
+        showManager,
+        setShowManager,
+        setIsCreatingProject,
+        setView
+    } = useUIStore();
+
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -69,7 +68,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                             <div className="absolute top-full left-0 mt-1 w-48 bg-[#18181b] border border-white/10 rounded-md shadow-xl py-1 z-50 overflow-hidden ring-1 ring-black/50">
                                 <button
                                     onClick={() => {
-                                        onCreateProject();
+                                        // Refactored creating project action
+                                        setShowManager(true);
+                                        setIsCreatingProject(true);
+                                        setView('dashboard');
                                         setOpenMenu(null);
                                     }}
                                     className="w-full text-left px-4 py-2 text-[13px] text-zinc-300 hover:bg-blue-600 hover:text-white transition-colors flex items-center gap-2"
@@ -96,9 +98,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                                         type="checkbox"
                                         checked={showExplorer}
                                         onChange={() => {
-                                            onToggleExplorer();
-                                            // Keep menu open for multiple toggles? Or close? Let's keep open for convenience or just toggle.
-                                            // setOpenMenu(null); 
+                                            setShowExplorer(!showExplorer);
                                         }}
                                         className="rounded border-zinc-600 bg-zinc-800 text-blue-500 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
                                     />
@@ -109,7 +109,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                                         type="checkbox"
                                         checked={showManager}
                                         onChange={() => {
-                                            onToggleManager();
+                                            setShowManager(!showManager);
                                         }}
                                         className="rounded border-zinc-600 bg-zinc-800 text-blue-500 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
                                     />
