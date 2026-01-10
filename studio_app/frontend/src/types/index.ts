@@ -52,6 +52,7 @@ export interface FileEntry {
     isPinned?: boolean;
     createdAt?: string;
     color?: string;
+    mimeType?: string;
 }
 
 // API DTOs
@@ -63,6 +64,7 @@ export interface CreateProjectRequest {
 export interface CreateFolderRequest {
     name: string;
     parentId: string;
+    color?: string;
 }
 
 export interface FileUpdateData {

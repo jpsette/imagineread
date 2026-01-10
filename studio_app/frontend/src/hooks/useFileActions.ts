@@ -18,9 +18,9 @@ export const useFileActions = () => {
         }
     };
 
-    const createFolder = async (name: string, parentId: string) => {
+    const createFolder = async (name: string, parentId: string, color?: string) => {
         try {
-            await api.createFolder({ name, parentId });
+            await api.createFolder({ name, parentId, color });
             // API returns { status, id, name } usually, but strict types might vary.
             // Original code reloaded data. Let's reload to be safe and consistent.
             await reloadFileSystem();

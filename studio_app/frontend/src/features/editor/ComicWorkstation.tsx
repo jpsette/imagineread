@@ -9,6 +9,7 @@ import { FileEntry } from '../../types';
 import { SortableItem } from '../../ui/SortableItem';
 import { useFileActions } from '../../hooks/useFileActions';
 import { useFileSystemStore } from '../../store/useFileSystemStore';
+import { useProjectStore } from '../../store/useProjectStore';
 
 export const ComicWorkstation: React.FC = () => {
     const { comicId } = useParams<{ comicId: string }>();
@@ -17,6 +18,8 @@ export const ComicWorkstation: React.FC = () => {
     // === GLOBAL STORE ===
     const { fileSystem, setOpenedPageId } = useFileSystemStore();
     const { deletePages, uploadPages, reorderItems } = useFileActions();
+    // Use project store to navigate back correctly
+    const { currentProjectId } = useProjectStore();
 
     // Derived Data
     const comic = fileSystem.find(f => f.id === comicId);
@@ -69,7 +72,11 @@ export const ComicWorkstation: React.FC = () => {
 
     // Actions Wrapper
     const handleClose = () => {
-        navigate('/');
+        if (currentProjectId) {
+            navigate(`/project/${currentProjectId}`);
+        } else {
+            navigate('/');
+        }
     };
 
     const handleSelectPage = (pageId: string) => {
