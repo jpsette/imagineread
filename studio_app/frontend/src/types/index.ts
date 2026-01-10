@@ -21,6 +21,12 @@ export interface Balloon {
     roughness?: number;
     tailTip?: { x: number, y: number } | null;
     tailCurve?: any;
+
+    // Style Props
+    color?: string;
+    textColor?: string;
+    fontFamily?: string;
+    opacity?: number;
 }
 
 export interface DetectedBalloon {

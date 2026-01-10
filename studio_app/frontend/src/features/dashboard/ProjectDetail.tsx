@@ -250,6 +250,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                             item.url // Fallback if url exists it's likely a renderable file in this context
                         );
 
+                        // Robust check for any edit activity
+                        const isEdited =
+                            (item as any).status === 'in_progress' ||
+                            (typeof (item as any).clean_url === 'string' && (item as any).clean_url.length > 5) ||
+                            ((item as any).is_cleaned === true) ||
+                            (Array.isArray((item as any).balloons) && (item as any).balloons.length > 0);
+
                         // Define click handler (CRITICAL: Distinguish comic folders from library folders)
                         const handleClick = (e: React.MouseEvent) => {
                             if (e.ctrlKey || e.metaKey) {
@@ -345,7 +352,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                     <>
                                         {isImage ? (
                                             // --- CASE A: IT IS AN IMAGE (Show Thumbnail) ---
-                                            <div className="aspect-[3/4] relative overflow-hidden rounded-lg border border-white/5 bg-gray-900 group-hover:border-accent-blue transition-colors">
+                                            <div className="aspect-[2/3] relative overflow-hidden rounded-none border border-white/5 bg-gray-900 group-hover:border-accent-blue transition-colors">
                                                 <img
                                                     src={item.url || (item as any).thumbnailUrl} // Prioritize URL, fallback to thumbnail if exists
                                                     alt={item.name}
@@ -353,10 +360,20 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                                 />
                                                 {/* Name overlay */}
                                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-6">
-                                                    <span className="text-xs text-white font-medium truncate block shadow-sm">
+                                                    <span className="text-xs text-white font-medium truncate block shadow-sm pr-4">
                                                         {item.name}
                                                     </span>
                                                 </div>
+
+                                                {/* STATUS BADGE: EM EDIÇÃO */}
+                                                {isEdited && (
+                                                    <div className="absolute top-2 right-2 bg-black/90 backdrop-blur-sm px-2 py-1 flex items-center gap-2 z-20 shadow-sm border border-white/10">
+                                                        <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                                                        <span className="text-[10px] uppercase tracking-wider font-bold text-white leading-none">
+                                                            EM EDIÇÃO
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (
                                             // --- CASE B: IT IS A FOLDER/OTHER (Show Icon) ---

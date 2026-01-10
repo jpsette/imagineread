@@ -1,21 +1,61 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Balloon } from '../../types';
 
 interface VectorProps {
     balloon: Balloon;
     containerRef: React.RefObject<HTMLDivElement>;
     isSelected: boolean;
-    zoom: number;
     onSelect: (id: string) => void;
     onUpdate: (id: string, updates: Partial<Balloon>) => void;
+    onCommit?: (label: string) => void;
+    hidden?: boolean;
 }
+
+// --- GEOMETRY HELPERS ---
+
+const getEllipticalPoint = (cx: number, cy: number, rx: number, ry: number, angle: number) => {
+    // Basic parametric ellipse
+    return {
+        x: cx + rx * Math.cos(angle),
+        y: cy + ry * Math.sin(angle)
+    };
+};
+
+const getRectPoint = (cx: number, cy: number, w: number, h: number, angle: number) => {
+    // Raycasting against a rectangle
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const absCos = Math.abs(cos);
+    const absSin = Math.abs(sin);
+
+    let xMult = 1;
+    let yMult = 1;
+
+    // abs(sin)/abs(cos) > h/w  =>  abs(sin)*w > abs(cos)*h
+    if (absSin * w > absCos * h) {
+        // Hits Top/Bottom
+        xMult = (h / 2) / absSin;
+        yMult = (h / 2) / absSin;
+    } else {
+        // Hits Left/Right
+        xMult = (w / 2) / absCos;
+        yMult = (w / 2) / absCos;
+    }
+
+    return {
+        x: cx + cos * xMult,
+        y: cy + sin * yMult
+    };
+};
 
 export const VectorBubble: React.FC<VectorProps> = React.memo(({
     balloon,
     containerRef,
     isSelected,
     onSelect,
-    onUpdate
+    onUpdate,
+    onCommit,
+    hidden = false
 }) => {
     // Refs for Dragging
     const isDragging = useRef(false);
@@ -33,30 +73,115 @@ export const VectorBubble: React.FC<VectorProps> = React.memo(({
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
     const [ymin, xmin, ymax, xmax] = balloon.box_2d;
+    const width = xmax - xmin;
+    const height = ymax - ymin;
 
-    // --- MATH HELPERS ---
-    const getRectIntersection = (angle: number, w: number, h: number) => {
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
-        if (Math.abs(cos) * h > Math.abs(sin) * w) {
-            const x = (Math.sign(cos) * w) / 2;
-            const y = x * (sin / cos);
-            return { x, y };
-        } else {
-            const y = (Math.sign(sin) * h) / 2;
-            const x = y * (cos / sin);
-            return { x, y };
+    // --- GEOMETRY CALCULATION ---
+    const pathData = useMemo(() => {
+        const cx = xmin + width / 2;
+        const cy = ymin + height / 2;
+        const rx = width / 2;
+        const ry = height / 2;
+
+        const tailTip = balloon.tailTip;
+        const tailWidth = balloon.tailWidth ?? 40;
+        const shape = balloon.shape;
+
+        // 1. If no tail, just draw the shape
+        if (!tailTip || balloon.type === 'thought') {
+            if (shape === 'ellipse') {
+                return `M ${xmin} ${cy} A ${rx} ${ry} 0 1 0 ${xmax} ${cy} A ${rx} ${ry} 0 1 0 ${xmin} ${cy} Z`;
+            } else {
+                // Rectangle
+                const r = Math.min(balloon.borderRadius ?? 20, rx, ry);
+                return `M ${xmin + r} ${ymin} 
+                        H ${xmax - r} A ${r} ${r} 0 0 1 ${xmax} ${ymin + r} 
+                        V ${ymax - r} A ${r} ${r} 0 0 1 ${xmax - r} ${ymax} 
+                        H ${xmin + r} A ${r} ${r} 0 0 1 ${xmin} ${ymax - r} 
+                        V ${ymin + r} A ${r} ${r} 0 0 1 ${xmin + r} ${ymin} Z`;
+            }
         }
-    };
 
-    const getEllipseIntersection = (angle: number, w: number, h: number) => {
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
-        const a = w / 2;
-        const b = h / 2;
-        const r = 1 / Math.sqrt((cos * cos) / (a * a) + (sin * sin) / (b * b));
-        return { x: r * cos, y: r * sin };
-    };
+        // 2. HAS TAIL - UNIFIED PATH LOGIC
+        // A. Calculate Angle to Tip
+        const angle = Math.atan2(tailTip.y - cy, tailTip.x - cx);
+
+        // B. Calculate Base Points
+        let p1: { x: number, y: number };
+        let p2: { x: number, y: number };
+
+        if (shape === 'ellipse') {
+            const avgR = (rx + ry) / 2;
+            const delta = (tailWidth / 2) / avgR;
+            p1 = getEllipticalPoint(cx, cy, rx, ry, angle - delta);
+            p2 = getEllipticalPoint(cx, cy, rx, ry, angle + delta);
+
+            // Draw long arc P2 -> P1, then to Tip, then close
+            return `M ${p2.x} ${p2.y} 
+                    A ${rx} ${ry} 0 1 1 ${p1.x} ${p1.y} 
+                    L ${tailTip.x} ${tailTip.y} 
+                    L ${p2.x} ${p2.y} Z`;
+        }
+        else {
+            // RECTANGLE LOGIC
+            const base = getRectPoint(cx, cy, width, height, angle);
+            const r = Math.min(balloon.borderRadius ?? 20, rx, ry);
+            const halfT = tailWidth / 2;
+
+            // Flags
+            const isTop = Math.abs(base.y - ymin) < 1;
+            const isBottom = Math.abs(base.y - ymax) < 1;
+            const isLeft = Math.abs(base.x - xmin) < 1;
+            const isRight = Math.abs(base.x - xmax) < 1;
+
+            let path = `M ${xmin + r} ${ymin}`; // Start after TL corner
+
+            // TOP EDGE
+            if (isTop) {
+                const tx = Math.max(xmin + r, Math.min(xmax - r, base.x));
+                const t1 = Math.max(xmin + r, tx - halfT);
+                const t2 = Math.min(xmax - r, tx + halfT);
+                path += ` L ${t1} ${ymin} L ${tailTip.x} ${tailTip.y} L ${t2} ${ymin}`;
+            }
+            path += ` L ${xmax - r} ${ymin}`; // Finish Top Edge
+            path += ` A ${r} ${r} 0 0 1 ${xmax} ${ymin + r}`; // TR Corner
+
+            // RIGHT EDGE
+            if (isRight) {
+                const ty = Math.max(ymin + r, Math.min(ymax - r, base.y));
+                const t1 = Math.max(ymin + r, ty - halfT);
+                const t2 = Math.min(ymax - r, ty + halfT);
+                path += ` L ${xmax} ${t1} L ${tailTip.x} ${tailTip.y} L ${xmax} ${t2}`;
+            }
+            path += ` L ${xmax} ${ymax - r}`; // Finish Right Edge
+            path += ` A ${r} ${r} 0 0 1 ${xmax - r} ${ymax}`; // BR Corner
+
+            // BOTTOM EDGE
+            if (isBottom) {
+                const tx = Math.max(xmin + r, Math.min(xmax - r, base.x));
+                const tRight = Math.min(xmax - r, tx + halfT);
+                const tLeft = Math.max(xmin + r, tx - halfT);
+                path += ` L ${tRight} ${ymax} L ${tailTip.x} ${tailTip.y} L ${tLeft} ${ymax}`;
+            }
+            path += ` L ${xmin + r} ${ymax}`; // Finish Bottom Edge
+            path += ` A ${r} ${r} 0 0 1 ${xmin} ${ymax - r}`; // BL Corner
+
+            // LEFT EDGE
+            if (isLeft) {
+                const ty = Math.max(ymin + r, Math.min(ymax - r, base.y));
+                const tBottom = Math.min(ymax - r, ty + halfT);
+                const tTop = Math.max(ymin + r, ty - halfT);
+                path += ` L ${xmin} ${tBottom} L ${tailTip.x} ${tailTip.y} L ${xmin} ${tTop}`;
+            }
+            path += ` L ${xmin} ${ymin + r}`; // Finish Left Edge
+            path += ` A ${r} ${r} 0 0 1 ${xmin + r} ${ymin}`; // TL Corner
+
+            path += " Z";
+            return path;
+        }
+
+    }, [balloon.box_2d, balloon.tailTip, balloon.tailWidth, balloon.shape, balloon.borderRadius, xmin, width, ymin, height]);
+
 
     // --- EVENT HANDLERS ---
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -114,7 +239,7 @@ export const VectorBubble: React.FC<VectorProps> = React.memo(({
             if (resizeHandle.current?.includes('w')) x1 += deltaX;
             if (resizeHandle.current?.includes('e')) x2 += deltaX;
 
-            // Minimum size constraint
+            // Constraint: Min 20px
             if (y2 - y1 < 20) y2 = y1 + 20;
             if (x2 - x1 < 20) x2 = x1 + 20;
 
@@ -126,11 +251,22 @@ export const VectorBubble: React.FC<VectorProps> = React.memo(({
     };
 
     const handleMouseUp = () => {
+        const wasDragging = isDragging.current;
+        const wasResizing = isResizing.current;
+        const wasTail = isDraggingTail.current;
+
         isDragging.current = false;
         isResizing.current = false;
         isDraggingTail.current = false;
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
+
+        // Commit History on Drag End
+        if (onCommit) {
+            if (wasDragging) onCommit('Mover Balão');
+            else if (wasResizing) onCommit('Redimensionar Balão');
+            else if (wasTail) onCommit('Ajustar Rabinho');
+        }
     };
 
     const toggleEdit = (e: React.MouseEvent) => {
@@ -141,114 +277,24 @@ export const VectorBubble: React.FC<VectorProps> = React.memo(({
         }
     };
 
-    // --- RENDER CALCS ---
-    const w = xmax - xmin;
-    const h = ymax - ymin;
-    const cx = xmin + w / 2;
-    const cy = ymin + h / 2;
 
-    let mainPathD = "";
-
-    // 1. Body Geometry
-    if (balloon.shape === 'rectangle') {
-        const r = balloon.borderRadius ?? 20;
-        const rSafe = Math.min(r, w / 2, h / 2);
-        mainPathD = `M ${xmin + rSafe} ${ymin} H ${xmax - rSafe} A ${rSafe} ${rSafe} 0 0 1 ${xmax} ${ymin + rSafe} V ${ymax - rSafe} A ${rSafe} ${rSafe} 0 0 1 ${xmax - rSafe} ${ymax} H ${xmin + rSafe} A ${rSafe} ${rSafe} 0 0 1 ${xmin} ${ymax - rSafe} V ${ymin + rSafe} A ${rSafe} ${rSafe} 0 0 1 ${xmin + rSafe} ${ymin} Z`;
-    }
-    else if (balloon.shape === 'ellipse') {
-        const rx = w / 2;
-        const ry = h / 2;
-        mainPathD = `M ${xmin} ${cy} A ${rx} ${ry} 0 1 0 ${xmax} ${cy} A ${rx} ${ry} 0 1 0 ${xmin} ${cy} Z`;
-    }
-    else {
-        // Procedural
-        const segments = balloon.shape === 'cloud' ? 12 : 30;
-        const rx = w / 2; const ry = h / 2;
-        const roughness = balloon.roughness ?? 1;
-
-        if (balloon.shape === 'cloud') {
-            mainPathD = `M ${cx + rx} ${cy}`;
-            for (let i = 1; i <= segments; i++) {
-                const angle = (i / segments) * Math.PI * 2;
-                const prevAngle = ((i - 1) / segments) * Math.PI * 2;
-                const px = cx + rx * Math.cos(angle);
-                const py = cy + ry * Math.sin(angle);
-                const midAngle = (angle + prevAngle) / 2;
-                const bumpSize = 1.3 * roughness;
-                const cpX = cx + rx * Math.cos(midAngle) * bumpSize;
-                const cpY = cy + ry * Math.sin(midAngle) * bumpSize;
-                mainPathD += ` Q ${cpX} ${cpY} ${px} ${py}`;
-            }
-            mainPathD += " Z";
-        } else {
-            // Scream
-            const points = [];
-            for (let i = 0; i <= segments; i++) {
-                const angle = (i / segments) * Math.PI * 2;
-                const spike = (i % 2) * 40 * roughness;
-                const rLocalX = rx + (Math.cos(angle) * spike);
-                const rLocalY = ry + (Math.sin(angle) * spike);
-                const px = cx + Math.cos(angle) * rLocalX;
-                const py = cy + Math.sin(angle) * rLocalY;
-                points.push({ x: px, y: py });
-            }
-            mainPathD = `M ${points[0].x} ${points[0].y} ` + points.slice(1).map(p => `L ${p.x} ${p.y}`).join(" ") + " Z";
-        }
-    }
-
-    // 2. Tail Geometry
-    let tailPathD = "";
-    let connectorPatch = null;
-    const isThought = balloon.type === 'thought';
+    // --- RENDER ---
     const isWhisper = balloon.type === 'whisper';
-
-    if (balloon.tailTip && !isThought) {
-        const dx = balloon.tailTip.x - cx;
-        const dy = balloon.tailTip.y - cy;
-        const angle = Math.atan2(dy, dx);
-
-        let perimeterPt = { x: cx, y: cy };
-        if (balloon.shape === 'ellipse' || balloon.shape === 'cloud' || balloon.shape === 'scream') {
-            perimeterPt = getEllipseIntersection(angle, w, h);
-        } else {
-            perimeterPt = getRectIntersection(angle, w, h);
-        }
-        const anchorX = cx + perimeterPt.x;
-        const anchorY = cy + perimeterPt.y;
-
-        const tailW = balloon.tailWidth ?? 40;
-        const perpAngle = angle + Math.PI / 2;
-        const bx1 = anchorX + Math.cos(perpAngle) * (tailW / 2);
-        const by1 = anchorY + Math.sin(perpAngle) * (tailW / 2);
-        const bx2 = anchorX - Math.cos(perpAngle) * (tailW / 2);
-        const by2 = anchorY - Math.sin(perpAngle) * (tailW / 2);
-
-        tailPathD = `M ${bx1} ${by1} L ${balloon.tailTip.x} ${balloon.tailTip.y} L ${bx2} ${by2}`;
-
-        const innerX = anchorX - Math.cos(angle) * 8;
-        const innerY = anchorY - Math.sin(angle) * 8;
-
-        connectorPatch = (
-            <path
-                d={`M ${bx1} ${by1} L ${bx2} ${by2} L ${innerX} ${innerY} Z`}
-                fill="white"
-                stroke="none"
-            />
-        );
-    }
+    const isThought = balloon.type === 'thought';
+    const visibilityClass = hidden ? 'opacity-0 pointer-events-none transition-opacity duration-200' : 'opacity-100 transition-opacity duration-200';
 
     return (
         <>
             <svg
-                className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                className={`absolute top-0 left-0 w-full h-full pointer-events-none ${visibilityClass}`}
                 style={{ overflow: 'visible', zIndex: isSelected ? 30 : 20 }}
                 viewBox="0 0 1000 1000" preserveAspectRatio="none"
             >
-                {/* 1. Main Body */}
+                {/* 1. Main Unified Body */}
                 <path
-                    d={mainPathD}
+                    d={pathData}
                     fill="white"
-                    stroke="black"
+                    stroke={isSelected ? "#3b82f6" : "black"}
                     strokeWidth={balloon.borderWidth ?? 3}
                     strokeDasharray={isWhisper ? "10,10" : ""}
                     strokeLinejoin="round"
@@ -256,28 +302,16 @@ export const VectorBubble: React.FC<VectorProps> = React.memo(({
                     vectorEffect="non-scaling-stroke"
                 />
 
-                {/* 2. Tail */}
-                {!isThought && balloon.tailTip && (
-                    <path
-                        d={tailPathD}
-                        fill="white"
-                        stroke="black"
-                        strokeWidth={balloon.borderWidth ?? 3}
-                        strokeLinejoin="round"
-                    />
-                )}
-
-                {/* 3. Patch */}
-                {connectorPatch}
-
-                {/* 4. Thought Content */}
+                {/* 2. Thought Bubbles (Overlay) */}
                 {isThought && balloon.tailTip && (
                     <g>
                         {[0.2, 0.45, 0.75].map((t, i) => {
+                            const cx = xmin + width / 2;
+                            const cy = ymin + height / 2;
+                            // Lerp
+                            const bx = balloon.tailTip!.x + (cx - balloon.tailTip!.x) * t;
+                            const by = balloon.tailTip!.y + (cy - balloon.tailTip!.y) * t;
                             const size = 15 + i * 10;
-                            const tip = balloon.tailTip!;
-                            const bx = tip.x + (cx - tip.x) * t;
-                            const by = tip.y + (cy - tip.y) * t;
                             return <circle key={i} cx={bx} cy={by} r={size} fill="white" stroke="black" strokeWidth={balloon.borderWidth ?? 3} />
                         })}
                     </g>
@@ -286,12 +320,12 @@ export const VectorBubble: React.FC<VectorProps> = React.memo(({
 
             {/* Interaction & Text Layer */}
             <div
-                className={`absolute flex items-center justify-center text-center cursor-move select-none`}
+                className={`absolute flex items-center justify-center text-center cursor-move select-none ${visibilityClass}`}
                 style={{
                     top: `${(ymin / 1000) * 100}%`,
                     left: `${(xmin / 1000) * 100}%`,
-                    height: `${h / 10}%`,
-                    width: `${w / 10}%`,
+                    height: `${height / 10}%`,
+                    width: `${width / 10}%`,
                     zIndex: isSelected ? 31 : 21
                 }}
                 onMouseDown={handleMouseDown}
@@ -334,7 +368,7 @@ export const VectorBubble: React.FC<VectorProps> = React.memo(({
 
                 {isSelected && (
                     <>
-                        {/* Handles */}
+                        {/* Corner Handles */}
                         <div className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-nw-resize z-40 shadow-sm" onMouseDown={(e) => handleResizeStart(e, 'nw')} />
                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-ne-resize z-40 shadow-sm" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
                         <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-sw-resize z-40 shadow-sm" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
