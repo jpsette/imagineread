@@ -253,14 +253,24 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                             item.url // Fallback if url exists it's likely a renderable file in this context
                         );
 
-                        // Define click handler (CRITICAL: Restore Editor access)
+                        // Define click handler (CRITICAL: Distinguish comic folders from library folders)
                         const handleClick = (e: React.MouseEvent) => {
                             if (e.ctrlKey || e.metaKey) {
                                 e.stopPropagation();
                                 toggleSelection(item.id);
                             } else {
                                 if (item.type === 'folder') {
-                                    onOpenItem(item); // Enter folder
+                                    // Check if this folder contains pages (comic) or subfolders (library)
+                                    const hasPages = fileSystem.some(f => f.parentId === item.id && f.type === 'file')
+                                    const hasSubFolders = fileSystem.some(f => f.parentId === item.id && f.type === 'folder')
+
+                                    if (hasPages && !hasSubFolders) {
+                                        // It's a COMIC folder -> Open Editor
+                                        onOpenComic(item.id);
+                                    } else {
+                                        // It's a LIBRARY folder -> Navigate into it
+                                        onOpenItem(item);
+                                    }
                                 } else if (item.type === 'comic') {
                                     onOpenComic(item.id);
                                 } else {
@@ -292,12 +302,10 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                                 <Pencil size={12} />
                                             </button>
                                         )}
-                                        {/* Delete for files */}
-                                        {!isFolder && (
-                                            <button onClick={(e) => { e.stopPropagation(); onDeletePages([item.id]) }} className={`p-1.5 rounded-md hover:bg-black/50 backdrop-blur-sm text-red-300 hover:text-red-200`}>
-                                                <Trash2 size={12} />
-                                            </button>
-                                        )}
+                                        {/* Delete button for all items */}
+                                        <button onClick={(e) => { e.stopPropagation(); onDeletePages([item.id]) }} className={`p-1.5 rounded-md hover:bg-black/50 backdrop-blur-sm text-red-300 hover:text-red-200`}>
+                                            <Trash2 size={12} />
+                                        </button>
                                     </div>
                                 )}
 

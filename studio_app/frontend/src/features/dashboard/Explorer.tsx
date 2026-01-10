@@ -89,7 +89,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
                     <p className="px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Seus Projetos</p>
                     {projects.map(project => {
                         const isExpanded = expandedProjects.has(project.id)
-                        const projectLibraries = fileSystem.filter(f => f.parentId === project.rootFolderId && f.type === 'folder')
+                        const projectLibraries = fileSystem.filter(f => f.parentId === project.rootFolderId)
 
                         return (
                             <div key={project.id} className="flex flex-col">
@@ -286,20 +286,43 @@ export const Explorer: React.FC<ExplorerProps> = ({
                                                             </div>
                                                         )}
 
-                                                        {/* Files inside Library (if expanded) - Usually empty if it's a "Library", but maybe nested comics? */}
-                                                        {isLibExpanded && (
-                                                            <div className="flex flex-col gap-0.5 ml-6 pl-2 border-l border-white/5">
-                                                                {libFiles.map(file => (
-                                                                    <div key={file.id} className="px-2 py-1 rounded flex items-center gap-2 text-[11px] text-zinc-400 hover:bg-white/5 cursor-pointer transition-colors group/file">
-                                                                        <File size={12} className="text-white opacity-80" />
-                                                                        <span className="truncate text-white">{file.name}</span>
-                                                                    </div>
-                                                                ))}
-                                                                {libFiles.length === 0 && (
-                                                                    <span className="text-[10px] text-zinc-700 py-1 pl-1 italic">Vazio</span>
-                                                                )}
-                                                            </div>
-                                                        )}
+                                                        {/* Nested content inside Library (if expanded) */}
+                                                        {isLibExpanded && (() => {
+                                                            const subFolders = fileSystem.filter(f => f.parentId === lib.id && f.type === 'folder')
+                                                            const directFiles = fileSystem.filter(f => f.parentId === lib.id && (f.type === 'comic' || f.type === 'file'))
+
+                                                            return (
+                                                                <div className="flex flex-col gap-0.5 ml-6 pl-2 border-l border-white/5">
+                                                                    {/* Subfolders (Comics like "Ahsoka 01") */}
+                                                                    {subFolders.map(subFolder => {
+                                                                        const subFiles = fileSystem.filter(f => f.parentId === subFolder.id && (f.type === 'comic' || f.type === 'file'))
+                                                                        return (
+                                                                            <div
+                                                                                key={subFolder.id}
+                                                                                className={`px-2 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-white/5 group transition-colors ${currentFolderId === subFolder.id ? 'bg-blue-500/20 text-white' : 'text-zinc-400'}`}
+                                                                                onClick={() => onSelectFolder(subFolder.id)}
+                                                                            >
+                                                                                <File size={14} className="text-white" />
+                                                                                <span className="truncate flex-1 font-medium text-white">{subFolder.name}</span>
+                                                                                <span className="text-[10px] text-zinc-600 group-hover:text-zinc-500">({subFiles.length})</span>
+                                                                            </div>
+                                                                        )
+                                                                    })}
+
+                                                                    {/* Direct files */}
+                                                                    {directFiles.map(file => (
+                                                                        <div key={file.id} className="px-2 py-1 rounded flex items-center gap-2 text-[11px] text-zinc-400 hover:bg-white/5 cursor-pointer transition-colors group/file">
+                                                                            <File size={12} className="text-white opacity-80" />
+                                                                            <span className="truncate text-white">{file.name}</span>
+                                                                        </div>
+                                                                    ))}
+
+                                                                    {subFolders.length === 0 && directFiles.length === 0 && (
+                                                                        <span className="text-[10px] text-zinc-700 py-1 pl-1 italic">Vazio</span>
+                                                                    )}
+                                                                </div>
+                                                            )
+                                                        })()}
                                                     </div>
                                                 )
                                             })
