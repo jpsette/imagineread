@@ -117,12 +117,14 @@ export const useEditorLogic = (
                 box_2d: [400, 400, 600, 600],
                 shape: 'rectangle',
                 type: 'speech',
-                customFontSize: 13,
+                customFontSize: 12,
                 borderRadius: 20,
                 borderWidth: 1,
-                tailWidth: 40,
+                tailWidth: 20,
                 roughness: 1,
-                tailTip: null
+                // Default tail bottom-right
+                tailTip: { x: 550, y: 650 },
+                tailControl: { x: 525, y: 625 }
             };
             setSelectedBubbleId(newId);
             return [...prev, newBubble];

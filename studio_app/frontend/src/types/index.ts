@@ -20,10 +20,12 @@ export interface Balloon {
     tailWidth?: number;
     roughness?: number;
     tailTip?: { x: number, y: number } | null;
-    tailCurve?: any;
+    tailControl?: { x: number, y: number } | null;
+    tailCurve?: any; // Deprecated or for older format compatibility
 
     // Style Props
-    color?: string;
+    color?: string; // Fill color
+    borderColor?: string; // Stroke color
     textColor?: string;
     fontFamily?: string;
     opacity?: number;

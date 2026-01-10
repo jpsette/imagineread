@@ -2,34 +2,32 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Plus, Trash2, Check, Edit3, Download } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
-import { useParams, useNavigate } from 'react-router-dom';
-
 import { ExportModal } from './ExportModal';
 import { FileEntry } from '../../types';
 import { SortableItem } from '../../ui/SortableItem';
-import { useFileActions } from '../../hooks/useFileActions';
-import { useFileSystemStore } from '../../store/useFileSystemStore';
-import { useProjectStore } from '../../store/useProjectStore';
 
-export const ComicWorkstation: React.FC = () => {
-    const { comicId } = useParams<{ comicId: string }>();
-    const navigate = useNavigate();
+interface ComicWorkstationProps {
+    comic: { id: string; name: string };
+    pages: FileEntry[];
+    onClose: () => void;
+    onSelectPage: (pageId: string, pageUrl: string) => void;
+    onAddPages: (files: File[]) => void;
+    onDeletePages: (pageIds: string[]) => void;
+    onReorderPages: (pageIds: string[]) => void;
+}
 
-    // === GLOBAL STORE ===
-    const { fileSystem, setOpenedPageId } = useFileSystemStore();
-    const { deletePages, uploadPages, reorderItems } = useFileActions();
-    // Use project store to navigate back correctly
-    const { currentProjectId } = useProjectStore();
+export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
+    comic,
+    pages,
+    onClose,
+    onSelectPage,
+    onAddPages,
+    onDeletePages,
+    onReorderPages
+}) => {
+    // === REMOVED INTERNAL FETCHING ===
+    // Data is now passed via props from App.tsx controller
 
-    // Derived Data
-    const comic = fileSystem.find(f => f.id === comicId);
-    const pages = React.useMemo(() => fileSystem
-        .filter(f => f.parentId === comicId && f.type === 'file')
-        .sort((a, b) => {
-            if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
-            // Fallback to name sort
-            return a.name.localeCompare(b.name, undefined, { numeric: true });
-        }), [fileSystem, comicId]);
 
     // === LOCAL STATE ===
     const [orderedPages, setOrderedPages] = useState<FileEntry[]>([]);  // Optimistic UI
@@ -63,24 +61,17 @@ export const ComicWorkstation: React.FC = () => {
             const reordered = arrayMove(items, oldIndex, newIndex);
 
             // Call Action to save
-            if (reorderItems) {
-                reorderItems(reordered.map(p => p.id));
-            }
+            onReorderPages(reordered.map(p => p.id));
             return reordered;
         });
     };
 
     // Actions Wrapper
-    const handleClose = () => {
-        if (currentProjectId) {
-            navigate(`/project/${currentProjectId}`);
-        } else {
-            navigate('/');
-        }
-    };
+    const handleClose = onClose;
 
     const handleSelectPage = (pageId: string) => {
-        setOpenedPageId(pageId); // Triggers overlay in EditorPage or Nav to /editor/:id/page/:pid
+        const page = pages.find(p => p.id === pageId);
+        if (page) onSelectPage(pageId, page.url);
     };
 
     // Multi-selection handler
@@ -116,11 +107,11 @@ export const ComicWorkstation: React.FC = () => {
     const handleBulkDelete = useCallback(() => {
         if (selectedPageIds.size === 0) return;
         if (confirm(`Excluir ${selectedPageIds.size} página(s)?`)) {
-            deletePages(Array.from(selectedPageIds));
+            onDeletePages(Array.from(selectedPageIds));
             setSelectedPageIds(new Set());
             setLastSelectedId(null);
         }
-    }, [selectedPageIds, deletePages]);
+    }, [selectedPageIds, onDeletePages]);
 
     // Edit single page (Trigger overlay)
     const handleEditPage = useCallback(() => {
@@ -132,12 +123,12 @@ export const ComicWorkstation: React.FC = () => {
     // Add pages handler
     const handleAddPages = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (!files || files.length === 0 || !comicId) return;
-        uploadPages(Array.from(files), comicId);
+        if (!files || files.length === 0) return;
+        onAddPages(Array.from(files));
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
-    }, [uploadPages, comicId]);
+    }, [onAddPages]);
 
     // Keyboard shortcuts
     useEffect(() => {

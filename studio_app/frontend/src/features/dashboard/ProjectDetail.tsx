@@ -1,10 +1,9 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import { Folder, ArrowLeft, Upload, ChevronRight, Image as ImageIcon, Pin, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { Input } from '../../ui/Input';
 import { Project, FileEntry } from '../../types';
-import { useFileActions } from '../../hooks/useFileActions';
 
 interface ProjectDetailProps {
     project: Project | null;
@@ -14,73 +13,85 @@ interface ProjectDetailProps {
     onOpenItem: (item: FileEntry) => void;
     onOpenComic: (comicId: string) => void;
     onBack: () => void;
-    // Add missing props to satisfy TS but ignore them for this simple view
-    sortOrder?: any;
-    isCreatingFolder?: any;
-    setIsCreatingFolder?: any;
-    newItemName?: any;
-    setNewItemName?: any;
-    newItemColor?: any;
-    setNewItemColor?: any;
+
+    // Controlled State Props
+    isCreatingFolder: boolean;
+    setIsCreatingFolder: (v: boolean) => void;
+    newFolderName: string;
+    setNewFolderName: (v: string) => void;
+    newFolderColor: string;
+    setNewFolderColor: (v: string) => void;
+
+    // Actions
+    onCreateFolder: () => void;
+    onDeleteFolder: (id: string) => void;
+    onImportFiles: (files: File[]) => void;
+
     PROJECT_THEMES?: any;
-    onCreateFolder?: any;
+    sortOrder?: any; // Ignored for now
 }
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     project, currentFolderId, fileSystem, searchTerm, PROJECT_THEMES,
-    onOpenItem, onOpenComic, onBack
+    onOpenItem, onOpenComic, onBack,
+    isCreatingFolder, setIsCreatingFolder,
+    newFolderName, setNewFolderName,
+    newFolderColor, setNewFolderColor,
+    onCreateFolder, onDeleteFolder, onImportFiles
 }) => {
-    const { createFolder, uploadPages, deleteFolder } = useFileActions();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isCreatingLocal, setIsCreatingLocal] = useState(false);
-    const [newFolderName, setNewFolderName] = useState('');
-    const [newItemColor, setNewItemColor] = useState(PROJECT_THEMES?.[0]?.bg || 'bg-zinc-800');
+
+    // --- SELECTION STATE ---
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+    const toggleSelection = (id: string) => {
+        const newSet = new Set(selectedIds);
+        if (newSet.has(id)) newSet.delete(id);
+        else newSet.add(id);
+        setSelectedIds(newSet);
+    };
+
+    // --- SAFETY CHECK ---
+    const safeFileSystem = fileSystem || [];
 
     // --- LOGIC TO GET ITEMS ---
     const rootId = project?.rootFolderId;
-    // If no folder is selected, default to the project root
     const targetParent = currentFolderId || rootId;
 
     // Filter the items from the global fileSystem
-    const items = fileSystem
+    const items = safeFileSystem
         .filter(i => i.parentId === targetParent)
-        .filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        .filter(i => i.name.toLowerCase().includes(searchTerm?.toLowerCase() || ''));
 
     // --- BREADCRUMB LOGIC ---
     const breadcrumbs = useMemo(() => {
-        if (!project || !fileSystem) return [];
+        if (!project || !safeFileSystem) return [];
         const path: { id: string, name: string }[] = [];
 
-        // Recursive helper to build path from leaf to root
         const buildPath = (currentId: string | null) => {
             if (!currentId) return;
-            // Stop if we hit the project root (we add it manually at start)
             if (currentId === project.rootFolderId) return;
 
-            const folder = fileSystem.find(f => f.id === currentId);
+            const folder = safeFileSystem.find(f => f.id === currentId);
             if (folder) {
                 path.unshift({ id: folder.id, name: folder.name });
                 if (folder.parentId) buildPath(folder.parentId);
             }
         };
 
-        // If we are deep in a folder, build the path
         if (currentFolderId && currentFolderId !== project.rootFolderId) {
             buildPath(currentFolderId);
         }
 
-        // Always start with Project Root
         return [
             { id: project.rootFolderId || 'root', name: project.name },
             ...path
         ];
-    }, [currentFolderId, project, fileSystem]);
+    }, [currentFolderId, project, safeFileSystem]);
 
     // --- SMART COVER LOGIC ---
     const getFolderCover = (folderId: string) => {
-        const folderChildren = fileSystem.filter(f => f.parentId === folderId);
-
-        // 1. Try to find a file that IS an image (mimeType or extension)
+        const folderChildren = safeFileSystem.filter(f => f.parentId === folderId);
         const sortedChildren = [...folderChildren].sort((a, b) =>
             a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
         );
@@ -95,34 +106,22 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         return image?.url;
     };
 
-    // Simple Handler for creating folder
-    const handleCreate = async () => {
-        if (!newFolderName) return;
-        // In a real app we would pass color too
-        await createFolder(newFolderName, targetParent || 'root', newItemColor);
-        setIsCreatingLocal(false);
-        setNewFolderName('');
-    }
-
     // Breadcrumb navigation handler
     const handleBreadcrumbClick = (id: string) => {
         if (id === project?.rootFolderId) {
-            const folderEntry = fileSystem.find(f => f.id === id);
-            // Verify if it exists, otherwise trigger back until root?
-            // Since onBack is passed from parent, we can't control it fully here.
-            // But onOpenItem usually sets the specific folder ID.
+            const folderEntry = safeFileSystem.find(f => f.id === id);
             if (folderEntry) onOpenItem(folderEntry);
             else {
-                // Fallback: This might be the project root ID which is kept in Project but not always in FS as an item?
-                // Actually FS should have root folder entry.
-                // If not, we can assume we want to go "home" for this project.
-                // We can emulate clicking a folder "mock" with that ID.
                 onOpenItem({ id: id, name: 'Root', type: 'folder', parentId: null } as FileEntry);
             }
         } else {
-            const folderEntry = fileSystem.find(f => f.id === id);
+            const folderEntry = safeFileSystem.find(f => f.id === id);
             if (folderEntry) onOpenItem(folderEntry);
         }
+    }
+
+    if (!project && !currentFolderId && items.length === 0) {
+        return <div className="p-8 text-center text-zinc-500">Selecione um projeto para começar.</div>;
     }
 
     return (
@@ -160,35 +159,33 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 </div>
             </div>
 
-            {/* CONTENT - STANDARD CSS GRID (NO VIRTUALIZATION) */}
+            {/* CONTENT */}
             <div className="flex-1 overflow-y-auto p-6">
-                {/* UPDATED GRID SIZE: minmax(220px, 1fr) */}
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
 
                     {/* CARD 1: CREATE FOLDER */}
-                    {isCreatingLocal ? (
+                    {isCreatingFolder ? (
                         <Card className="h-72 p-4 border border-blue-500 bg-[#18181b] flex flex-col justify-center gap-2 shadow-lg shadow-blue-500/10">
                             <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">Nova Biblioteca</span>
                             <Input autoFocus value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Nome..." className="text-sm py-2" />
 
-                            {/* COLOR PICKER */}
                             <div className="flex flex-wrap gap-1 mb-1 mt-2">
                                 {PROJECT_THEMES && PROJECT_THEMES.map((theme: any) => (
                                     <button
                                         key={theme.bg}
-                                        onClick={(e) => { e.stopPropagation(); setNewItemColor(theme.bg); }}
-                                        className={`w-4 h-4 rounded-full transition-all ${theme.bg} ${newItemColor === theme.bg ? 'ring-2 ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                                        onClick={(e) => { e.stopPropagation(); setNewFolderColor(theme.bg); }}
+                                        className={`w-4 h-4 rounded-full transition-all ${theme.bg} ${newFolderColor === theme.bg ? 'ring-2 ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
                                     />
                                 ))}
                             </div>
 
                             <div className="flex gap-2 mt-4">
-                                <Button size="sm" onClick={handleCreate} className="flex-1 text-xs font-bold">CRIAR</Button>
-                                <Button size="sm" variant="secondary" onClick={() => setIsCreatingLocal(false)} className="text-xs">X</Button>
+                                <Button size="sm" onClick={onCreateFolder} className="flex-1 text-xs font-bold">CRIAR</Button>
+                                <Button size="sm" variant="secondary" onClick={() => setIsCreatingFolder(false)} className="text-xs">X</Button>
                             </div>
                         </Card>
                     ) : (
-                        <Card onClick={() => setIsCreatingLocal(true)}
+                        <Card onClick={() => setIsCreatingFolder(true)}
                             className="h-72 border border-dashed border-white/10 hover:border-blue-500/50 hover:bg-white/5 cursor-pointer flex flex-col items-center justify-center gap-4 transition-all group">
                             <div className="p-4 rounded-full bg-zinc-800/50 text-zinc-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
                                 <Folder size={32} />
@@ -210,19 +207,49 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                     {items.map(item => {
                         const coverImage = item.type === 'folder' ? getFolderCover(item.id) : item.url;
                         const folderColor = PROJECT_THEMES?.find((t: any) => t.bg === item.color)?.text || 'text-blue-500';
+                        const isSelected = selectedIds.has(item.id);
+
+                        const handleClick = (e: React.MouseEvent) => {
+                            // 1. Handle Selection (Ctrl/Meta click)
+                            if (e.ctrlKey || e.metaKey) {
+                                e.stopPropagation();
+                                toggleSelection(item.id);
+                                return;
+                            }
+
+                            // 2. Handle Folder/Comic Navigation Logic
+                            if (item.type === 'folder') {
+                                const children = safeFileSystem.filter(f => f.parentId === item.id);
+                                const hasPages = children.some(f => f.type === 'file');
+                                const hasSubFolders = children.some(f => f.type === 'folder');
+
+                                if (hasPages && !hasSubFolders) {
+                                    onOpenComic(item.id);
+                                } else {
+                                    onOpenItem(item);
+                                }
+                            }
+                            else if (item.type === 'comic') {
+                                onOpenComic(item.id);
+                            }
+                            else {
+                                const parentId = currentFolderId || item.parentId;
+                                if (parentId) onOpenComic(parentId);
+                            }
+                        };
 
                         return (
                             <Card key={item.id}
-                                onClick={() => item.type === 'folder' ? onOpenItem(item) : onOpenComic(item.id)}
-                                className="h-72 relative group cursor-pointer border border-white/5 bg-[#18181b] overflow-hidden hover:ring-2 hover:ring-blue-500 hover:shadow-2xl transition-all">
+                                onClick={handleClick}
+                                className={`h-72 relative group cursor-pointer border bg-[#18181b] overflow-hidden hover:ring-2 hover:ring-blue-500 hover:shadow-2xl transition-all ${isSelected ? 'ring-2 ring-blue-500 border-blue-500' : 'border-white/5'}`}
+                            >
 
-                                {/* COVER IMAGE LOGIC */}
+                                {/* COVER IMAGE */}
                                 {coverImage ? (
                                     <>
                                         <div className="absolute inset-0 bg-zinc-900">
                                             <img src={coverImage} alt={item.name} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
                                         </div>
-                                        {/* Dark Gradient Overlay for text readability */}
                                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
                                     </>
                                 ) : (
@@ -235,7 +262,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                     </div>
                                 )}
 
-                                {/* ACTION BUTTONS OVERLAY */}
+                                {/* ACTION BUTTONS */}
                                 <div className="absolute top-2 right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 rounded-lg p-1 backdrop-blur-sm">
                                     <button className="p-1.5 hover:bg-white/20 rounded text-zinc-400 hover:text-white transition-colors" onClick={(e) => e.stopPropagation()}>
                                         <Pin size={14} />
@@ -247,14 +274,14 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                         className="p-1.5 hover:bg-red-500/20 rounded text-zinc-400 hover:text-red-400 transition-colors"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            if (confirm('Excluir este item?')) deleteFolder(item.id);
+                                            if (confirm('Excluir este item?')) onDeleteFolder(item.id);
                                         }}
                                     >
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
 
-                                {/* LABEL & META */}
+                                {/* META INFO */}
                                 <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col gap-1">
                                     <div className="flex items-center gap-2 mb-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300">
                                         <span className={`text-[10px] uppercase font-bold tracking-widest ${folderColor} bg-white/5 px-2 py-0.5 rounded border border-white/10`}>
@@ -264,8 +291,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                     <p className="text-sm font-bold text-white truncate leading-tight drop-shadow-md">{item.name}</p>
                                     {item.type === 'folder' && (
                                         <p className="text-[10px] text-zinc-400 font-medium">
-                                            {/* Count items inside */}
-                                            {fileSystem.filter(f => f.parentId === item.id).length} itens
+                                            {safeFileSystem.filter(f => f.parentId === item.id).length} itens
                                         </p>
                                     )}
                                 </div>
@@ -275,13 +301,12 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 </div>
             </div>
 
-            {/* HIDDEN INPUT */}
             <input
                 type="file"
                 multiple
                 ref={fileInputRef}
                 className="hidden"
-                onChange={(e) => e.target.files && uploadPages(Array.from(e.target.files), targetParent || "")}
+                onChange={(e) => e.target.files && onImportFiles(Array.from(e.target.files))}
             />
         </div>
     );

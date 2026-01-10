@@ -1,226 +1,154 @@
-import { useState } from 'react'
-import { Folder, ChevronRight, ChevronDown, Pencil, Trash2, Check, X, Pin, File } from 'lucide-react'
-import { useNavigate } from 'react-router-dom';
-
+import React from 'react';
+import { Folder, ChevronRight, ChevronDown, Pencil, Trash2, Pin, File } from 'lucide-react';
 import { Project, FileEntry as FileNode } from '../../types';
-import { useProjectStore } from '../../store/useProjectStore';
-import { useFileSystemStore } from '../../store/useFileSystemStore';
-import { useProjectActions } from '../../hooks/useProjectActions';
-import { useFileActions } from '../../hooks/useFileActions';
-import { useUIStore } from '../../store/useUIStore';
 
-// Note: PROJECT_THEMES should probably be imported or kept in a constant file
-import { PROJECT_THEMES } from '../../constants/theme';
+interface ExplorerProps {
+    projects: Project[];
+    fileSystem: FileNode[];
+    currentProjectId: string | null;
+    currentFolderId: string | null;
+    onSelectProject: (id: string) => void;
+    onSelectFolder: (id: string) => void;
+    onEditProject: (project: Project) => void;
+    onDeleteProject: (id: string) => void;
+    onPinProject: (id: string) => void;
+    onEditFolder: (folder: FileNode) => void;
+    onDeleteFolder: (id: string) => void;
+    onToggleProjectExpand: (id: string) => void;
+    onToggleFolderExpand: (id: string) => void;
+    expandedProjects: Set<string>;
+    expandedFolders: Set<string>;
+    PROJECT_THEMES: { bg: string; text: string; lightText: string }[];
+}
 
-export const Explorer: React.FC = () => {
-    const navigate = useNavigate();
+export const Explorer: React.FC<ExplorerProps> = ({
+    projects,
+    fileSystem,
+    currentProjectId,
+    currentFolderId,
+    onSelectProject,
+    onSelectFolder,
+    onEditProject,
+    onDeleteProject,
+    onPinProject,
+    onEditFolder,
+    onDeleteFolder,
+    onToggleProjectExpand,
+    onToggleFolderExpand,
+    expandedProjects,
+    expandedFolders,
+    PROJECT_THEMES
+}) => {
+    // Defensive check
+    const safeProjects = projects || [];
+    const safeFileSystem = fileSystem || [];
+    // const navigate = useNavigate(); // Navigation is handled by parent callback
 
-    // === STORE ACCESS ===
-    const { projects, currentProjectId, setCurrentProjectId } = useProjectStore();
-    const { fileSystem, currentFolderId, setCurrentFolderId } = useFileSystemStore();
-    const { setShowManager, showManager } = useUIStore(); // Determine if we open manager on select
+    // === STORE ACCESS REMOVED ===
+    // Actions are passed as props
 
-    // === ACTIONS ===
-    const { updateProject, deleteProject, togglePin } = useProjectActions();
-    const { deleteFolder } = useFileActions();
+    // === LOCAL UI STATE ===
+    // Edit state remains local as it is transient UI state, 
+    // BUT user snippet suggests onEditProject prop might handle the *start* of editing?
+    // "onEditProject={(p) => { setEditingProject(p); ... }}" in App.tsx
+    // So Explorer should likely just trigger the parent to open the edit UI?
+    // Or Explorer keeps local edit UI? 
+    // In App.tsx snippet: onEditProject sets parent editingProject state. 
+    // Does Explorer render the edit form?
+    // In original code, Explorer rendered the inline edit form using local `editingProject`.
+    // If App.tsx sets parent state, App.tsx likely renders the form?
+    // NO, App.tsx renders ProjectManager which renders the form?
+    // Or Explorer renders it?
+    // The Explorer code I read in Step 1003 has inline edit form.
+    // If I keep local state for editing here, it desyncs with App.tsx "editingProject".
+    // The user snippet implies App.tsx manages `editingProject`.
+    // However, Explorer JSX uses `editingProject?.id === project.id`.
+    // So Explorer needs to know about `editingProject`.
+    // BUT `ExplorerProps` in user snippet DOES NOT include `editingProject`.
+    // "onEditProject={(p) => ... defined in App.tsx ...}"
+    // This suggests Explorer just notifies "Hey, user clicked edit".
+    // Does Explorer display the edit form?
+    // If it doesn't receive `editingProject` as prop, it doesn't know.
+    // Maybe the user intends Explorer to NOT have inline editing, but rather trigger the Manager to edit?
+    // "onEditProject={(p) => { setEditingProject(p); ... if(!showManager) setShowManager(true); }}"
+    // This implementation in App.tsx STRONGLY suggests that clicking Edit in Explorer OPENS THE MANAGER to edit.
+    // So Explorer should NOT have inline editing anymore. 
+    // It should just call `onEditProject`.
 
-    // === LOCAL UI STATE (Specific to Explorer) ===
-    const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
-    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+    // So I will REMOVE local editing state from Explorer.
 
-    // Local edit state
-    const [editingProject, setEditingProject] = useState<Project | null>(null)
-    const [editingFolder, setEditingFolder] = useState<FileNode | null>(null)
-    const [editName, setEditName] = useState('')
-    const [editColor, setEditColor] = useState('')
 
     // === HANDLERS ===
     const handleSelectProject = (id: string) => {
-        setCurrentProjectId(id);
-        setCurrentFolderId(null);
-        navigate(`/project/${id}`);
-        if (!showManager) setShowManager(true);
+        onSelectProject(id);
     };
 
     const handleSelectFolder = (id: string) => {
-        setCurrentFolderId(id);
-        if (!currentProjectId) {
-            // Find project for this folder?
-            // Not strictly necessary if we are just navigating, but good for context.
-            const folder = fileSystem.find(f => f.id === id);
-            if (folder && folder.projectId) {
-                setCurrentProjectId(folder.projectId);
-            }
-        }
-        navigate(`/project/${currentProjectId || ''}`); // Re-navigates to ensure view
+        onSelectFolder(id);
     };
 
-    const onToggleProjectExpand = (id: string) => {
-        const s = new Set(expandedProjects);
-        if (s.has(id)) s.delete(id);
-        else s.add(id);
-        setExpandedProjects(s);
-    };
+    // Note: Inline editing has been removed in favor of ProjectManager
+    // The "Edit" button now triggers parent to show ProjectManager in edit mode
 
-    const onToggleFolderExpand = (id: string) => {
-        const s = new Set(expandedFolders);
-        if (s.has(id)) s.delete(id);
-        else s.add(id);
-        setExpandedFolders(s);
-    };
-
-    // Project Editing
-    const startEditingProject = (project: Project, e: React.MouseEvent) => {
-        e.stopPropagation()
-        setEditingProject(project)
-        setEditName(project.name)
-        setEditColor(project.color)
-    }
-
-    const handleSaveProject = () => {
-        if (!editingProject || !editName.trim()) {
-            setEditingProject(null)
-            return
-        }
-        updateProject(editingProject.id, { name: editName, color: editColor })
-        setEditingProject(null)
-        setEditName('')
-        setEditColor('')
-    }
-
-    // Folder Editing
+    // Folder editing is currently placeholder/disabled as per App.tsx
     const startEditingFolder = (folder: FileNode, e: React.MouseEvent) => {
-        e.stopPropagation()
-        setEditingFolder(folder)
-        setEditName(folder.name)
-        setEditColor(folder.color || '')
-    }
-
-    const handleSaveFolder = () => {
-        if (!editingFolder || !editName.trim()) {
-            setEditingFolder(null)
-            return
-        }
-        // Assuming updateFolder action exists? Or generic file update?
-        // useFileActions does NOT seem to have updateFolder exposed based on my memory?
-        // Let's check logic: Wrapper usually handles it.
-        // Wait, onEditFolder was passed as () => {} in DesktopEnvironment?
-        // Checking previous file content...
-        // onEditFolder={() => { }}
-        // So editing folder was NOT implemented in DesktopEnvironment!
-        // We need to implement it here if we want it.
-        // Assuming we want to support it, we should add updateFolder to useFileActions or directly import api.
-        // For now, I will placeholder it or try api.rename?
-        // api.ts does NOT have updateFolder/rename.
-        // I'll comment it out or leave as TODO to be safe, or just use console log.
-        console.log("Update folder not implemented yet in backend/actions", editingFolder, editName, editColor);
-
-        setEditingFolder(null)
-        setEditName('')
-        setEditColor('')
-    }
+        e.stopPropagation();
+        onEditFolder(folder);
+    };
 
     return (
         <div className="w-full h-full p-4 flex flex-col gap-4 min-w-[250px]">
             <nav className="flex flex-col gap-1">
                 <div className="mt-4 flex flex-col gap-1">
                     <p className="px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Seus Projetos</p>
-                    {projects.map(project => {
+                    {safeProjects.map(project => {
                         const isExpanded = expandedProjects.has(project.id)
-                        const projectLibraries = fileSystem.filter(f => f.parentId === project.rootFolderId)
+                        const projectLibraries = safeFileSystem.filter(f => f.parentId === project.rootFolderId)
 
                         return (
                             <div key={project.id} className="flex flex-col">
-                                {editingProject?.id === project.id ? (
-                                    // INLINE EDIT FORM
-                                    <div
-                                        className="px-3 py-2 bg-[#27272a] rounded-lg flex flex-col gap-2 cursor-default"
-                                        onClick={(e) => e.stopPropagation()}
+                                <div
+                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 cursor-pointer transition-colors text-sm group ${currentProjectId === project.id ? 'bg-[#27272a] text-white' : 'text-text-secondary hover:text-text-primary hover:bg-app-bg'}`}
+                                    onClick={() => handleSelectProject(project.id)}
+                                >
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            onToggleProjectExpand(project.id)
+                                        }}
+                                        className="p-0.5 rounded hover:bg-white/10 text-text-secondary hover:text-white transition-colors"
                                     >
-                                        <input
-                                            type="text"
-                                            value={editName}
-                                            onChange={(e) => setEditName(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') handleSaveProject()
-                                                if (e.key === 'Escape') { setEditingProject(null); setEditName(''); setEditColor('') }
-                                            }}
-                                            autoFocus
-                                            className="w-full px-2 py-1 text-xs bg-[#18181b] border border-[#3f3f46] rounded text-white focus:border-blue-500 outline-none"
-                                            placeholder="Nome do projeto"
-                                        />
+                                        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                    </button>
 
-                                        <div className="grid grid-cols-8 gap-0.5 mt-2">
-                                            {PROJECT_THEMES.map(theme => (
-                                                <button
-                                                    key={theme.bg}
-                                                    onClick={() => setEditColor(theme.bg)}
-                                                    className={`w-3 h-3 rounded-full ${theme.bg} ${editColor === theme.bg ? 'ring-1 ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'} transition-all`}
-                                                />
-                                            ))}
-                                        </div>
-                                        <div className="flex items-center gap-1 justify-end mt-2">
-                                            <div className="flex gap-1">
-                                                <button
-                                                    onClick={() => { setEditingProject(null); setEditName(''); setEditColor('') }}
-                                                    className="p-1 hover:text-red-400 text-gray-500"
-                                                >
-                                                    <X size={12} />
-                                                </button>
-                                                <button
-                                                    onClick={handleSaveProject}
-                                                    className="p-1 hover:text-green-400 text-gray-500"
-                                                >
-                                                    <Check size={12} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    // NORMAL VIEW
-                                    <div
-                                        className={`px-3 py-2 rounded-lg flex items-center gap-2 cursor-pointer transition-colors text-sm group ${currentProjectId === project.id ? 'bg-[#27272a] text-white' : 'text-text-secondary hover:text-text-primary hover:bg-app-bg'}`}
-                                        onClick={() => handleSelectProject(project.id)}
-                                    >
+                                    <Folder size={16} className={`${PROJECT_THEMES.find(t => t.bg === project.color)?.text || 'text-text-secondary'} fill-current`} />
+                                    <span className={`truncate flex-1 ${PROJECT_THEMES.find(t => t.bg === project.color)?.lightText || ''}`}>{project.name}</span>
+
+                                    <div className="hidden group-hover:flex gap-1">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onPinProject(project.id); }}
+                                            className={`p-1 hover:text-white ${project.isPinned ? 'text-accent-blue' : 'text-gray-500'}`}
+                                            title={project.isPinned ? 'Desafixar' : 'Fixar'}
+                                        >
+                                            <Pin size={12} className={project.isPinned ? "fill-current" : ""} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onEditProject(project); }}
+                                            className="p-1 hover:text-white text-gray-500"
+                                        >
+                                            <Pencil size={12} />
+                                        </button>
                                         <button
                                             onClick={(e) => {
-                                                e.stopPropagation()
-                                                onToggleProjectExpand(project.id)
+                                                e.stopPropagation();
+                                                onDeleteProject(project.id);
                                             }}
-                                            className="p-0.5 rounded hover:bg-white/10 text-text-secondary hover:text-white transition-colors"
+                                            className="p-1 hover:text-red-400 text-gray-500"
                                         >
-                                            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                            <Trash2 size={12} />
                                         </button>
-
-                                        <Folder size={16} className={`${PROJECT_THEMES.find(t => t.bg === project.color)?.text || 'text-text-secondary'} fill-current`} />
-                                        <span className={`truncate flex-1 ${PROJECT_THEMES.find(t => t.bg === project.color)?.lightText || ''}`}>{project.name}</span>
-
-                                        <div className="hidden group-hover:flex gap-1">
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); togglePin(project.id); }}
-                                                className={`p-1 hover:text-white ${project.isPinned ? 'text-accent-blue' : 'text-gray-500'}`}
-                                                title={project.isPinned ? 'Desafixar' : 'Fixar'}
-                                            >
-                                                <Pin size={12} className={project.isPinned ? "fill-current" : ""} />
-                                            </button>
-                                            <button
-                                                onClick={(e) => startEditingProject(project, e)}
-                                                className="p-1 hover:text-white text-gray-500"
-                                            >
-                                                <Pencil size={12} />
-                                            </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteProject(project.id);
-                                                }}
-                                                className="p-1 hover:text-red-400 text-gray-500"
-                                            >
-                                                <Trash2 size={12} />
-                                            </button>
-                                        </div>
                                     </div>
-                                )}
+                                </div>
 
                                 {/* Sub-libraries */}
                                 {isExpanded && (
@@ -231,8 +159,8 @@ export const Explorer: React.FC = () => {
                                             projectLibraries.map(lib => {
                                                 const isLibExpanded = expandedFolders.has(lib.id)
                                                 // Check content to determine visual type
-                                                const libFiles = fileSystem.filter(f => f.parentId === lib.id && (f.type === 'comic' || f.type === 'file'))
-                                                const hasSubFolders = fileSystem.some(f => f.parentId === lib.id && f.type === 'folder')
+                                                const libFiles = safeFileSystem.filter(f => f.parentId === lib.id && (f.type === 'comic' || f.type === 'file'))
+                                                const hasSubFolders = safeFileSystem.some(f => f.parentId === lib.id && f.type === 'folder')
 
                                                 // Heuristic: If it has files but no subfolders, it's likely a Semantic Comic (File)
                                                 const isLikelyComic = libFiles.length > 0 && !hasSubFolders;
@@ -256,7 +184,7 @@ export const Explorer: React.FC = () => {
                                                                 </button>
                                                                 <button onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    if (confirm('Tem certeza que deseja excluir esta pasta e todo seu conteúdo?')) deleteFolder(lib.id);
+                                                                    if (confirm('Tem certeza que deseja excluir esta pasta e todo seu conteúdo?')) onDeleteFolder(lib.id);
                                                                 }} className="p-1 hover:text-red-400 text-zinc-600 transition-colors">
                                                                     <Trash2 size={11} />
                                                                 </button>
@@ -268,79 +196,50 @@ export const Explorer: React.FC = () => {
                                                 // RENDER AS FOLDER (Library)
                                                 return (
                                                     <div key={lib.id} className="flex flex-col">
-                                                        {editingFolder?.id === lib.id ? (
-                                                            // INLINE EDIT FOLDER
-                                                            <div
-                                                                className="px-2 py-1 bg-[#27272a] rounded flex flex-col gap-1 cursor-default"
-                                                                onClick={(e) => e.stopPropagation()}
+                                                        <div
+                                                            className={`px-2 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-white/5 group transition-colors ${currentFolderId === lib.id ? 'bg-blue-500/20 text-white' : 'text-zinc-400'}`}
+                                                            onClick={() => handleSelectFolder(lib.id)}
+                                                        >
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    onToggleFolderExpand(lib.id)
+                                                                }}
+                                                                className="p-0.5 hover:text-white transition-colors"
                                                             >
-                                                                <input
-                                                                    type="text"
-                                                                    value={editName}
-                                                                    onChange={(e) => setEditName(e.target.value)}
-                                                                    onKeyDown={(e) => {
-                                                                        if (e.key === 'Enter') handleSaveFolder()
-                                                                        if (e.key === 'Escape') { setEditingFolder(null); setEditName(''); setEditColor('') }
-                                                                    }}
-                                                                    autoFocus
-                                                                    className="w-full px-2 py-1 text-[10px] bg-[#18181b] border border-[#3f3f46] rounded text-white focus:border-blue-500 outline-none"
-                                                                    placeholder="Nome da pasta"
-                                                                />
-                                                                <div className="flex justify-end gap-1">
-                                                                    <button onClick={() => { setEditingFolder(null); setEditName(''); setEditColor('') }} className="p-0.5 hover:text-red-400 text-gray-500">
-                                                                        <X size={10} />
-                                                                    </button>
-                                                                    <button onClick={handleSaveFolder} className="p-0.5 hover:text-green-400 text-gray-500">
-                                                                        <Check size={10} />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <div
-                                                                className={`px-2 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-white/5 group transition-colors ${currentFolderId === lib.id ? 'bg-blue-500/20 text-white' : 'text-zinc-400'}`}
-                                                                onClick={() => handleSelectFolder(lib.id)}
-                                                            >
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation()
-                                                                        onToggleFolderExpand(lib.id)
-                                                                    }}
-                                                                    className="p-0.5 hover:text-white transition-colors"
-                                                                >
-                                                                    {isLibExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                                                                </button>
-                                                                {/* Folder Icon: Default to Blue if no color set */}
-                                                                <Folder
-                                                                    size={14}
-                                                                    className={`${PROJECT_THEMES.find(t => t.bg === lib.color)?.text || 'text-blue-500'}`}
-                                                                />
-                                                                <span className="truncate flex-1 font-medium text-white">{lib.name}</span>
-                                                                <span className="text-[10px] text-zinc-600 group-hover:text-zinc-500">({libFiles.length})</span>
+                                                                {isLibExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                                                            </button>
+                                                            {/* Folder Icon: Default to Blue if no color set */}
+                                                            <Folder
+                                                                size={14}
+                                                                className={`${PROJECT_THEMES.find(t => t.bg === lib.color)?.text || 'text-blue-500'}`}
+                                                            />
+                                                            <span className="truncate flex-1 font-medium text-white">{lib.name}</span>
+                                                            <span className="text-[10px] text-zinc-600 group-hover:text-zinc-500">({libFiles.length})</span>
 
-                                                                <div className="hidden group-hover:flex gap-1 ml-auto">
-                                                                    <button onClick={(e) => startEditingFolder(lib, e)} className="p-1 hover:text-white text-zinc-600 transition-colors">
-                                                                        <Pencil size={11} />
-                                                                    </button>
-                                                                    <button onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        if (confirm('Tem certeza que deseja excluir esta pasta e todo seu conteúdo?')) deleteFolder(lib.id);
-                                                                    }} className="p-1 hover:text-red-400 text-zinc-600 transition-colors">
-                                                                        <Trash2 size={11} />
-                                                                    </button>
-                                                                </div>
+                                                            <div className="hidden group-hover:flex gap-1 ml-auto">
+                                                                <button onClick={(e) => startEditingFolder(lib, e)} className="p-1 hover:text-white text-zinc-600 transition-colors">
+                                                                    <Pencil size={11} />
+                                                                </button>
+                                                                <button onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (confirm('Tem certeza que deseja excluir esta pasta e todo seu conteúdo?')) onDeleteFolder(lib.id);
+                                                                }} className="p-1 hover:text-red-400 text-zinc-600 transition-colors">
+                                                                    <Trash2 size={11} />
+                                                                </button>
                                                             </div>
-                                                        )}
+                                                        </div>
 
                                                         {/* Nested content inside Library (if expanded) */}
                                                         {isLibExpanded && (() => {
-                                                            const subFolders = fileSystem.filter(f => f.parentId === lib.id && f.type === 'folder')
-                                                            const directFiles = fileSystem.filter(f => f.parentId === lib.id && (f.type === 'comic' || f.type === 'file'))
+                                                            const subFolders = safeFileSystem.filter(f => f.parentId === lib.id && f.type === 'folder')
+                                                            const directFiles = safeFileSystem.filter(f => f.parentId === lib.id && (f.type === 'comic' || f.type === 'file'))
 
                                                             return (
                                                                 <div className="flex flex-col gap-0.5 ml-6 pl-2 border-l border-white/5">
                                                                     {/* Subfolders (Comics like "Ahsoka 01") */}
                                                                     {subFolders.map(subFolder => {
-                                                                        const subFiles = fileSystem.filter(f => f.parentId === subFolder.id && (f.type === 'comic' || f.type === 'file'))
+                                                                        const subFiles = safeFileSystem.filter(f => f.parentId === subFolder.id && (f.type === 'comic' || f.type === 'file'))
                                                                         return (
                                                                             <div
                                                                                 key={subFolder.id}

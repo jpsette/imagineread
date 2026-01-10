@@ -1,57 +1,78 @@
-import { useState } from 'react'
-import { Plus, Search, ArrowDownAZ, ArrowUpZA, Folder, Pin, Pencil, Trash2, ChevronRight } from 'lucide-react'
+import React from 'react';
+import { Plus, Search, Folder, Trash2, Pin, Pencil, ArrowDownAZ, ArrowUpZA, ChevronRight } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Card } from '../../ui/Card';
 import { Project } from '../../types';
-import { useProjectStore } from '../../store/useProjectStore';
-import { useProjectActions } from '../../hooks/useProjectActions';
-import { PROJECT_THEMES } from '../../constants/theme';
-import { useNavigate } from 'react-router-dom';
 
-export const ProjectManager: React.FC = () => {
-    const navigate = useNavigate();
-
-    // === STORE ACCESS ===
-    const { projects } = useProjectStore();
-    const { createProject, updateProject, deleteProject, togglePin } = useProjectActions();
-
-    // === LOCAL UI STATE ===
-    const [searchTerm, setSearchTerm] = useState('');
-    const [sortOrder, setSortOrder] = useState<'az' | 'za'>('az');
+interface ProjectManagerProps {
+    projects: Project[];
+    searchTerm: string;
+    setSearchTerm: (term: string) => void;
+    sortOrder: 'az' | 'za';
+    setSortOrder: (order: 'az' | 'za') => void;
 
     // Creation State
-    const [isCreatingProject, setIsCreatingProject] = useState(false);
-    const [newItemName, setNewItemName] = useState('');
-    const [newItemColor, setNewItemColor] = useState(PROJECT_THEMES[0].bg);
+    isCreatingProject: boolean;
+    setIsCreatingProject: (isOpen: boolean) => void;
+    newItemName: string;
+    setNewItemName: (name: string) => void;
+    newItemColor: string;
+    setNewItemColor: (color: string) => void;
 
     // Editing State
-    const [editingProject, setEditingProject] = useState<Project | null>(null);
-    const [editName, setEditName] = useState('');
-    const [editColor, setEditColor] = useState('');
+    editingProject: Project | null;
+    setEditingProject: (project: Project | null) => void;
+    editName: string;
+    setEditName: (name: string) => void;
+    editColor: string;
+    setEditColor: (color: string) => void;
 
-    // === HANDLERS ===
-    const handleCreateProject = async () => {
-        if (!newItemName.trim()) return;
-        const newProject = await createProject(newItemName, newItemColor);
-        setIsCreatingProject(false);
-        setNewItemName('');
-        setNewItemColor(PROJECT_THEMES[0].bg);
-        // Navigate to the new project immediately
-        if (newProject) {
-            navigate(`/project/${newProject.id}`);
-        }
-    };
+    // Actions
+    onCreateProject: () => void;
+    onUpdateProject: (id: string, updates: Partial<Project>) => void;
+    onDeleteProject: (id: string) => void;
+    onSelectProject: (id: string) => void;
+    onTogglePin: (id: string) => void;
+
+    // Constants
+    PROJECT_THEMES: { bg: string; text: string; lightText: string }[];
+}
+
+export const ProjectManager: React.FC<ProjectManagerProps> = ({
+    projects,
+    searchTerm, setSearchTerm,
+    sortOrder, setSortOrder,
+    isCreatingProject, setIsCreatingProject,
+    newItemName, setNewItemName,
+    newItemColor, setNewItemColor,
+    editingProject, setEditingProject,
+    editName, setEditName,
+    editColor, setEditColor,
+    onCreateProject,
+    onUpdateProject,
+    onDeleteProject,
+    onSelectProject,
+    onTogglePin,
+    PROJECT_THEMES
+}) => {
+    // const navigate = useNavigate(); // REMOVE: Navigation handled by prop
+
+    // === STORE ACCESS REMOVED ===
+
+    // === LOCAL UI STATE REMOVED ===
+
+    // === HANDLERS MAPPED TO PROPS ===
+    const handleCreateProject = onCreateProject;
 
     const handleUpdateProject = () => {
         if (!editingProject || !editName.trim()) return;
-        updateProject(editingProject.id, { name: editName, color: editColor });
-        setEditingProject(null);
+        onUpdateProject(editingProject.id, { name: editName, color: editColor });
     };
 
-    const handleSelectProject = (projectId: string) => {
-        navigate(`/project/${projectId}`);
-    };
+    const handleSelectProject = onSelectProject;
+    const togglePin = onTogglePin;
+
 
     return (
         <>
@@ -205,7 +226,7 @@ export const ProjectManager: React.FC = () => {
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (confirm('Tem certeza que deseja excluir este projeto?')) {
-                                                    deleteProject(project.id);
+                                                    onDeleteProject(project.id);
                                                 }
                                             }}
                                         >
