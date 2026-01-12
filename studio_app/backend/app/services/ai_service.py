@@ -212,25 +212,54 @@ def clean_page_content(image_path_or_url: str, bubbles: List[dict]):
     
     with PILImage.open(local_path) as img:
         w_orig, h_orig = img.size
-        mask = PILImage.new("L", img.size, 0)
+        
+        # --- MASK GENERATION (Refactored to Spec) ---
+        # Cria máscara preta
+        mask = PILImage.new("L", (w_orig, h_orig), 0)
         draw = ImageDraw.Draw(mask)
         
         has_bubbles = False
-        for b in bubbles:
+        logger.info(f"🧼 [Backend] Generating Mask for {len(bubbles)} bubbles...")
+        
+        for i, b in enumerate(bubbles):
+            # Input: [ymin, xmin, ymax, xmax] (0-1000)
             if 'box_2d' not in b: continue
-            ymin, xmin, ymax, xmax = b['box_2d']
-            x1, y1 = int((xmin/1000)*w_orig), int((ymin/1000)*h_orig)
-            x2, y2 = int((xmax/1000)*w_orig), int((ymax/1000)*h_orig)
+            
+            # Extract Normalized Coords
+            box = b['box_2d']
+            if len(box) != 4: continue
+            
+            ymin_n, xmin_n, ymax_n, xmax_n = box
+            
+            # Conversão para Pixels Absolutos
+            x1 = int((xmin_n / 1000) * w_orig)
+            y1 = int((ymin_n / 1000) * h_orig)
+            x2 = int((xmax_n / 1000) * w_orig)
+            y2 = int((ymax_n / 1000) * h_orig)
+            
+            logger.info(f"   🔹 Bubble {i}: Norm[{ymin_n}, {xmin_n}...] -> Pixels[{x1}, {y1}, {x2}, {y2}]")
+            
+            # PIL espera [x1, y1, x2, y2]
             draw.rectangle([x1, y1, x2, y2], fill=255)
             has_bubbles = True
 
-        if not has_bubbles: return None, None
+        if not has_bubbles: 
+            logger.warning("❌ No valid bubbles found to clean.")
+            return None, None
         
-        mask = mask.filter(ImageFilter.MaxFilter(15))
+        # Dilatação para cobrir a borda do balão (Essential!)
+        # MaxFilter(25) expande a área branca em ~12px para cada lado
+        logger.info("🔧 Applying Aggressive Dilation (MaxFilter 25)...")
+        mask = mask.filter(ImageFilter.MaxFilter(25))
+        
+        # DEBUG: Salvar para verificação visual
         session_id = uuid.uuid4().hex[:6]
         mask_filename = f"mask_{session_id}.png"
         mask_path = os.path.join(TEMP_DIR, mask_filename)
         mask.save(mask_path)
+        logger.info(f"✅ Mask saved to: {mask_path}")
+        
+        # --- END MASK GENERATION ---
         
         raw_ref = types.RawReferenceImage(reference_id=1, reference_image=types.Image.from_file(location=local_path))
         mask_ref = types.MaskReferenceImage(reference_id=2, reference_image=types.Image.from_file(location=mask_path), config=types.MaskReferenceConfig(mask_mode='MASK_MODE_USER_PROVIDED'))

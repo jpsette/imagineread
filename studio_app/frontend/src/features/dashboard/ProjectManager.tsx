@@ -56,11 +56,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     onTogglePin,
     PROJECT_THEMES
 }) => {
-    // const navigate = useNavigate(); // REMOVE: Navigation handled by prop
 
-    // === STORE ACCESS REMOVED ===
-
-    // === LOCAL UI STATE REMOVED ===
 
     // === HANDLERS MAPPED TO PROPS ===
     const handleCreateProject = onCreateProject;

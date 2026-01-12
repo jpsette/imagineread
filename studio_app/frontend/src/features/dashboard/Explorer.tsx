@@ -42,40 +42,9 @@ export const Explorer: React.FC<ExplorerProps> = ({
     // Defensive check
     const safeProjects = projects || [];
     const safeFileSystem = fileSystem || [];
-    // const navigate = useNavigate(); // Navigation is handled by parent callback
 
-    // === STORE ACCESS REMOVED ===
-    // Actions are passed as props
+    // Note: Local editing state has been removed in favor of ProjectManager
 
-    // === LOCAL UI STATE ===
-    // Edit state remains local as it is transient UI state, 
-    // BUT user snippet suggests onEditProject prop might handle the *start* of editing?
-    // "onEditProject={(p) => { setEditingProject(p); ... }}" in App.tsx
-    // So Explorer should likely just trigger the parent to open the edit UI?
-    // Or Explorer keeps local edit UI? 
-    // In App.tsx snippet: onEditProject sets parent editingProject state. 
-    // Does Explorer render the edit form?
-    // In original code, Explorer rendered the inline edit form using local `editingProject`.
-    // If App.tsx sets parent state, App.tsx likely renders the form?
-    // NO, App.tsx renders ProjectManager which renders the form?
-    // Or Explorer renders it?
-    // The Explorer code I read in Step 1003 has inline edit form.
-    // If I keep local state for editing here, it desyncs with App.tsx "editingProject".
-    // The user snippet implies App.tsx manages `editingProject`.
-    // However, Explorer JSX uses `editingProject?.id === project.id`.
-    // So Explorer needs to know about `editingProject`.
-    // BUT `ExplorerProps` in user snippet DOES NOT include `editingProject`.
-    // "onEditProject={(p) => ... defined in App.tsx ...}"
-    // This suggests Explorer just notifies "Hey, user clicked edit".
-    // Does Explorer display the edit form?
-    // If it doesn't receive `editingProject` as prop, it doesn't know.
-    // Maybe the user intends Explorer to NOT have inline editing, but rather trigger the Manager to edit?
-    // "onEditProject={(p) => { setEditingProject(p); ... if(!showManager) setShowManager(true); }}"
-    // This implementation in App.tsx STRONGLY suggests that clicking Edit in Explorer OPENS THE MANAGER to edit.
-    // So Explorer should NOT have inline editing anymore. 
-    // It should just call `onEditProject`.
-
-    // So I will REMOVE local editing state from Explorer.
 
 
     // === HANDLERS ===

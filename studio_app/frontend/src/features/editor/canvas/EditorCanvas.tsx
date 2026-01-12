@@ -11,6 +11,7 @@ interface EditorCanvasProps {
     selectedId?: string | null;
     onSelect?: (id: string | null) => void;
     onUpdate?: (id: string, attrs: Partial<Balloon>) => void;
+    onImageLoad?: (width: number, height: number) => void; // Added Prop
 }
 
 // Background Component that receives the image object
@@ -29,7 +30,8 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({
     balloons = [],
     selectedId = null,
     onSelect = () => { },
-    onUpdate = () => { }
+    onUpdate = () => { },
+    onImageLoad // Destructure
 }) => {
     const stageRef = useRef<Konva.Stage>(null);
     const containerRef = useRef<HTMLDivElement>(null); // To measure available space
@@ -48,9 +50,15 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({
             const containerWidth = container.offsetWidth;
             const containerHeight = container.offsetHeight;
 
+            // Notify parent of natural dimensions
+            if (onImageLoad) {
+                onImageLoad(image.width, image.height);
+            }
+
             // Calculate ratios
             const scaleX = containerWidth / image.width;
             const scaleY = containerHeight / image.height;
+
 
             // Use the smaller scale to fit entirely, with 5% padding
             const newScale = Math.min(scaleX, scaleY) * 0.95;
