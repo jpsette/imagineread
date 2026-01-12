@@ -117,8 +117,13 @@ async def upload_pdf(file: UploadFile = File(...), parent_id: str = Form(...), d
 
 @router.post("/upload_page")
 async def upload_page(file: UploadFile = File(...), parent_id: str = Form(...), db: Session = Depends(get_db)):
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image")
+    # Relaxed Validation: Check Content-Type OR Extension
+    is_image_mime = file.content_type.startswith("image/")
+    is_image_ext = file.filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.gif'))
+    
+    if not (is_image_mime or is_image_ext):
+        logger.warning(f"⚠️ Rejected file upload: {file.filename} (Type: {file.content_type})")
+        raise HTTPException(status_code=400, detail=f"File must be an image. Got: {file.filename}")
     
     try:
         unique_id = str(uuid.uuid4())[:8]
@@ -258,6 +263,57 @@ def update_file_data(file_id: str, update_data: FileUpdateData, db: Session = De
         
     return {"status": "success", "message": "No data to update"}
 
+
+@router.delete("/files/{item_id}")
+def delete_item(item_id: str, db: Session = Depends(get_db)):
+    # 1. Get Item
+    item = db.query(FileSystemEntry).filter(FileSystemEntry.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    # 2. Define Recursive Deletion Helper
+    def get_all_descendant_ids(root_id):
+        ids = []
+        children = db.query(FileSystemEntry).filter(FileSystemEntry.parent_id == root_id).all()
+        for child in children:
+            ids.append(child.id)
+            if child.type == 'folder':
+                ids.extend(get_all_descendant_ids(child.id))
+        return ids
+
+    # 3. Collect all IDs to delete (Self + Descendants)
+    target_ids = [item.id]
+    if item.type == 'folder':
+        target_ids.extend(get_all_descendant_ids(item.id))
+
+    # 4. Physical Deletion of FILES
+    deleted_files_count = 0
+    items_to_delete = db.query(FileSystemEntry).filter(FileSystemEntry.id.in_(target_ids)).all()
+    
+    for entry in items_to_delete:
+        if entry.type == 'file' and entry.url:
+            try:
+                # Extract filename from URL or use stored name if consistent
+                # URL format: http://.../library/filename.jpg
+                filename = entry.url.split('/')[-1]
+                file_path = os.path.join(LIBRARY_DIR, filename)
+                
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    deleted_files_count += 1
+            except Exception as e:
+                logger.error(f"Failed to delete physical file {entry.id}: {e}")
+
+    # 5. DB Deletion
+    try:
+        # Delete in bulk
+        db.query(FileSystemEntry).filter(FileSystemEntry.id.in_(target_ids)).delete(synchronize_session=False)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"status": "success", "deleted_count": len(target_ids), "physical_files_removed": deleted_files_count}
 
 from app.models import MoveItemRequest, ReorderItemsRequest
 from app.models_db import FileSystemEntry

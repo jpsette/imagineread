@@ -13,7 +13,7 @@ export interface Balloon {
     text: string;
     box_2d: number[]; // [ymin, xmin, ymax, xmax]
     shape: 'rectangle' | 'ellipse' | 'cloud' | 'scream';
-    type: 'speech' | 'thought' | 'whisper';
+    type: 'speech' | 'thought' | 'whisper' | 'text' | 'shape' | 'mask' | 'balloon';
     customFontSize?: number;
     borderRadius?: number;
     borderWidth?: number;
@@ -22,6 +22,7 @@ export interface Balloon {
     tailTip?: { x: number, y: number } | null;
     tailControl?: { x: number, y: number } | null;
     tailCurve?: any; // Deprecated or for older format compatibility
+    points?: { x: number, y: number }[]; // For freeform vertex editing
 
     // Style Props
     color?: string; // Fill color

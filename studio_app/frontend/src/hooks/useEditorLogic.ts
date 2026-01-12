@@ -41,7 +41,6 @@ export const useEditorLogic = (
     const [yoloDetections, setYoloDetections] = useState<DetectedBalloon[]>([]);
 
     // --- AUTO SAVE ---
-    // --- AUTO SAVE ---
     // Track last saved state to prevent save loops or save-on-mount
     const lastSavedRef = useRef<string>(JSON.stringify(balloons));
 
@@ -83,12 +82,6 @@ export const useEditorLogic = (
 
         const current = balloonsRef.current;
 
-        // Push History (before update) IF not skipping and not a slider (or controlled externally)
-        // User request: dragging (transient) passes skipHistory=true, then commitHistory separately.
-        // Inspectors pass skipHistory=true/false? Inspectors usually want instant save? 
-        // Let's assume Inspectors want instant history unless they are sliders.
-        // But if Inspectors pass skipHistory=false, we keep old behavior.
-
         if (!skipHistory) {
             if (!isSlider) {
                 pushToHistory(`Update ${keys}`, current);
@@ -129,17 +122,14 @@ export const useEditorLogic = (
             setSelectedBubbleId(newId);
             return [...prev, newBubble];
         });
-    }, []); // Removed pushToHistory dep as wrapper handles it. Actually setBalloonsWithHistory isn't stable unless ref-based? It isn't wrapped.
-    // Ideally setBalloonsWithHistory should be stable or used inside.
-    // We defined it in scope. It depends on 'pushToHistory'.
+    }, []);
 
     const handleDeleteBalloon = React.useCallback(() => {
         if (!selectedBubbleId) return;
-        if (confirm("Tem certeza que deseja excluir este balão?")) {
-            setBalloonsWithHistory("Delete Balloon", prev => prev.filter(b => b.id !== selectedBubbleId));
-            setSelectedBubbleId(null);
-        }
-    }, [selectedBubbleId]); // Wrapper in scope
+        // Direct delete without confirmation
+        setBalloonsWithHistory("Delete Balloon", prev => prev.filter(b => b.id !== selectedBubbleId));
+        setSelectedBubbleId(null);
+    }, [selectedBubbleId]);
 
     const addTailToSelected = React.useCallback(() => {
         if (!selectedBubbleId) return;
@@ -240,21 +230,7 @@ export const useEditorLogic = (
         }
     };
 
-    // --- KEYBOARD ---
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBubbleId) {
-                if (document.activeElement?.tagName !== 'TEXTAREA' && document.activeElement?.tagName !== 'INPUT') {
-                    setBalloonsWithHistory("Delete Balloon", prev => prev.filter(b => b.id !== selectedBubbleId));
-                    setSelectedBubbleId(null);
-                }
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedBubbleId]); // Removed pushToHistory dep
-
+    // Keyboard listener REMOVED (Handled in EditorView)
 
     return {
         // State

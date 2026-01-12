@@ -31,26 +31,28 @@ export const useFileActions = () => {
         }
     };
 
-    const deleteFolder = (id: string) => {
-        // Original code: recursive local filtering
-        const newFs = fileSystem.filter(f => f.id !== id && f.parentId !== id);
-        setFileSystem(newFs);
-        // Note: Backend deletion is not implemented in original handler either
+    const deleteFolder = async (id: string) => {
+        try {
+            await api.deleteFileSystemEntry(id);
+            // Local Optimistic Update
+            const newFs = fileSystem.filter(f => f.id !== id && f.parentId !== id);
+            setFileSystem(newFs);
+        } catch (e) {
+            console.error("Failed to delete folder", e);
+            alert("Erro ao excluir pasta.");
+        }
     };
 
-    const deletePages = (pageIds: string[]) => {
-        // Original code: local filtering + confirm
-        // We assume confirm is handled by UI/Caller or we do it here?
-        // Original handler: if (confirm...) ...
-        // Better to let UI handle confirm, but for now we follow the "extract logic" pattern.
-        // We will expose the logic *after* confirmation usually, but let's replicate the handler logic minus UI if possible.
-        // Actually, prompts say "Call API -> Remove from Store".
-        // The original App.tsx had: if (confirm(...)) { ... }
-        // We'll expose a function that performs the deletion. The caller should confirm.
-
-        const newFs = fileSystem.filter(f => !pageIds.includes(f.id));
-        setFileSystem(newFs);
-        console.warn("Deleted pages locally only - Backend implementation pending in original code");
+    const deletePages = async (pageIds: string[]) => {
+        try {
+            await Promise.all(pageIds.map(id => api.deleteFileSystemEntry(id)));
+            // Local Optimistic Update
+            const newFs = fileSystem.filter(f => !pageIds.includes(f.id));
+            setFileSystem(newFs);
+        } catch (e) {
+            console.error("Failed to delete pages", e);
+            alert("Erro ao excluir páginas.");
+        }
     };
 
     const uploadPages = async (files: File[], targetParentId: string) => {

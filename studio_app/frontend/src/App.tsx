@@ -35,7 +35,7 @@ const App: React.FC = () => {
 
     // === ACTIONS (HOOKS) ===
     const { createProject, updateProject, deleteProject, togglePin } = useProjectActions();
-    const { createFolder, deleteFolder, deletePages, uploadPages } = useFileActions();
+    const { createFolder, deleteFolder, deletePages, uploadPages, uploadPDF } = useFileActions();
 
     // === LOCAL APP STATE (Hoisted from Dashboard) ===
 
@@ -133,11 +133,10 @@ const App: React.FC = () => {
     };
 
     const handleDeleteFolder = (id: string) => {
-        if (confirm("Excluir pasta?")) {
-            deleteFolder(id);
-            if (currentFolderId === id) {
-                setCurrentFolderId(null);
-            }
+        // Confirm moved to UI component (ProjectDetail)
+        deleteFolder(id);
+        if (currentFolderId === id) {
+            setCurrentFolderId(null);
         }
     };
 
@@ -169,19 +168,33 @@ const App: React.FC = () => {
     };
 
     const handleImportFiles = async (files: File[]) => {
-        if (files && files.length > 0 && (currentFolderId || currentProjectId)) {
-            // Find target parent
-            let target: string | null = currentFolderId;
-            if (!target && currentProjectId) {
-                const proj = projects.find(p => p.id === currentProjectId);
-                if (proj) target = proj.rootFolderId || null;
-            }
+        if (!files || files.length === 0) return;
 
-            if (target) {
-                await uploadPages(files, target);
-                await loadData();
+        // Find target parent
+        let target: string | null = currentFolderId;
+        if (!target && currentProjectId) {
+            const proj = projects.find(p => p.id === currentProjectId);
+            if (proj) target = proj.rootFolderId || null;
+        }
+
+        if (!target) return;
+
+        // Split files
+        const pdfs = files.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+        const images = files.filter(f => !pdfs.includes(f));
+
+        if (pdfs.length > 0) {
+            // Upload PDFs one by one (as they create new comics/folders usually)
+            for (const pdf of pdfs) {
+                await uploadPDF(pdf, target);
             }
         }
+
+        if (images.length > 0) {
+            await uploadPages(images, target);
+        }
+
+        await loadData();
     };
 
 

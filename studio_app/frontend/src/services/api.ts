@@ -174,6 +174,12 @@ class ApiClient {
             body: JSON.stringify({ orderedIds })
         });
     }
+
+    async deleteFileSystemEntry(itemId: string): Promise<void> {
+        return this.request<void>(`${API_ENDPOINTS.BASE_URL}/files/${itemId}`, {
+            method: 'DELETE'
+        });
+    }
 }
 
 export const api = new ApiClient();
