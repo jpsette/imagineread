@@ -35,7 +35,7 @@ const App: React.FC = () => {
 
     // === ACTIONS (HOOKS) ===
     const { createProject, updateProject, deleteProject, togglePin } = useProjectActions();
-    const { createFolder, deleteFolder, deletePages, uploadPages, uploadPDF } = useFileActions();
+    const { createFolder, deleteFolder, deletePages, uploadPages, uploadPDF, renameItem } = useFileActions();
 
     // === LOCAL APP STATE (Hoisted from Dashboard) ===
 
@@ -392,6 +392,7 @@ const App: React.FC = () => {
                             onOpenItem={(node: FileEntry) => setCurrentFolderId(node.id)}
                             onOpenComic={setOpenedComicId}
                             onCreateFolder={handleCreateFolder}
+                            onRenameFolder={(id, newName, newColor) => renameItem(id, newName, newColor)}
                             onDeleteFolder={handleDeleteFolder}
                             onImportFiles={handleImportFiles}
                             onBack={() => setView('dashboard')}

@@ -315,8 +315,22 @@ def delete_item(item_id: str, db: Session = Depends(get_db)):
 
     return {"status": "success", "deleted_count": len(target_ids), "physical_files_removed": deleted_files_count}
 
-from app.models import MoveItemRequest, ReorderItemsRequest
+    return {"status": "success", "deleted_count": len(target_ids), "physical_files_removed": deleted_files_count}
+
+from app.models import MoveItemRequest, ReorderItemsRequest, FileRenameRequest
 from app.models_db import FileSystemEntry
+
+@router.put("/files/{item_id}")
+def rename_item(item_id: str, request: FileRenameRequest, db: Session = Depends(get_db)):
+    updated = crud.update_filesystem_entry(db, item_id, {
+        "name": request.name,
+        "color": request.color
+    })
+    
+    if not updated:
+        raise HTTPException(status_code=404, detail="Item not found")
+        
+    return {"status": "success", "id": item_id, "name": request.name, "color": request.color}
 
 @router.post("/files/{item_id}/move")
 def move_item(item_id: str, request: MoveItemRequest, db: Session = Depends(get_db)):

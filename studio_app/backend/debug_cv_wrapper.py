@@ -1,0 +1,1 @@
+import sys; import os; sys.path.append(os.getcwd()); from app.services.ai_service import detect_panels_cv2; detect_panels_cv2('/Users/jp/Documents/APP/Imagine Read/studio_app/backend/temp/clean_page_13_224186e3.jpg')

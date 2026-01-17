@@ -23,8 +23,11 @@ interface ProjectDetailProps {
     setNewFolderColor: (v: string) => void;
 
     // Actions
+    // Actions
+    // Actions
     onCreateFolder: () => void;
     onDeleteFolder: (id: string) => void;
+    onRenameFolder: (id: string, newName: string, newColor?: string) => void;
     onImportFiles: (files: File[]) => void;
 
     PROJECT_THEMES?: any;
@@ -37,18 +40,51 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     isCreatingFolder, setIsCreatingFolder,
     newFolderName, setNewFolderName,
     newFolderColor, setNewFolderColor,
-    onCreateFolder, onDeleteFolder, onImportFiles
+    onCreateFolder, onDeleteFolder, onRenameFolder, onImportFiles
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // --- SELECTION STATE ---
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+    // --- RENAMING STATE ---
+    const [renamingId, setRenamingId] = useState<string | null>(null);
+    const [renameValue, setRenameValue] = useState('');
+    const [renamingColor, setRenamingColor] = useState('');
+
     const toggleSelection = (id: string) => {
         const newSet = new Set(selectedIds);
         if (newSet.has(id)) newSet.delete(id);
         else newSet.add(id);
         setSelectedIds(newSet);
+    };
+
+    // --- HELPER: Resolve Folder Color ---
+    const getFolderColorClass = (color: string | undefined) => {
+        if (!color) return 'text-blue-500';
+
+        // 1. Try finding in themes (best match)
+        const theme = PROJECT_THEMES?.find((t: any) => t.bg === color);
+        if (theme) return theme.text;
+
+        // 2. If it's a bg- class, swap to text-
+        if (color.startsWith('bg-')) {
+            return color.replace('bg-', 'text-');
+        }
+
+        // 3. If standard hex or other unknown, default
+        return 'text-blue-500';
+    };
+
+    const handleRenameSubmit = () => {
+        if (renamingId && renameValue.trim()) {
+            onRenameFolder(renamingId, renameValue.trim(), renamingColor);
+            setRenamingId(null);
+            setRenameValue('');
+            setRenamingColor('');
+        } else {
+            setRenamingId(null);
+        }
     };
 
     // --- SAFETY CHECK ---
@@ -206,10 +242,15 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                     {/* DATA ITEMS */}
                     {items.map(item => {
                         const coverImage = item.type === 'folder' ? getFolderCover(item.id) : item.url;
-                        const folderColor = PROJECT_THEMES?.find((t: any) => t.bg === item.color)?.text || 'text-blue-500';
+                        const folderColor = getFolderColorClass(item.color);
                         const isSelected = selectedIds.has(item.id);
+                        const isRenaming = renamingId === item.id;
+                        // Use active renaming color if renaming this item (and color is set), otherwise use item color
+                        const activeColorClass = isRenaming && renamingColor ? getFolderColorClass(renamingColor) : folderColor;
 
                         const handleClick = (e: React.MouseEvent) => {
+                            if (isRenaming) return; // Prevent nav if renaming
+
                             // 1. Handle Selection (Ctrl/Meta click)
                             if (e.ctrlKey || e.metaKey) {
                                 e.stopPropagation();
@@ -255,40 +296,81 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                 ) : (
                                     <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-zinc-800 to-zinc-900 group-hover:from-zinc-800 group-hover:to-zinc-800 transition-colors">
                                         {item.type === 'folder' ? (
-                                            <Folder size={48} className={`${folderColor} opacity-80 group-hover:opacity-100 transition-colors`} />
+                                            <Folder size={48} className={`${activeColorClass} opacity-80 group-hover:opacity-100 transition-colors`} />
                                         ) : (
                                             <ImageIcon size={48} className="text-zinc-600 group-hover:text-purple-500 transition-colors" />
                                         )}
                                     </div>
                                 )}
 
-                                {/* ACTION BUTTONS */}
-                                <div className="absolute top-2 right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 rounded-lg p-1 backdrop-blur-sm">
-                                    <button className="p-1.5 hover:bg-white/20 rounded text-zinc-400 hover:text-white transition-colors" onClick={(e) => e.stopPropagation()}>
-                                        <Pin size={14} />
-                                    </button>
-                                    <button className="p-1.5 hover:bg-white/20 rounded text-zinc-400 hover:text-blue-400 transition-colors" onClick={(e) => e.stopPropagation()}>
-                                        <Pencil size={14} />
-                                    </button>
-                                    <button
-                                        className="p-1.5 hover:bg-red-500/20 rounded text-zinc-400 hover:text-red-400 transition-colors"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (confirm('Excluir este item?')) onDeleteFolder(item.id);
-                                        }}
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
-                                </div>
+                                {/* ACTION BUTTONS - Hide when renaming */}
+                                {!isRenaming && (
+                                    <div className="absolute top-2 right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 rounded-lg p-1 backdrop-blur-sm">
+                                        <button className="p-1.5 hover:bg-white/20 rounded text-zinc-400 hover:text-white transition-colors" onClick={(e) => e.stopPropagation()}>
+                                            <Pin size={14} />
+                                        </button>
+                                        <button
+                                            className="p-1.5 hover:bg-white/20 rounded text-zinc-400 hover:text-blue-400 transition-colors"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setRenamingId(item.id);
+                                                setRenameValue(item.name);
+                                                setRenamingColor(item.color || '');
+                                            }}
+                                        >
+                                            <Pencil size={14} />
+                                        </button>
+                                        <button
+                                            className="p-1.5 hover:bg-red-500/20 rounded text-zinc-400 hover:text-red-400 transition-colors"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm('Excluir este item?')) onDeleteFolder(item.id);
+                                            }}
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                )}
 
                                 {/* META INFO */}
                                 <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col gap-1">
                                     <div className="flex items-center gap-2 mb-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300">
-                                        <span className={`text-[10px] uppercase font-bold tracking-widest ${folderColor} bg-white/5 px-2 py-0.5 rounded border border-white/10`}>
+                                        <span className={`text-[10px] uppercase font-bold tracking-widest ${activeColorClass} bg-white/5 px-2 py-0.5 rounded border border-white/10`}>
                                             {item.type === 'folder' ? 'Biblioteca' : 'Comic'}
                                         </span>
                                     </div>
-                                    <p className="text-sm font-bold text-white truncate leading-tight drop-shadow-md">{item.name}</p>
+
+                                    {isRenaming ? (
+                                        <div onClick={e => e.stopPropagation()} className="flex flex-col gap-2">
+                                            <Input
+                                                autoFocus
+                                                value={renameValue}
+                                                onChange={e => setRenameValue(e.target.value)}
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter') handleRenameSubmit();
+                                                    if (e.key === 'Escape') setRenamingId(null);
+                                                }}
+                                                className="h-8 py-1 text-sm font-bold bg-zinc-900/90 border-blue-500 text-white"
+                                            />
+                                            {/* COLOR PICKER FOR RENAMING */}
+                                            <div className="flex flex-wrap gap-1">
+                                                {PROJECT_THEMES && PROJECT_THEMES.map((theme: any) => (
+                                                    <button
+                                                        key={theme.bg}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setRenamingColor(theme.bg);
+                                                        }}
+                                                        className={`w-3 h-3 rounded-full transition-all ${theme.bg} ${renamingColor === theme.bg ? 'ring-2 ring-white scale-125' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <Button size="sm" onClick={handleRenameSubmit} className="h-6 text-[10px] mt-1">Salvar</Button>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm font-bold text-white truncate leading-tight drop-shadow-md">{item.name}</p>
+                                    )}
+
                                     {item.type === 'folder' && (
                                         <p className="text-[10px] text-zinc-400 font-medium">
                                             {safeFileSystem.filter(f => f.parentId === item.id).length} itens

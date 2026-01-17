@@ -100,6 +100,21 @@ def update_file_clean_status(db: Session, file_id: str, clean_url: str):
         return db_entry
     return None
 
+def update_filesystem_entry(db: Session, entry_id: str, updates: dict):
+    db_entry = get_filesystem_entry(db, entry_id)
+    if not db_entry:
+        return None
+    
+    # Map frontend camelCase to snake_case if strictly needed, 
+    # but here we pass 'name' and 'color' which match.
+    for key, value in updates.items():
+        if value is not None:
+             setattr(db_entry, key, value)
+             
+    db.commit()
+    db.refresh(db_entry)
+    return db_entry
+
 def delete_filesystem_entry(db: Session, entry_id: str):
     # This is a simple delete. Recursive deletion of children is handled by app logic or further calls if needed.
     # Ideally should cascade but for now following existing logic.

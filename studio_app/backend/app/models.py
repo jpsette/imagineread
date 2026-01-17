@@ -44,3 +44,7 @@ class MoveItemRequest(BaseModel):
 
 class ReorderItemsRequest(BaseModel):
     orderedIds: List[str]
+
+class FileRenameRequest(BaseModel):
+    name: str
+    color: Optional[str] = None

@@ -13,8 +13,9 @@ export interface Balloon {
     text: string;
     box_2d: number[]; // [ymin, xmin, ymax, xmax]
     shape: 'rectangle' | 'ellipse' | 'cloud' | 'scream';
-    type: 'speech' | 'thought' | 'whisper' | 'text' | 'shape' | 'mask' | 'balloon';
+    type: 'speech' | 'thought' | 'whisper' | 'text' | 'shape' | 'mask' | 'balloon' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout';
     customFontSize?: number;
+    fontSize?: number;
     borderRadius?: number;
     borderWidth?: number;
     tailWidth?: number;
@@ -29,7 +30,13 @@ export interface Balloon {
     borderColor?: string; // Stroke color
     textColor?: string;
     fontFamily?: string;
+    fontStyle?: string;   // 'bold', 'italic', 'italic bold', 'normal'
+    textDecoration?: string; // 'underline', 'line-through', ''
     opacity?: number;
+    html?: string; // For rich text content
+    rotation?: number;
+    direction?: string;
+    tail_box_2d?: number[];
 }
 
 export interface DetectedBalloon {
@@ -39,6 +46,14 @@ export interface DetectedBalloon {
     confidence?: number;
     class_id?: number;
     polygon?: number[][];
+}
+
+export interface Panel {
+    id: string;
+    type: 'panel';
+    order: number;
+    points: number[]; // [x1, y1, x2, y2...] representing polygon
+    box_2d: [number, number, number, number]; // [top, left, bottom, right]
 }
 
 export interface FileEntry {

@@ -175,7 +175,125 @@ def analyze_page_layout(image_path: str):
             item["box_2d"] = box
             normalized.append(item)
             
+            
     return normalized
+
+import cv2
+import numpy as np
+
+# ... imports ...
+
+def detect_panels_cv2(image_path: str):
+    # 1. Resolve Path
+    local_path = resolve_local_path(image_path)
+    if not os.path.exists(local_path):
+        raise FileNotFoundError(f"Image not found: {local_path}")
+        
+    # 2. Load Image
+    img = cv2.imread(local_path)
+    if img is None:
+         return []
+         
+    h, w = img.shape[:2]
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    # 3. THRESHOLD: "Isolate Content"
+    # Everything darker than 230 is content (White=Content, Black=Background)
+    _, thresh = cv2.threshold(gray, 230, 255, cv2.THRESH_BINARY_INV)
+    
+    # 4. EROSION (The "Separator")
+    # Instead of closing gaps, we ERODE to widen the gutters.
+    # This ensures that even thin white lines break the connection between panels.
+    kernel_size = 3
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    
+    # Erode twice to make sure panels are separated
+    processed = cv2.erode(thresh, kernel, iterations=2)
+    
+    # 5. FIND CONTOURS (With Hierarchy)
+    # RETR_TREE allows us to see if a box is inside another box
+    contours, _ = cv2.findContours(processed, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    panels = []
+    
+    # Area Filters
+    min_area = (w * h) * 0.02  # 2% (Ignore noise)
+    max_area = (w * h) * 0.85  # 85% (CRITICAL: Ignore the giant container box)
+
+    # DEBUG IMAGE
+    debug_img = img.copy()
+
+    for cnt in contours:
+        x, y, cw, ch = cv2.boundingRect(cnt)
+        area = cw * ch # Use bounding box area for simpler filtering
+        
+        # LOGIC:
+        # 1. Must be bigger than noise
+        # 2. Must be SMALLER than the full page container (Fixes the single giant box issue)
+        if area > min_area and area < max_area:
+            
+            # Aspect Ratio Sanity Check
+            # Panels are rarely super thin strips
+            aspect = cw / ch
+            if aspect > 10 or aspect < 0.1:
+                continue
+                
+            # Expand the box slightly back to original size 
+            # (Since we eroded it, we add a tiny padding to compensate)
+            padding = 5
+            final_x = max(0, x - padding)
+            final_y = max(0, y - padding)
+            final_w = min(w - final_x, cw + (padding * 2))
+            final_h = min(h - final_y, ch + (padding * 2))
+
+            # Draw Blue Box for valid panels
+            cv2.rectangle(debug_img, (final_x, final_y), (final_x + final_w, final_y + final_h), (255, 0, 0), 5)
+            
+            # Construct Panel Object (Maintains Backend Contract)
+            panels.append({
+                "id": f"panel_{uuid.uuid4().hex[:8]}", # Temporary ID
+                "box_2d": [final_y, final_x, final_y+final_h, final_x+final_w], # [ymin, xmin, ymax, xmax]
+                "points": [[final_x, final_y], [final_x+final_w, final_y], [final_x+final_w, final_y+final_h], [final_x, final_y+final_h]],
+                "label": "panel"
+            })
+        else:
+            # Draw Red Box for REJECTED panels (Too big or too small) - for debug
+            cv2.rectangle(debug_img, (x, y), (x + cw, y + ch), (0, 0, 255), 2)
+
+    # Sort by area (largest first) to ensure we keep the container, not the child
+    # Area = (x2-x1) * (y2-y1)
+    # box_2d is [y, x, y2, x2] so (x2-x) * (y2-y)
+    panels.sort(key=lambda p: (p["box_2d"][3]-p["box_2d"][1]) * (p["box_2d"][2]-p["box_2d"][0]), reverse=True)
+
+    final_panels = []
+    
+    for current in panels:
+        c_y, c_x, c_y2, c_x2 = current["box_2d"]
+        is_nested = False
+        
+        for kept in final_panels:
+            k_y, k_x, k_y2, k_x2 = kept["box_2d"]
+            
+            # Check if 'current' is inside 'kept'
+            # Allow small margin of error (padding)
+            # Logic: c_x >= k_x AND c_x2 <= k_x2 AND c_y >= k_y AND c_y2 <= k_y2
+            if c_x >= k_x and c_x2 <= k_x2 and c_y >= k_y and c_y2 <= k_y2:
+                is_nested = True
+                break
+        
+        if not is_nested:
+            final_panels.append(current)
+
+    # Re-sort Top-to-Bottom, Left-to-Right for UI order
+    final_panels.sort(key=lambda p: (p["box_2d"][0] // 100, p["box_2d"][1]))
+    
+    # Re-assign IDs
+    for idx, p in enumerate(final_panels):
+        p["id"] = f"panel_{idx+1}"
+        p["order"] = idx + 1
+        
+    return final_panels
+
 
 def clean_page_content(image_path_or_url: str, bubbles: List[dict]):
     if not client: raise Exception("GenAI Client not initialized")
@@ -290,88 +408,121 @@ def clean_page_content(image_path_or_url: str, bubbles: List[dict]):
         return clean_name, mask_filename
 
 def perform_ocr(image_path_or_url: str, balloons: List[dict]):
+    import time
     if not client: raise Exception("GenAI Client not initialized")
     
     local_path = resolve_local_path(image_path_or_url)
     if not os.path.exists(local_path):
         raise Exception(f"Image not found at path: {local_path}")
     
-    logger.info(f"📖 Starting OCR on: {os.path.basename(local_path)} with {len(balloons)} bubbles")
+    logger.info(f"📖 Starting Single-Shot OCR on: {len(balloons)} bubbles")
 
-    full_img = Image.open(local_path)
-    chunk_size = 10
+    if not balloons:
+        return balloons
+
+    # --- 1. PREPARE INPUTS (Prompt + Images) ---
+    # System Instruction: Ask for a JSON Array mapped by index
+    prompt = """
+    You are a Comic Book OCR Expert. 
+    I will provide a series of images (crops of speech bubbles). 
+    Your task:
+    1. Read the text from EACH image strictly in the order provided.
+    2. Return a RAW JSON Array of objects.
+    3. Format: [{"index": 0, "text": "content..."}, {"index": 1, "text": "..."}]
+    4. If a bubble is empty or unintelligible, return empty string for text.
+    5. Do NOT include markdown formatting (like ```json). Just the raw JSON.
+    """
     
-    for i in range(0, len(balloons), chunk_size):
-        chunk = balloons[i:i+chunk_size]
-        prompt = "Read the text from each. Return JSON ARRAY of strings."
-        payload = [types.Part.from_text(text=prompt)]
-        valid_indices = []
-        
-        for idx, b in enumerate(chunk):
+    inputs = [types.Part.from_text(text=prompt)]
+
+    valid_indices = []
+    
+    # Load Main Image (Using PIL as in existing code to avoid mixed dependencies/CV2 issues)
+    full_img = Image.open(local_path)
+
+    # --- 2. CROP ALL BALLOONS ---
+    for idx, b in enumerate(balloons):
+        try:
+            # Parse coordinates (box is [x, y, w, h])
+            # BUT wait, user snippet used y1,x1,y2,x2 from b['y1']... 
+            # Existing code used b.get('box') -> x,y,w,h.
+            # I MUST ADAPT TO EXISTING DATA STRUCTURE: b['box'] = [x, y, w, h]
             box = b.get('box')
             if not box: continue
+            
             x, y, w, h = map(int, box)
             
-            # Safety crop
+            # Safety checks for boundaries
             x, y = max(0, x), max(0, y)
             w, h = min(full_img.width-x, w), min(full_img.height-y, h)
+            
             if w <= 0 or h <= 0: continue
 
+            # Crop
             crop = full_img.crop((x, y, x+w, y+h))
+            
+            # Convert to Bytes for API (Standard PIL -> Bytes)
             buf = io.BytesIO()
             crop.save(buf, "JPEG")
-            payload.append(types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg"))
+            
+            inputs.append(types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg"))
             valid_indices.append(idx)
-        
-        if not valid_indices: continue
-        
-        try:
-            resp = client.models.generate_content(
-                model=MODEL_ID, contents=payload, 
-                config=types.GenerateContentConfig(response_mime_type="application/json")
-            )
-            
-            # Sanitize response (Strip Markdown)
-            # Sanitize response (Strip Markdown aggressively)
-            raw_text = resp.text.strip()
-            # Remove all markdown code block markers
-            raw_text = raw_text.replace("```json", "").replace("```", "").strip()
-            if raw_text.endswith("```"):
-                raw_text = raw_text.rstrip("```")
-            
-            # Additional Cleanup for Bad Escapes
-            # Remove single backslashes that aren't escaping typical chars
-            # raw_text = raw_text.replace("\\", "\\\\") # Too aggressive?
-            
-            try:
-                # 1. Attempt strict parsing
-                texts = json.loads(raw_text)
-            except json.JSONDecodeError:
-                # 2. Attempt permissive parsing
-                try: 
-                    texts = json.loads(raw_text, strict=False)
-                except:
-                     # 3. Fallback: Raw text as single result
-                     logger.warning(f"OCR JSON Parse Failed. raw: {raw_text[:20]}...")
-                     texts = [raw_text] if len(valid_indices) == 1 else []
-
-            # Ensure texts is a list
-            if not isinstance(texts, list):
-                 texts = [str(texts)]
-
-            for k, txt in enumerate(texts):
-                if k < len(valid_indices): 
-                    # Clean the individual text string
-                    clean_txt = str(txt).strip()
-                    chunk[valid_indices[k]]['text'] = clean_txt
-                
         except Exception as e:
-            logger.error(f"OCR Batch Error: {e}")
-            # Fallback for the entire batch exception
-            # We don't overwrite with empty, we just leave old text (or empty string)
-            pass
+            logger.error(f"⚠️ Crop error for balloon {idx}: {e}")
+            continue
+
+    if not valid_indices:
+        return balloons
+
+    # --- 3. SINGLE API EXECUTION (No Loop) ---
+    try:
+        logger.info(f"🚀 Sending 1 request with {len(valid_indices)} images to Gemini...")
+        
+        # *** EXECUTE API CALL ***
+        resp = client.models.generate_content(
+            model=MODEL_ID, 
+            contents=inputs,
+            config=types.GenerateContentConfig(response_mime_type="application/json")
+        )
+        
+        # --- 4. PARSE RESPONSE ---
+        raw_text = resp.text.strip()
+        
+        # Cleanup potential markdown
+        if "```json" in raw_text:
+            raw_text = raw_text.replace("```json", "").replace("```", "")
+        if raw_text.startswith("```"): # generic
+             raw_text = raw_text.replace("```", "")
+        
+        raw_text = raw_text.strip()
+             
+        try:
+            json_data = json.loads(raw_text)
+        except:
+             # Fallback check
+             logger.warning(f"OCR JSON Parse Failed. raw: {raw_text[:50]}...")
+             return balloons
+        
+        # Create map for O(1) lookup
+        text_map = {item.get('index'): item.get('text', '') for item in json_data}
+
+        # Map back to IDs using the preserved order
+        # valid_indices maps the API input order (0, 1, 2...) to original balloon index
+        for i, original_idx in enumerate(valid_indices):
+            extracted_text = text_map.get(i, "")
             
-    return balloons
+            # Clean text
+            extracted_text = str(extracted_text).strip()
+            
+            # Assign to original balloon
+            balloons[original_idx]['text'] = extracted_text
+            logger.info(f"✅ Blob {i} -> Text: {extracted_text[:30]}...")
+
+        return balloons
+
+    except Exception as e:
+        logger.error(f"❌ Critical OCR Error: {e}")
+        return balloons
 
 # --- ASYNC JOB WRAPPERS ---
 from app.services.job_manager import job_manager, JobState

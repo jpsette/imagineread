@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -14,12 +14,27 @@
   --color-text-secondary: #a1a1aa;
 }
 
+/* Custom Fonts Configuration */
+/* User must place .ttf files in /public/fonts/ folder */
+
+@font-face { font-family: 'Acme Secret Agent'; src: url('/fonts/AcmeSecretAgent.ttf') format('truetype'); }
+@font-face { font-family: 'Anime Ace 2'; src: url('/fonts/AnimeAce2.ttf') format('truetype'); }
+@font-face { font-family: 'Digital Strip'; src: url('/fonts/DigitalStrip.ttf') format('truetype'); }
+@font-face { font-family: 'Laffayette Comic Pro'; src: url('/fonts/LaffayetteComicPro.ttf') format('truetype'); }
+@font-face { font-family: 'Komika Title'; src: url('/fonts/KomikaTitle.ttf') format('truetype'); }
+@font-face { font-family: 'Crimefighter'; src: url('/fonts/Crimefighter.ttf') format('truetype'); }
+@font-face { font-family: 'Badaboom'; src: url('/fonts/Badaboom.ttf') format('truetype'); }
+@font-face { font-family: 'SF Action Man'; src: url('/fonts/SFActionMan.ttf') format('truetype'); }
+@font-face { font-family: 'Universal Fruitcake'; src: url('/fonts/UniversalFruitcake.ttf') format('truetype'); }
+@font-face { font-family: 'Qarmic Sans'; src: url('/fonts/QarmicSans.ttf') format('truetype'); }
+
 body {
   background-color: var(--color-app-bg);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
+  font-family: 'Comic Neue', sans-serif;
 }
 
 /* Custom Scrollbar */

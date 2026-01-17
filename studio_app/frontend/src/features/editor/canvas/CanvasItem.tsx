@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Group, Rect, Text, Transformer, Ellipse, Circle } from 'react-konva';
+import React, { useRef, useEffect } from 'react';
+import { Group, Rect, Text, Transformer, Ellipse } from 'react-konva';
 import Konva from 'konva';
 import { Balloon } from '../../../types';
 
@@ -13,9 +13,6 @@ interface CanvasItemProps {
 export const CanvasItem: React.FC<CanvasItemProps> = ({ item, isSelected, onSelect, onChange }) => {
     const shapeRef = useRef<Konva.Group>(null);
     const trRef = useRef<Konva.Transformer>(null);
-    // Local state for drag - triggers re-render but contained to this component
-    // With separated layers, this is much cheaper.
-    const [isDragging, setIsDragging] = useState(false);
 
     // Attach transformer when selected
     useEffect(() => {
@@ -61,12 +58,7 @@ export const CanvasItem: React.FC<CanvasItemProps> = ({ item, isSelected, onSele
         });
     };
 
-    const handleDragStart = () => {
-        setIsDragging(true);
-    };
-
     const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
-        setIsDragging(false);
         const node = e.target;
         const newX = node.x();
         const newY = node.y();
@@ -95,7 +87,6 @@ export const CanvasItem: React.FC<CanvasItemProps> = ({ item, isSelected, onSele
                     e.cancelBubble = true;
                     onSelect();
                 }}
-                onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onTransformEnd={handleTransformEnd}
             >
@@ -120,10 +111,14 @@ export const CanvasItem: React.FC<CanvasItemProps> = ({ item, isSelected, onSele
                     item.type !== 'text' ? (
                         item.shape === 'ellipse' ? (
                             <Ellipse
-                                width={width}
-                                height={height}
-                                offsetX={-width / 2}
-                                offsetY={-height / 2}
+                                radiusX={width / 2}
+                                radiusY={height / 2}
+                                offsetX={-width / 2} // Ellipse center is at (0,0), so offset logic depends on Group placement
+                                offsetY={-height / 2} // If Group x/y is TopLeft, and Ellipse is at 0,0, then Ellipse center is at TopLeft. 
+                                // We need center to be at Width/2, Height/2.
+                                // Instead of offset, let's just set x/y for ellipse relative to group.
+                                x={width / 2}
+                                y={height / 2}
                                 fill={item.color || 'white'}
                                 stroke={item.borderColor || 'black'}
                                 strokeWidth={item.borderWidth ?? 2}

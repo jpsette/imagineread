@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
     Scan,
@@ -8,25 +7,26 @@ import {
     MessageCircle,
     Type,
     Eraser,
-    Image as ImageIcon,
-    Sparkles,
-    RotateCcw
+    Layout,
+    Scissors,
+    RotateCcw,
+    Images
 } from 'lucide-react';
 import { WorkflowStep } from '../../hooks/useVectorization';
-import { Balloon } from '../../../../types';
+import { useEditorStore } from '../../store'; // Store Import
 
 interface VectorizeMenuProps {
     // State from Hook
     workflowStep: WorkflowStep;
     isProcessing: boolean;
-    localCleanUrl: string | null;
+    // localCleanUrl removed
 
     // Actions from Hook
     onCreateMask: () => void;
     onConfirmMask: () => void;
     onDetectBalloon: () => void;
     onDetectText: () => void;
-    onCleanImage: () => void;
+    onCleanImage: (onSuccess?: (url: string) => void) => void;
 
     // Local Editor State (Toggles)
     showMasks: boolean;
@@ -35,17 +35,34 @@ interface VectorizeMenuProps {
     setShowBalloons: (v: boolean) => void;
     showText: boolean;
     setShowText: (v: boolean) => void;
-    isOriginalImage: boolean;
-    setIsOriginalImage: (v: boolean) => void;
+    // isOriginalImage removed
+    // setIsOriginalImage removed
 
-    // Data (to check existence)
-    balloons: Balloon[];
+    // Flags
+    canDetectBalloons: boolean;
+    canDetectText: boolean;
+    canDetectPanels?: boolean;
+    hasBalloons: boolean;
+    hasText: boolean;
+    hasPanels?: boolean;
+    onDetectPanels?: () => void;
+
+    // Panel Logic
+    onSeparatePanels?: () => void;
+    isPanelsConfirmed?: boolean;
+    onConfirmPanels?: () => void;
+    showPanelsLayer?: boolean;
+    setShowPanelsLayer?: (v: boolean) => void;
+
+    // Gallery
+    previewImages?: string[];
+    onOpenPanelGallery?: () => void;
 }
 
 export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     workflowStep,
     isProcessing,
-    localCleanUrl,
+    // localCleanUrl removed
     onCreateMask,
     onConfirmMask,
     onDetectBalloon,
@@ -57,182 +74,280 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     setShowBalloons,
     showText,
     setShowText,
-    isOriginalImage,
-    setIsOriginalImage,
-    balloons
+    // isOriginalImage removed
+    // setIsOriginalImage removed
+    canDetectBalloons,
+    canDetectText,
+    canDetectPanels,
+    hasBalloons,
+    hasText,
+    hasPanels,
+    onDetectPanels,
+    onSeparatePanels,
+    showPanelsLayer,
+    setShowPanelsLayer,
+    isPanelsConfirmed,
+    onConfirmPanels,
+    previewImages = [],
+    onOpenPanelGallery
 }) => {
 
-    // --- HELPER DE ESTILO (Refactored) ---
-    const getButtonStyle = (disabled: boolean) =>
-        `w-full py-2 px-4 mb-2 text-left rounded-md text-sm font-medium transition-all flex items-center gap-3 select-none border border-transparent ${disabled
-            ? 'bg-[#333] text-gray-500 cursor-not-allowed opacity-50'
-            : 'bg-[#3f3f46] hover:bg-[#52525b] text-white shadow-sm active:transform active:scale-[0.98]'
-        }`;
+    // --- STORE HOOKS ---
+    const cleanImageUrl = useEditorStore(state => state.cleanImageUrl);
+    const isOriginalVisible = useEditorStore(state => state.isOriginalVisible);
+    const toggleVisibility = useEditorStore(state => state.toggleVisibility);
+    const setCleanImage = useEditorStore(state => state.setCleanImage);
+
+    // --- HANDLERS ---
+    const handleCleanClick = () => {
+        onCleanImage((url: string) => {
+            console.log("✨ Updating Editor with Clean Image:", url);
+            if (setCleanImage) {
+                setCleanImage(url);
+            }
+        });
+    };
+
+    // Helper for consistency
+    const getButtonStyle = (disabled: boolean, variant: 'default' | 'blue' = 'default') => {
+        const base = `w-full py-2 px-4 mb-2 text-left rounded-md text-sm font-medium transition-all flex items-center gap-3 select-none border border-transparent`;
+
+        if (disabled) return `${base} bg-[#333] text-gray-500 cursor-not-allowed opacity-50`;
+
+        if (variant === 'blue') {
+            return `${base} bg-blue-600 hover:bg-blue-500 text-white shadow-sm active:transform active:scale-[0.98]`;
+        }
+
+        return `${base} bg-[#3f3f46] hover:bg-[#52525b] text-white shadow-sm active:transform active:scale-[0.98]`;
+    };
 
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-1">
 
-            {/* 1. Criar Máscara (Logica Dividida) */}
-            {(workflowStep === 'mask' || workflowStep === 'confirmed') ? (
-                <div className="flex gap-1 mb-2 h-[38px]">
-                    {/* Status: Gerado */}
-                    <div className="flex-1 bg-emerald-600 text-white px-4 rounded-l-md flex items-center gap-2 select-none text-sm font-medium">
-                        <Check className="w-4 h-4" />
-                        <span>Gerado</span>
-                    </div>
-                    {/* Action: Refazer */}
+            {/* 1. MASCARA */}
+            <div className="mb-4">
+                <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">1. Máscara</label>
+
+                {workflowStep === 'idle' || isProcessing ? (
+                    // STATE 1: IDLE / PROCESSING
                     <button
                         onClick={onCreateMask}
                         disabled={isProcessing}
-                        className="bg-[#3f3f46] hover:bg-[#52525b] text-white px-3 rounded-r-md flex items-center justify-center transition-colors border-l border-[#333]"
-                        title="Refazer Detecção"
+                        className={getButtonStyle(isProcessing, 'blue')}
                     >
-                        <RotateCcw className={`w-4 h-4 ${isProcessing ? 'animate-spin' : ''}`} />
+                        {isProcessing ? (
+                            <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> <span>Processando...</span></>
+                        ) : (
+                            <><Scan className="w-5 h-5" /> <span>Gerar Máscaras</span></>
+                        )}
                     </button>
+                ) : workflowStep === 'mask' ? (
+                    // STATE 2: REVIEW (Confirm + Redo)
+                    <div className="flex flex-col gap-2">
+                        <button
+                            onClick={onConfirmMask}
+                            className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded flex items-center justify-center gap-2 text-sm font-medium transition-colors shadow-sm"
+                        >
+                            <Check className="w-4 h-4" /> Confirmar
+                        </button>
+                        <button
+                            onClick={onCreateMask} // Redo
+                            className="w-full py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded flex items-center justify-center gap-2 text-sm font-medium transition-colors"
+                            title="Refazer Máscara"
+                        >
+                            <RotateCcw className="w-4 h-4" /> Refazer
+                        </button>
+                    </div>
+                ) : (
+                    // STATE 3: DONE (Status + Eye)
+                    <div className="flex gap-2 h-[38px]">
+                        <div className="flex-1 bg-emerald-600/20 text-emerald-500 border border-emerald-600/30 rounded flex items-center justify-center gap-2 text-sm font-medium cursor-default">
+                            <Check className="w-4 h-4" /> <span>Máscara Confirmada</span>
+                        </div>
+                        <button
+                            onClick={() => setShowMasks(!showMasks)}
+                            className={`w-12 flex items-center justify-center rounded border transition-colors ${showMasks ? 'bg-zinc-700 text-zinc-300 border-zinc-600' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}
+                            title={showMasks ? 'Esconder' : 'Mostrar'}
+                        >
+                            {showMasks ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            <div className="h-px bg-[#333] w-full my-2"></div>
+
+            {/* 2. BALÕES */}
+            <div className="mb-4">
+                <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">2. Balões</label>
+                {hasBalloons ? (
+                    <div className="flex gap-2 h-[38px]">
+                        <div className="flex-1 bg-emerald-600/20 text-emerald-500 border border-emerald-600/30 rounded flex items-center justify-center gap-2 text-sm font-medium cursor-default">
+                            <Check className="w-4 h-4" /> <span>Detectados</span>
+                        </div>
+                        <button
+                            onClick={() => setShowBalloons(!showBalloons)}
+                            className={`w-12 flex items-center justify-center rounded border transition-colors ${showBalloons ? 'bg-zinc-700 text-zinc-300 border-zinc-600' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}
+                            title={showBalloons ? 'Esconder' : 'Mostrar'}
+                        >
+                            {showBalloons ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        className={getButtonStyle(!canDetectBalloons)}
+                        disabled={!canDetectBalloons}
+                        onClick={onDetectBalloon}
+                    >
+                        <MessageCircle className="w-5 h-5" /> <span>Detectar Balão</span>
+                    </button>
+                )}
+            </div>
+
+            {/* 3. TEXTO */}
+            <div className="mb-4">
+                <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">3. Texto</label>
+                {hasText ? (
+                    <div className="flex gap-2 h-[38px]">
+                        <div className="flex-1 bg-emerald-600/20 text-emerald-500 border border-emerald-600/30 rounded flex items-center justify-center gap-2 text-sm font-medium cursor-default">
+                            <Check className="w-4 h-4" /> <span>Detectado</span>
+                        </div>
+                        <button
+                            onClick={() => setShowText(!showText)}
+                            className={`w-12 flex items-center justify-center rounded border transition-colors ${showText ? 'bg-zinc-700 text-zinc-300 border-zinc-600' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}
+                            title={showText ? 'Esconder' : 'Mostrar'}
+                        >
+                            {showText ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        className={getButtonStyle(!canDetectText)}
+                        disabled={!canDetectText}
+                        onClick={onDetectText}
+                    >
+                        <Type className="w-5 h-5" /> <span>Detectar Texto</span>
+                    </button>
+                )}
+            </div>
+
+            <div className="h-px bg-[#333] w-full my-2"></div>
+
+            {/* 4. LIMPEZA (INPAINTING) */}
+            <div className="flex flex-col gap-2 mb-4">
+                <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">4. Limpeza</label>
+
+                <div className="flex gap-2"> {/* Flex Row container */}
+
+                    {/* 1. Main Clean Button (Grow to fill space) */}
+                    <button
+                        onClick={handleCleanClick}
+                        disabled={isProcessing}
+                        className={`flex-1 rounded-md py-2 px-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${cleanImageUrl
+                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
+                    >
+                        {isProcessing ? (
+                            <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> <span>Limpando...</span></>
+                        ) : cleanImageUrl ? (
+                            <>
+                                <Check className="w-5 h-5" /> <span>Imagem Limpa</span>
+                            </>
+                        ) : (
+                            <>
+                                <Eraser className="w-5 h-5" /> <span>Limpar Imagem</span>
+                            </>
+                        )}
+                    </button>
+
+                    {/* 2. The Specific Eye Button (User Requested Style) */}
+                    {/* Only show if we actually have a clean image in store */}
+                    {cleanImageUrl && (
+                        <button
+                            onClick={toggleVisibility}
+                            className="w-12 flex items-center justify-center rounded border transition-colors bg-zinc-800 text-zinc-500 border-zinc-700 hover:text-white hover:border-zinc-500"
+                            title={isOriginalVisible ? "Ver Imagem Limpa" : "Ver Original"}
+                        >
+                            {/* Toggle Icon based on state */}
+                            {/* isOriginalVisible = TRUE -> User sees original -> Button should show "Eye Off" symbol or "Eye Open"? 
+                                Usually:
+                                Seeing Original -> Click to see Clean -> Icon: Eye (to show clean?) or EyeOff (to hide original?)
+                                Let's follow user snippet logic:
+                                isOriginalVisible ? EyeOff : Eye
+                            */}
+                            {isOriginalVisible ? (
+                                <EyeOff className="w-4 h-4" />
+                            ) : (
+                                <Eye className="w-4 h-4" />
+                            )}
+                        </button>
+                    )}
                 </div>
-            ) : (
-                /* Botão Normal: Gerar Máscara */
-                <button
-                    className={getButtonStyle(isProcessing)}
-                    onClick={onCreateMask}
-                    disabled={isProcessing}
-                >
-                    <Scan className="w-5 h-5" /> <span>Gerar Máscara</span>
-                </button>
-            )}
-
-            {/* 2. Confirmar Máscara */}
-            <button
-                className={`${getButtonStyle(workflowStep !== 'mask' && workflowStep !== 'confirmed')} ${workflowStep === 'confirmed' ? '!bg-emerald-600 !text-white hover:!bg-emerald-700' : ''
-                    }`}
-                disabled={workflowStep !== 'mask' && workflowStep !== 'confirmed'}
-                onClick={onConfirmMask}
-            >
-                {workflowStep === 'confirmed' ? (
-                    <><Check className="w-5 h-5" /> <span>Máscara Confirmada</span></>
-                ) : (
-                    <><Check className="w-5 h-5" /> <span>Confirmar Máscara</span></>
-                )}
-            </button>
-
-            {/* TOGGLE: Visualizar Máscara */}
-            <div
-                className={`flex items-center gap-2 mt-1 mb-4 px-4 transition-all ${(workflowStep === 'mask' || workflowStep === 'confirmed')
-                    ? 'opacity-100 cursor-pointer hover:bg-[#333]/50 rounded py-1'
-                    : 'opacity-30 cursor-not-allowed'
-                    }`}
-                onClick={() => {
-                    if (workflowStep === 'mask' || workflowStep === 'confirmed') {
-                        setShowMasks(!showMasks);
-                    }
-                }}
-            >
-                {showMasks ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
-                <span className="text-xs text-gray-400 font-medium">
-                    {showMasks ? 'Esconder Máscara' : 'Visualizar Máscara'}
-                </span>
             </div>
 
             <div className="h-px bg-[#333] w-full my-2"></div>
 
-            {/* 3. Detectar Balão */}
-            <button
-                className={`${getButtonStyle(workflowStep !== 'confirmed' || !!localCleanUrl)} ${balloons.some(b => b.type === 'balloon') ? '!bg-emerald-600 !text-white hover:!bg-emerald-700' : ''
-                    }`}
-                disabled={workflowStep !== 'confirmed' || !!localCleanUrl} // DISABLED IF CLEANED
-                onClick={onDetectBalloon}
-            >
-                {balloons.some(b => b.type === 'balloon') ? (
-                    <><Check className="w-5 h-5" /> <span>Balões Detectados</span></>
+            {/* 5. ESTRUTURA */}
+            <div className="mb-4">
+                <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">5. Estrutura</label>
+
+                {!hasPanels ? (
+                    // STATE 1: IDLE
+                    <button
+                        className={getButtonStyle(!canDetectPanels)}
+                        disabled={!canDetectPanels}
+                        onClick={onDetectPanels}
+                    >
+                        <Layout className="w-5 h-5" /> <span>Detectar Quadros</span>
+                    </button>
+                ) : !isPanelsConfirmed ? (
+                    // STATE 2: REVIEW (Confirm + Redo) - VERTICAL STACK
+                    <div className="flex flex-col gap-2">
+                        <button
+                            onClick={onConfirmPanels}
+                            className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded flex items-center justify-center gap-2 text-sm font-medium transition-colors"
+                        >
+                            <Check className="w-4 h-4" /> <span>Confirmar</span>
+                        </button>
+                        <button
+                            onClick={onDetectPanels} // Reload/Refazer
+                            className="w-full py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded flex items-center justify-center gap-2 text-sm transition-colors"
+                            title="Refazer Detecção"
+                        >
+                            <RotateCcw className="w-4 h-4" /> <span>Refazer</span>
+                        </button>
+                    </div>
                 ) : (
-                    <><MessageCircle className="w-5 h-5" /> <span>Detectar Balão</span></>
+                    // STATE 3: DONE (Separate + Eye)
+                    <div className="flex flex-col gap-2">
+                        <div className="flex gap-2 h-[38px]">
+                            <button
+                                onClick={onSeparatePanels}
+                                className="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded flex items-center justify-center gap-2 text-sm font-medium shadow-sm transition-colors"
+                            >
+                                <Scissors className="w-4 h-4" /> <span>Separar Quadros</span>
+                            </button>
+                            <button
+                                onClick={() => setShowPanelsLayer && setShowPanelsLayer(!showPanelsLayer)}
+                                className={`w-12 flex items-center justify-center rounded border transition-colors ${showPanelsLayer ? 'bg-zinc-700 text-zinc-300 border-zinc-600' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}
+                                title={showPanelsLayer ? 'Esconder' : 'Mostrar'}
+                            >
+                                {showPanelsLayer ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                            </button>
+                        </div>
+
+                        {/* PERSISTENT GALLERY BUTTON */}
+                        {previewImages && previewImages.length > 0 && (
+                            <button
+                                onClick={onOpenPanelGallery}
+                                className="w-full py-2 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-300 rounded flex items-center justify-center gap-2 text-sm transition-colors"
+                            >
+                                <Images className="w-4 h-4" /> Ver Galeria
+                            </button>
+                        )}
+                    </div>
                 )}
-            </button>
-
-            {/* TOGGLE: Visualizar Balões */}
-            <div
-                className={`flex items-center gap-2 mt-1 mb-4 px-4 transition-all ${balloons.some(b => b.type === 'balloon')
-                    ? 'opacity-100 cursor-pointer hover:bg-[#333]/50 rounded py-1'
-                    : 'opacity-30 cursor-not-allowed'
-                    }`}
-                onClick={() => {
-                    if (balloons.some(b => b.type === 'balloon')) {
-                        setShowBalloons(!showBalloons);
-                    }
-                }}
-            >
-                {showBalloons ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
-                <span className="text-xs text-gray-400 font-medium">
-                    {showBalloons ? 'Esconder Balões' : 'Visualizar Balões'}
-                </span>
-            </div>
-
-            {/* 4. Detectar Texto */}
-            <button
-                className={`${getButtonStyle(workflowStep !== 'confirmed' || isProcessing || !!localCleanUrl)} ${balloons.some(b => b.text && b.text.length > 0) ? '!bg-emerald-600 !text-white hover:!bg-emerald-700' : ''}`}
-                disabled={workflowStep !== 'confirmed' || isProcessing || !!localCleanUrl} // DISABLED IF CLEANED
-                onClick={onDetectText}
-            >
-                {balloons.some(b => b.text && b.text.length > 0) ? (
-                    <><Check className="w-5 h-5" /> <span>Texto Detectado</span></>
-                ) : (
-                    <><Type className="w-5 h-5" /> <span>Detectar Texto</span></>
-                )}
-            </button>
-
-            {/* TOGGLE: Visualizar Texto */}
-            <div
-                className={`flex items-center gap-2 mt-1 mb-4 px-4 transition-all ${balloons.some(b => b.text && b.text.length > 0)
-                    ? 'opacity-100 cursor-pointer hover:bg-[#333]/50 rounded py-1'
-                    : 'opacity-30 cursor-not-allowed'
-                    } `}
-                onClick={() => {
-                    if (balloons.some(b => b.text && b.text.length > 0)) {
-                        setShowText(!showText);
-                    }
-                }}
-            >
-                {showText ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
-                <span className="text-xs text-gray-400 font-medium">
-                    {showText ? 'Esconder Texto' : 'Visualizar Texto'}
-                </span>
-            </div>
-
-            <div className="h-px bg-[#333] w-full my-2"></div>
-
-            {/* 5. Limpar Imagem */}
-            <button
-                className={`${getButtonStyle(workflowStep !== 'confirmed' || isProcessing)} ${localCleanUrl ? '!bg-emerald-600 !text-white hover:!bg-emerald-700' : ''}`}
-                disabled={workflowStep !== 'confirmed' || isProcessing}
-                onClick={onCleanImage}
-            >
-                {localCleanUrl ? (
-                    <><Check className="w-5 h-5" /> <span className="font-medium text-sm">Imagem Limpa</span></>
-                ) : (
-                    isProcessing ? (
-                        <><span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></span> <span className="font-medium text-sm">Limpando...</span></>
-                    ) : (
-                        <><Eraser className="w-5 h-5" /> <span className="font-medium text-sm">Limpar Imagem</span></>
-                    )
-                )}
-            </button>
-
-            {/* TOGGLE: Ver Original */}
-            <div
-                className={`flex items-center gap-2 mt-1 px-4 transition-all ${localCleanUrl
-                    ? 'opacity-100 cursor-pointer hover:bg-[#333]/50 rounded py-1'
-                    : 'opacity-30 cursor-not-allowed'
-                    } `}
-                onClick={() => {
-                    if (localCleanUrl) {
-                        setIsOriginalImage(!isOriginalImage);
-                    }
-                }}
-            >
-                {isOriginalImage ? <ImageIcon className="w-4 h-4 text-white" /> : <Sparkles className="w-4 h-4 text-white" />}
-                <span className="text-xs text-gray-400 font-medium">
-                    {isOriginalImage ? 'Ver Imagem Limpa' : 'Ver Imagem Original'}
-                </span>
             </div>
 
         </div>

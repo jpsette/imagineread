@@ -147,6 +147,13 @@ class ApiClient {
         });
     }
 
+    async detectPanels(imagePath: string): Promise<{ panels: any[] }> {
+        return this.request<{ panels: any[] }>(`${API_ENDPOINTS.BASE_URL}/analisar-quadros`, {
+            method: 'POST',
+            body: JSON.stringify({ image_path: imagePath })
+        });
+    }
+
     async createFolder(data: CreateFolderRequest): Promise<FileEntry> {
         // Backend returns the created folder entry, or should.
         // If backend returns just {id, name}, we need to adapt or type strictly.
@@ -167,6 +174,14 @@ class ApiClient {
             body: JSON.stringify({ targetParentId: newParentId })
         });
     }
+
+    async renameFileSystemEntry(itemId: string, name: string, color?: string): Promise<{ id: string, name: string, color?: string }> {
+        return this.request<{ id: string, name: string, color?: string }>(`${API_ENDPOINTS.BASE_URL}/files/${itemId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ name, color })
+        });
+    }
+
 
     async reorderItems(orderedIds: string[]): Promise<void> {
         return this.request<void>(`${API_ENDPOINTS.BASE_URL}/files/reorder`, {

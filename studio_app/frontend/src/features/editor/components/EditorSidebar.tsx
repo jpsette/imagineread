@@ -1,64 +1,66 @@
-
 import React from 'react';
-import { VectorizeMenu } from './menus/VectorizeMenu';
+import {
+    MousePointer2, Type as TypeIcon, Trash2, // Edit Icons
+} from 'lucide-react';
 import { EditMenu } from './menus/EditMenu';
-import { TranslationMenu } from './menus/TranslationMenu';
-import { AnimationMenu } from './menus/AnimationMenu';
-
-// Re-using types if needed, or string literal is fine
-type EditorMode = 'vectorize' | 'edit' | 'translate' | 'animate';
 
 interface EditorSidebarProps {
-    activeMode: EditorMode;
-    sidebarWidth: number;
-    setIsResizing: (isResizing: boolean) => void;
-
-    // Props for Vectorize Menu (We pass them all down)
-    vectorizeProps: any; // Using any for simplicity here to avoid duplicating the huge interface, or import it.
-    // Ideally: import { VectorizeMenuProps } from './menus/VectorizeMenu';
-    // But for now, let's keep it clean.
+    editProps: any;
+    activeTool: 'select' | 'text';
+    setActiveTool: (tool: 'text' | 'select') => void;
 }
 
 export const EditorSidebar: React.FC<EditorSidebarProps> = ({
-    activeMode,
-    sidebarWidth,
-    setIsResizing,
-    vectorizeProps
+    editProps,
+    activeTool,
+    setActiveTool
 }) => {
     return (
-        <aside
-            style={{ width: sidebarWidth }}
-            className="absolute top-0 left-0 h-full bg-[#252526] border-r border-[#333] shadow-2xl z-20 flex flex-col"
-        >
-            {/* Sidebar Header */}
-            <div className="h-12 border-b border-[#333] flex items-center px-4 shrink-0 bg-[#2d2d2d]">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    {activeMode === 'vectorize' && 'Vetorizar'}
-                    {activeMode === 'edit' && 'Editar'}
-                    {activeMode === 'translate' && 'Traduzir'}
-                    {activeMode === 'animate' && 'Animar'}
-                </span>
+        <div className="flex flex-col gap-4 p-4 w-full h-full overflow-y-auto custom-scrollbar animate-in slide-in-from-right-4">
+
+            {/* COMPACT TOOLBAR */}
+            <div>
+                <div className="flex gap-1.5 mb-1.5">
+                    <button
+                        onClick={() => setActiveTool('select')}
+                        className={`flex-1 h-9 rounded flex items-center justify-center gap-2 transition-all border text-xs font-medium ${activeTool === 'select'
+                            ? 'bg-cyan-900/30 text-cyan-400 border-cyan-500/50'
+                            : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-700'
+                            }`}
+                        title="Selecionar e Mover (V)"
+                    >
+                        <MousePointer2 size={16} />
+                        <span>Mover</span>
+                    </button>
+
+                    <button
+                        onClick={() => editProps.onDelete(editProps.selectedId)}
+                        disabled={!editProps.selectedId}
+                        className="flex-1 h-9 rounded flex items-center justify-center gap-2 transition-all border text-xs font-medium bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20 disabled:border-transparent disabled:bg-[#333] disabled:text-zinc-600 disabled:cursor-not-allowed"
+                        title="Excluir Selecionado (Del)"
+                    >
+                        <Trash2 size={16} />
+                        <span>Excluir</span>
+                    </button>
+                </div>
+
+                <button
+                    onClick={() => setActiveTool('text')}
+                    className={`w-full h-9 rounded flex items-center justify-center gap-2 transition-all border text-xs font-medium ${activeTool === 'text'
+                        ? 'bg-cyan-900/30 text-cyan-400 border-cyan-500/50'
+                        : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-700'
+                        }`}
+                    title="Adicionar Texto (T)"
+                >
+                    <TypeIcon size={16} />
+                    <span>Novo Texto</span>
+                </button>
             </div>
 
-            {/* Sidebar Content */}
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            <div className="h-px bg-[#333]" />
 
-                {activeMode === 'vectorize' && (
-                    <VectorizeMenu {...vectorizeProps} />
-                )}
-
-                {activeMode === 'edit' && <EditMenu />}
-                {activeMode === 'translate' && <TranslationMenu />}
-                {activeMode === 'animate' && <AnimationMenu />}
-
-            </div>
-
-            {/* Resizer Handle */}
-            <div
-                onMouseDown={(e) => { e.preventDefault(); setIsResizing(true); }}
-                className="absolute top-0 right-0 w-1 h-full cursor-ew-resize hover:bg-blue-500/50 transition-colors z-30"
-                title="Arrastar largura"
-            />
-        </aside>
+            {/* 2. PROPERTIES MENU */}
+            <EditMenu {...editProps} />
+        </div>
     );
 };

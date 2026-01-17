@@ -60,3 +60,13 @@ async def read_text(request: OCRRequest):
     except Exception as e:
         logger.error(f"OCR Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/analisar-quadros")
+async def analisar_quadros(request: YOLOAnalyzeRequest):
+    try:
+        from app.services.ai_service import detect_panels_cv2
+        panels = detect_panels_cv2(request.image_path)
+        return {"status": "success", "panels": panels}
+    except Exception as e:
+        logger.error(f"Panel Detection Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

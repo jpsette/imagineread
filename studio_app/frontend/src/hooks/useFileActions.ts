@@ -147,12 +147,27 @@ export const useFileActions = () => {
         }
     };
 
+    const renameItem = async (id: string, newName: string, newColor?: string) => {
+        try {
+            await api.renameFileSystemEntry(id, newName, newColor);
+            // Local Optimistic Update
+            const newFs = fileSystem.map(item =>
+                item.id === id ? { ...item, name: newName, color: newColor || item.color } : item
+            );
+            setFileSystem(newFs);
+        } catch (e) {
+            console.error("Failed to rename item", e);
+            alert("Erro ao renomear item.");
+        }
+    };
+
     return {
         createFolder,
         deleteFolder,
         deletePages,
         uploadPages,
         uploadPDF,
-        reorderItems
+        reorderItems,
+        renameItem
     };
 };
