@@ -34,6 +34,24 @@ export const useVectorization = ({
     const [isProcessing, setIsProcessing] = useState(false);
     const [localCleanUrl, setLocalCleanUrl] = useState<string | null>(cleanUrl || null);
 
+    // RESET STATE ON NEW IMAGE
+    useEffect(() => {
+        if (imageUrl) {
+            console.log("🔄 New Image Detected. Resetting Editor State...", imageUrl);
+
+            // 1. Clear State
+            setBalloons([]);
+            setLocalCleanUrl(null);
+            setWorkflowStep('idle');
+
+            // 2. Clear Store Clean Image
+            const store = useEditorStore.getState();
+            if (store.setCleanImage) {
+                store.setCleanImage(null);
+            }
+        }
+    }, [imageUrl, setBalloons]);
+
     // DERIVED STATE (Single Source of Truth)
     const hasBalloons = currentBalloons.some(b => b.type.startsWith('balloon'));
     const hasText = currentBalloons.some(b =>
