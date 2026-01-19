@@ -49,7 +49,7 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
     };
 
     return (
-        <Group>
+        <Group id={panel.id}>
             {/* The Polygon Panel */}
             <Line
                 points={panel.points}

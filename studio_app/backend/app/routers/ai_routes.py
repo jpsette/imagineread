@@ -1,10 +1,16 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.models import AnalyzeRequest, CleanRequest, YOLOAnalyzeRequest, OCRRequest
-from app.services.ai_service import analyze_page_layout, clean_page_content, execute_yolo, perform_ocr
-from app.utils import logger, TEMP_DIR
 from app.database import get_db
 from app import crud
+from app.utils import logger, TEMP_DIR
+
+# --- SERVICE IMPORTS ---
+# AI Service acts as orchestrator for Layout and Cleaning
+from app.services.ai_service import analyze_page_layout, clean_page_content, perform_ocr
+# Dedicated Services for Detection
+from app.services.frame_service import detect_frames
+from app.services.balloon_service import execute_yolo
 
 router = APIRouter(tags=["AI"])
 
@@ -27,7 +33,6 @@ async def clean_page(request: CleanRequest, db: Session = Depends(get_db)):
         # PERSISTENCE LOGIC
         if request.file_id:
             try:
-                # Use CRUD Update
                 updated = crud.update_file_clean_status(db, request.file_id, final_clean_url)
                 if updated:
                     logger.info(f"💾 Persisted clean URL for file {request.file_id}")
@@ -47,6 +52,7 @@ async def clean_page(request: CleanRequest, db: Session = Depends(get_db)):
 @router.post("/analisar-yolo")
 async def analisar_yolo(request: YOLOAnalyzeRequest):
     try:
+        # Calls the dedicated Balloon Service
         return execute_yolo(request.image_path)
     except Exception as e:
         logger.error(f"YOLO Error: {e}")
@@ -64,9 +70,10 @@ async def read_text(request: OCRRequest):
 @router.post("/analisar-quadros")
 async def analisar_quadros(request: YOLOAnalyzeRequest):
     try:
-        from app.services.ai_service import detect_panels_cv2
-        panels = detect_panels_cv2(request.image_path)
-        return {"status": "success", "panels": panels}
+        # Calls the dedicated Frame Service
+        frames = detect_frames(request.image_path)
+        # Returns 'panels' key for Frontend compatibility
+        return {"status": "success", "panels": frames}
     except Exception as e:
         logger.error(f"Panel Detection Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

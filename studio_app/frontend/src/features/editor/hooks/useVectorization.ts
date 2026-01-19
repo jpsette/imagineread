@@ -422,7 +422,7 @@ export const useVectorization = ({
                     let rawH = v3 - v1;
 
                     // 2. Apply Padding (Capture the black border)
-                    const PADDING = 5;
+                    const PADDING = 0;
 
                     // Clamp X/Y to be at least 0
                     x = Math.max(0, rawX - PADDING);

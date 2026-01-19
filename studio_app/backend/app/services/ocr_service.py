@@ -102,9 +102,27 @@ def perform_ocr(image_path_or_url: str, balloons: List[dict], client, model_id: 
             match = re.search(r'\[.*\]', raw_text, re.DOTALL)
             if match:
                 clean_json_str = match.group()
-                json_data = json.loads(clean_json_str)
             else:
-                json_data = json.loads(raw_text)
+                clean_json_str = raw_text
+
+            # --- SANITIZER (Fix Common LLM JSON Errors) ---
+            try:
+                # 1. Fix unescaped backslashes (e.g., "C:\path" -> "C:\\path")
+                # Negative lookahead: Replace \ that is NOT followed by valid JSON escape chars
+                clean_json_str = re.sub(r'\\(?![\\"/bfnrtu])', r'\\\\', clean_json_str)
+                
+                # 2. Fix trailing commas (e.g., {"a":1,} -> {"a":1})
+                clean_json_str = re.sub(r',\s*]', ']', clean_json_str)
+                clean_json_str = re.sub(r',\s*}', '}', clean_json_str)
+
+                json_data = json.loads(clean_json_str)
+            except json.JSONDecodeError:
+                # Fallback: Try strict raw definition if sanitizer broke something (unlikely but safe)
+                logger.warning("Sanitized JSON parse failed, trying raw...")
+                if match:
+                    json_data = json.loads(match.group())
+                else:
+                     json_data = json.loads(raw_text)
         except Exception as e:
              logger.warning(f"OCR JSON Parse Failed. raw: {raw_text[:50]}... Error: {e}")
              return balloons
