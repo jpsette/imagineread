@@ -9,10 +9,7 @@ interface UsePanelDetectionProps {
 }
 
 export const usePanelDetection = ({ imageUrl, imgNaturalSize }: UsePanelDetectionProps) => {
-    // Local state for this specific process
     const [isProcessingPanels, setIsProcessing] = useState(false);
-
-    // Access Global Store to update panels
     const { setPanels } = useEditorStore();
 
     const detectPanels = async () => {
@@ -22,7 +19,7 @@ export const usePanelDetection = ({ imageUrl, imgNaturalSize }: UsePanelDetectio
         console.log("Detecting Panels (Real API)...");
 
         try {
-            const data = await api.detectPanels(imageUrl); // Calls POST /analisar-quadros
+            const data = await api.detectPanels(imageUrl);
             const rawPanels = data.panels;
 
             if (!rawPanels || !Array.isArray(rawPanels) || rawPanels.length === 0) {
@@ -33,7 +30,11 @@ export const usePanelDetection = ({ imageUrl, imgNaturalSize }: UsePanelDetectio
             const { w: imageWidth, h: imageHeight } = imgNaturalSize;
             if (!imageWidth || !imageHeight) throw new Error("Dimensões da imagem não disponíveis");
 
-            // CONVERT TO PANELS (Preserving PADDING=0 Logic)
+            // --- CONFIGURATION ---
+            // INSET: How many pixels to shrink the box inwards.
+            // 4px is usually the sweet spot to kill white borders/gutters.
+            const INSET = 5;
+
             const newPanels: Panel[] = rawPanels.map((p: any, index: number) => {
                 const rawBox = p.box || p.box_2d || p.bbox;
                 if (!Array.isArray(rawBox) || rawBox.length < 4) return null;
@@ -41,42 +42,48 @@ export const usePanelDetection = ({ imageUrl, imgNaturalSize }: UsePanelDetectio
                 let x, y, width, height;
                 const [v1, v2, v3, v4] = rawBox.map(Number);
 
-                // Fallbacks
-                const safeW = imageWidth;
-                const safeH = imageHeight;
-
-                // Check if normalized (0-1)
+                // Normalization Check
                 if (v1 < 1 && v2 < 1 && v3 < 1 && v4 < 1) {
-                    // Normalized Logic
-                    x = v2 * safeW;
-                    y = v1 * safeH;
-                    width = (v4 - v2) * safeW;
-                    height = (v3 - v1) * safeH;
+                    // Normalized coords logic (rarely used by YOLO usually, but supported)
+                    const rawX = v2 * imageWidth;
+                    const rawY = v1 * imageHeight;
+                    const rawW = (v4 - v2) * imageWidth;
+                    const rawH = (v3 - v1) * imageHeight;
+
+                    x = rawX + INSET;
+                    y = rawY + INSET;
+                    width = rawW - (INSET * 2);
+                    height = rawH - (INSET * 2);
                 } else {
-                    // Absolute pixels handling
+                    // Absolute pixels logic
                     const rawX = v2;
                     const rawY = v1;
                     const rawW = v4 - v2;
                     const rawH = v3 - v1;
 
-                    // CRITICAL: Keep PADDING at 0 as requested by user
-                    const PADDING = 0;
-
-                    // Clamp X/Y to be at least 0
-                    x = Math.max(0, rawX - PADDING);
-                    y = Math.max(0, rawY - PADDING);
-
-                    // Calculate new Width/Height ensuring we don't exceed image boundaries
-                    width = Math.min(imageWidth - x, rawW + (PADDING * 2));
-                    height = Math.min(imageHeight - y, rawH + (PADDING * 2));
+                    // APPLY INSET TO TIGHTEN THE CROP
+                    // Increase X/Y (move right/down)
+                    // Decrease Width/Height (shrink size)
+                    x = rawX + INSET;
+                    y = rawY + INSET;
+                    width = rawW - (INSET * 2);
+                    height = rawH - (INSET * 2);
                 }
+
+                // Safety Clamp (Don't let inset invert the shape or go out of bounds)
+                x = Math.max(0, x);
+                y = Math.max(0, y);
+                width = Math.max(1, width);
+                height = Math.max(1, height);
 
                 // Final Panel Object
                 return {
                     id: `panel-${Date.now()}-${index}`,
                     type: 'panel',
                     order: index + 1,
+                    // box_2d is kept as fallback reference
                     box_2d: [y, x, y + height, x + width],
+                    // POINTS are the source of truth for the Editor
                     points: [x, y, x + width, y, x + width, y + height, x, y + height]
                 };
             }).filter((item): item is Panel => item !== null);

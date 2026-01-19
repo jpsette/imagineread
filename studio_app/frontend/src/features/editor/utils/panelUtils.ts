@@ -1,8 +1,8 @@
 import Konva from 'konva';
 
 /**
- * Generates exact pixel crops using Data Coordinates (Math-based).
- * This is the stable method. It respects manual resizing by applying scale factors.
+ * Generates exact pixel crops based on Panel Data.
+ * SUPPORTS POLYGONAL CLIPPING: Respects trapezoids and irregular shapes using transparency.
  */
 export const generatePanelPreviews = (stage: Konva.Stage | null, panels: any[]): string[] => {
     if (!stage || !panels || panels.length === 0) {
@@ -13,15 +13,13 @@ export const generatePanelPreviews = (stage: Konva.Stage | null, panels: any[]):
 
     try {
         // 1. SELECT SOURCE IMAGE
-        // Priority: Clean Image > Base Image
         let imageNode = stage.findOne('.clean-image') as Konva.Image;
-
         if (!imageNode) {
             imageNode = stage.findOne('.base-image') as Konva.Image;
         }
 
         if (!imageNode) {
-            console.error("No source image found (.clean-image or .base-image).");
+            console.error("No source image found.");
             return [];
         }
 
@@ -31,47 +29,77 @@ export const generatePanelPreviews = (stage: Konva.Stage | null, panels: any[]):
             return [];
         }
 
-        // 2. PROCESS PANELS (Data-Based Calculation)
+        // 2. PROCESS PANELS
         panels.forEach((panel) => {
-            // DATA-DRIVEN STRATEGY (Stable)
-            let x = 0, y = 0, w = 0, h = 0;
+            let cropX = 0, cropY = 0, cropW = 0, cropH = 0;
+            let points: number[] = [];
 
-            if (typeof panel.x === 'number') {
-                // If the user resized the panel manually, Konva updates scaleX/scaleY
-                const sX = panel.scaleX || 1;
-                const sY = panel.scaleY || 1;
+            // A. DETERMINE GEOMETRY
+            // Case 1: Manual Points (Polygon/Trapezoid) - HIGHEST PRIORITY
+            if (panel.points && Array.isArray(panel.points) && panel.points.length >= 4) {
+                points = panel.points;
+                const xs = points.filter((_, i) => i % 2 === 0);
+                const ys = points.filter((_, i) => i % 2 === 1);
+                const minX = Math.min(...xs);
+                const minY = Math.min(...ys);
+                const maxX = Math.max(...xs);
+                const maxY = Math.max(...ys);
 
-                x = panel.x;
-                y = panel.y;
-                w = panel.width * sX;
-                h = panel.height * sY;
-            } else if (Array.isArray(panel.box_2d)) {
-                // Fallback for raw API data
-                const [y1, x1, y2, x2] = panel.box_2d;
-                x = x1;
-                y = y1;
-                w = x2 - x1;
-                h = y2 - y1;
+                cropX = minX;
+                cropY = minY;
+                cropW = maxX - minX;
+                cropH = maxY - minY;
+            }
+            // Case 2: Rectangle (Transformer or Raw Box)
+            else {
+                // Determine Rect Coords
+                if (typeof panel.x === 'number') {
+                    const sX = panel.scaleX || 1;
+                    const sY = panel.scaleY || 1;
+                    cropX = panel.x; cropY = panel.y;
+                    cropW = panel.width * sX; cropH = panel.height * sY;
+                } else if (Array.isArray(panel.box_2d)) {
+                    const [y1, x1, y2, x2] = panel.box_2d;
+                    cropX = x1; cropY = y1; cropW = x2 - x1; cropH = y2 - y1;
+                }
+                // Generate rectangular points for consistency
+                points = [cropX, cropY, cropX + cropW, cropY, cropX + cropW, cropY + cropH, cropX, cropY + cropH];
             }
 
             // Sanity Check
-            if (w <= 0 || h <= 0) return;
+            if (cropW <= 0 || cropH <= 0) return;
 
-            // Create canvas crop
+            // B. DRAW AND CLIP
             const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
+            canvas.width = cropW;
+            canvas.height = cropH;
             const ctx = canvas.getContext('2d');
 
             if (ctx) {
-                // Draw strictly based on the calculated numbers
+                // 1. Define Path relative to the crop canvas (0,0)
+                ctx.beginPath();
+                if (points.length >= 2) {
+                    // Move points to be relative to the bounding box top-left (cropX, cropY)
+                    ctx.moveTo(points[0] - cropX, points[1] - cropY);
+                    for (let i = 2; i < points.length; i += 2) {
+                        ctx.lineTo(points[i] - cropX, points[i + 1] - cropY);
+                    }
+                }
+                ctx.closePath();
+
+                // 2. Clip: This makes everything outside the path transparent
+                ctx.clip();
+
+                // 3. Draw Image
+                // We draw the slice of the original image starting at cropX, cropY
+                // onto the full size of our new canvas (0, 0)
                 ctx.drawImage(
                     nativeImage,
-                    x, y, w, h,  // Source Crop
-                    0, 0, w, h   // Destination
+                    cropX, cropY, cropW, cropH,  // Source Slice
+                    0, 0, cropW, cropH   // Destination
                 );
 
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+                const dataUrl = canvas.toDataURL('image/png'); // PNG is required for transparency
                 previews.push(dataUrl);
             }
         });
