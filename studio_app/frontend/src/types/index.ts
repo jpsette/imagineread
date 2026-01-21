@@ -8,6 +8,8 @@ export interface Project {
     isPinned: boolean;
 }
 
+export type EditorTool = 'select' | 'text' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout';
+
 export interface Balloon {
     id: string;
     text: string;
@@ -87,6 +89,8 @@ export interface CreateFolderRequest {
 
 export interface FileUpdateData {
     balloons: Balloon[];
+    cleanUrl?: string; // Unified Persistence
+    isCleaned?: boolean;
 }
 
 export interface OCRRequest {

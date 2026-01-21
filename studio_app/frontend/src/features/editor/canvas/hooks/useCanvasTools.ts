@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 import Konva from 'konva';
-import { Balloon } from '../../../../types'; // Imports from src/types
+import { Balloon, EditorTool } from '../../../../types'; // Imports from src/types
 
 interface UseCanvasToolsProps {
-    activeTool: string;
-    setActiveTool: (tool: string) => void;
+    activeTool: EditorTool;
+    setActiveTool: (tool: EditorTool) => void;
     onSelect: (id: string | null) => void;
     onBalloonAdd: (balloon: Balloon) => void;
     setEditingId: (id: string | null) => void;

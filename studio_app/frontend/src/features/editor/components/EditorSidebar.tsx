@@ -3,11 +3,12 @@ import {
     MousePointer2, Type as TypeIcon, Trash2, // Edit Icons
 } from 'lucide-react';
 import { EditMenu } from './menus/EditMenu';
+import { EditorTool } from '../../../types';
 
 interface EditorSidebarProps {
     editProps: any;
-    activeTool: 'select' | 'text';
-    setActiveTool: (tool: 'text' | 'select') => void;
+    activeTool: EditorTool;
+    setActiveTool: (tool: EditorTool) => void;
 }
 
 export const EditorSidebar: React.FC<EditorSidebarProps> = ({

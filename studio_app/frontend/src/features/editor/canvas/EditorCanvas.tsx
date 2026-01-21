@@ -4,7 +4,7 @@ import useImage from 'use-image';
 import Konva from 'konva';
 import { BalloonShape } from './BalloonShape';
 import { PanelShape } from './PanelShape';
-import { Balloon, Panel } from '../../../types';
+import { Balloon, Panel, EditorTool } from '../../../types';
 import { useEditorStore } from '../store';
 
 // HOOKS
@@ -17,8 +17,8 @@ interface EditorCanvasProps {
     panels?: Panel[];
     showPanels?: boolean;
     selectedId?: string | null;
-    activeTool?: string;
-    setActiveTool?: (tool: string) => void;
+    activeTool?: EditorTool;
+    setActiveTool?: (tool: EditorTool) => void;
     onSelect?: (id: string | null) => void;
     onUpdate?: (id: string, attrs: Partial<Balloon>) => void;
     onImageLoad?: (width: number, height: number) => void;

@@ -1,10 +1,12 @@
 import React from 'react';
 import { Square, Circle, Cloud, Zap } from 'lucide-react';
 
+import { EditorTool } from '../../../../types';
+
 interface RightSidebarProps {
     width: number;
-    activeTool: string;
-    setActiveTool: (tool: string) => void;
+    activeTool: EditorTool;
+    setActiveTool: (tool: EditorTool) => void;
 }
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({ width, activeTool, setActiveTool }) => {

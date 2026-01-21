@@ -5,6 +5,7 @@ import { useEditorLogic } from '../../hooks/useEditorLogic';
 import { Balloon } from '../../types';
 import { EditorCanvas } from './canvas/EditorCanvas';
 import { useEditorStore } from './store';
+import { EditorTool } from '../../types';
 
 // --- NEW COMPONENTS & UTILS ---
 import { useVectorization } from './hooks/useVectorization';
@@ -36,15 +37,13 @@ export const EditorView: React.FC<EditorViewProps> = ({
     const { balloons, addBalloon, updateBalloon, removeBalloon, panels, setPanels, removePanel } = useEditorStore();
 
     // --- STATE ---
-    const [activeTool, setActiveTool] = useState<any>('select');
+    const [activeTool, setActiveTool] = useState<EditorTool>('select');
     const [activeMode, setActiveMode] = useState<EditorMode>('vectorize');
 
     // Toggles
     const [showMasks, setShowMasks] = useState(true);
     const [showBalloons, setShowBalloons] = useState(true);
     const [showText, setShowText] = useState(true);
-    // isOriginalImage removed to fix lint error
-    // const [isOriginalImage, setIsOriginalImage] = useState(false); 
 
     // Panel & Preview State
     const [showPanelsLayer, setShowPanelsLayer] = useState(true);
@@ -140,7 +139,6 @@ export const EditorView: React.FC<EditorViewProps> = ({
                         <VectorizeMenu
                             workflowStep={vectorization.workflowStep}
                             isProcessing={vectorization.isProcessing}
-                            // localCleanUrl removed
                             onCreateMask={vectorization.handleCreateMask}
                             onConfirmMask={vectorization.handleConfirmMask}
                             onDetectBalloon={vectorization.detectBalloon}
@@ -149,7 +147,6 @@ export const EditorView: React.FC<EditorViewProps> = ({
                             showMasks={showMasks} setShowMasks={setShowMasks}
                             showBalloons={showBalloons} setShowBalloons={setShowBalloons}
                             showText={showText} setShowText={setShowText}
-                            // isOriginalImage removed
                             canDetectBalloons={vectorization.canDetectBalloons}
                             canDetectText={vectorization.canDetectText}
                             canDetectPanels={vectorization.canDetectPanels}
