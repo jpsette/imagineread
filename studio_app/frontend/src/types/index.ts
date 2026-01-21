@@ -73,6 +73,9 @@ export interface FileEntry {
     createdAt?: string;
     color?: string;
     mimeType?: string;
+    // Backend Enrichment
+    isComic?: boolean;
+    coverUrl?: string;
 }
 
 // API DTOs

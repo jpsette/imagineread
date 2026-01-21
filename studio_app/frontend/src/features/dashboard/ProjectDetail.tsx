@@ -34,8 +34,10 @@ interface ProjectDetailProps {
     sortOrder?: any; // Ignored for now
 }
 
+import { useFolderContents } from './hooks/useFolderContents'; // NEW HOOK
+
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({
-    project, currentFolderId, fileSystem, searchTerm, PROJECT_THEMES,
+    project, currentFolderId, fileSystem: _legacyFiles, searchTerm, PROJECT_THEMES,
     onOpenItem, onOpenComic, onBack,
     isCreatingFolder, setIsCreatingFolder,
     newFolderName, setNewFolderName,
@@ -43,6 +45,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     onCreateFolder, onDeleteFolder, onRenameFolder, onImportFiles
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // --- DATA FETCHING (Independent) ---
+    const rootId = project?.rootFolderId;
+    const targetParent = currentFolderId || rootId;
+
+    // We fetch contents for the CURRENT view (folder or root)
+    const { data: fetchedItems } = useFolderContents(targetParent || null);
 
     // --- SELECTION STATE ---
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -88,15 +97,11 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     };
 
     // --- SAFETY CHECK ---
-    const safeFileSystem = fileSystem || [];
+    const safeFileSystem = fetchedItems || []; // Use Fetched Data
 
     // --- LOGIC TO GET ITEMS ---
-    const rootId = project?.rootFolderId;
-    const targetParent = currentFolderId || rootId;
-
-    // Filter the items from the global fileSystem
+    // Since useFolderContents ALREADY filters by parentId, we just filter by search
     const items = safeFileSystem
-        .filter(i => i.parentId === targetParent)
         .filter(i => i.name.toLowerCase().includes(searchTerm?.toLowerCase() || ''));
 
     // --- BREADCRUMB LOGIC ---
@@ -241,7 +246,8 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
                     {/* DATA ITEMS */}
                     {items.map(item => {
-                        const coverImage = item.type === 'folder' ? getFolderCover(item.id) : item.url;
+                        // FIX: Use backend-provided coverUrl if available (Lazy Loading support)
+                        const coverImage = item.coverUrl || (item.type === 'folder' ? getFolderCover(item.id) : item.url);
                         const folderColor = getFolderColorClass(item.color);
                         const isSelected = selectedIds.has(item.id);
                         const isRenaming = renamingId === item.id;
@@ -259,6 +265,15 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                             }
 
                             // 2. Handle Folder/Comic Navigation Logic
+
+                            // Check for Explicit OR Implicit Comic (Lazy Loading)
+                            const isComic = item.type === 'comic' || item.isComic;
+
+                            if (isComic) {
+                                onOpenComic(item.id);
+                                return;
+                            }
+
                             if (item.type === 'folder') {
                                 const children = safeFileSystem.filter(f => f.parentId === item.id);
                                 const hasPages = children.some(f => f.type === 'file');
@@ -269,9 +284,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                 } else {
                                     onOpenItem(item);
                                 }
-                            }
-                            else if (item.type === 'comic') {
-                                onOpenComic(item.id);
                             }
                             else {
                                 const parentId = currentFolderId || item.parentId;
@@ -336,7 +348,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                 <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col gap-1">
                                     <div className="flex items-center gap-2 mb-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300">
                                         <span className={`text-[10px] uppercase font-bold tracking-widest ${activeColorClass} bg-white/5 px-2 py-0.5 rounded border border-white/10`}>
-                                            {item.type === 'folder' ? 'Biblioteca' : 'Comic'}
+                                            {(item.type === 'comic' || item.isComic) ? 'Comic' : (item.type === 'folder' ? 'Biblioteca' : 'Comic')}
                                         </span>
                                     </div>
 

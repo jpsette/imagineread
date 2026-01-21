@@ -2,22 +2,22 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { EditorLayout } from '../../../layouts/EditorLayout';
 import EditorView from '../EditorView';
-import { useFileSystemStore } from '../../../store/useFileSystemStore';
-import { FileEntry } from '../../../types';
+import { useFileItem } from '../../dashboard/hooks/useFileItem';
 
 export const EditorScreen: React.FC = () => {
     const { fileId } = useParams<{ fileId: string }>();
     const navigate = useNavigate();
 
-    const { fileSystem } = useFileSystemStore();
+    // Data Independence: Fetch specifically this file from Server (React Query)
+    const { data: file, isLoading } = useFileItem(fileId || null);
 
-    const file = fileSystem.find((f: FileEntry) => f.id === fileId);
-
-    if (!file && fileSystem.length > 0) {
-        return <div className="text-white p-10">Arquivo não encontrado. <button onClick={() => navigate('/')}>Voltar</button></div>;
+    if (isLoading) {
+        return <div className="fixed inset-0 bg-black flex items-center justify-center text-white z-[200]">Carregando editor...</div>;
     }
 
-    if (!file) return null;
+    if (!file) {
+        return <div className="text-white p-10 fixed z-[200]">Arquivo não encontrado. <button onClick={() => navigate('/')} className="underline ml-2">Voltar</button></div>;
+    }
 
     // Determine return path. Ideally we go back to the Comic (parent).
     const handleBack = () => {

@@ -1,9 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useProjectStore } from '../store/useProjectStore';
 import { useUIStore } from '../store/useUIStore';
 import { api } from '../services/api';
 import { Project } from '../types';
 
 export const useProjectActions = () => {
+    const queryClient = useQueryClient();
     const {
         projects,
         addProject,
@@ -15,10 +17,21 @@ export const useProjectActions = () => {
 
     const { setView, setIsCreatingProject } = useUIStore();
 
+    // Helper to sync UI (React Query) with Actions
+    const invalidateProjects = () => {
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
+    };
+
     const createProject = async (name: string, color: string) => {
         try {
             const newP = await api.createProject({ name, color });
+
+            // 1. Update Legacy Store (for internal logic like togglePin)
             addProject(newP);
+
+            // 2. Sync UI (React Query)
+            invalidateProjects();
+
             setCurrentProjectId(newP.id);
             setView('project');
             setIsCreatingProject(false);
@@ -33,11 +46,11 @@ export const useProjectActions = () => {
         try {
             await api.updateProject(id, data);
 
-            // Optimistic / Store update
-            // Verify if we need to reload or just update local
-            // Original code: await api.updateProject... const newP = await api.getProjects()... setProjects
-            // Optimization: Update local state directly
+            // 1. Update Legacy Store
             updateStoreProject(id, data);
+
+            // 2. Sync UI
+            invalidateProjects();
 
         } catch (e) {
             console.error("Failed to update project", e);
@@ -48,7 +61,12 @@ export const useProjectActions = () => {
     const deleteProject = async (id: string) => {
         try {
             await api.deleteProject(id);
+
+            // 1. Update Legacy Store
             deleteStoreProject(id);
+
+            // 2. Sync UI
+            invalidateProjects();
 
             if (currentProjectId === id) {
                 setCurrentProjectId(null);

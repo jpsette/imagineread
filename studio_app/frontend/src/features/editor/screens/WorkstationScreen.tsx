@@ -1,59 +1,60 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { EditorLayout } from '../../../layouts/EditorLayout';
 import { ComicWorkstation } from '../../editor/ComicWorkstation';
-import { useFileSystemStore } from '../../../store/useFileSystemStore';
 import { useFileActions } from '../../../hooks/useFileActions';
+import { useFileItem } from '../../dashboard/hooks/useFileItem';
+import { useFolderContents } from '../../dashboard/hooks/useFolderContents';
 import { FileEntry } from '../../../types';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const WorkstationScreen: React.FC = () => {
     const { comicId } = useParams<{ comicId: string }>();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
-    // Connect to Store
-    const { fileSystem } = useFileSystemStore();
-    const { uploadPages, deletePages, reorderFiles } = useFileActions();
+    // === DATA FETCHING (Independent) ===
+    const { data: comic, isLoading: isLoadingComic } = useFileItem(comicId || null);
+    const { data: contents, isLoading: isLoadingPages } = useFolderContents(comicId || null);
 
-    // In App.tsx, openedComicId was state. Here it comes from URL.
-    // If comicId is invalid or not found, we should probably redirect to dashboard.
+    const { uploadPages, deletePages } = useFileActions();
 
-    const comic = fileSystem.find((f: FileEntry) => f.id === comicId);
-
-    // If we have no data yet (loadData async), we might render nothing or a loader.
-    // For now, we render if comic exists.
-
-    const pages = fileSystem
-        .filter((f: FileEntry) => f.parentId === comicId && f.type === 'file')
+    // Filter pages from contents
+    const pages = (contents || [])
+        .filter((f: FileEntry) => f.type === 'file')
         .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    const handleAddPages = (files: File[]) => {
+    // Actions Wrappers (to invalidate cache)
+    const handleAddPages = async (files: File[]) => {
         if (comicId) {
-            uploadPages(files, comicId);
-            // App.tsx called loadData() after. 
-            // We assume store updates or we might need a refresh mechanism.
+            await uploadPages(files, comicId);
+            // Invalidate to refresh list
+            queryClient.invalidateQueries({ queryKey: ['filesystem', comicId] });
         }
     };
 
-    const handleDeletePages = (pageIds: string[]) => {
+    const handleDeletePages = async (pageIds: string[]) => {
         if (confirm(`Excluir ${pageIds.length} páginas?`)) {
-            deletePages(pageIds);
+            await deletePages(pageIds);
+            queryClient.invalidateQueries({ queryKey: ['filesystem', comicId] });
         }
     };
 
-    const handleReorderPages = (pageIds: string[]) => {
-        // Mock implementation from App.tsx or use reorderFiles if available
-        console.log("Reorder pages:", pageIds);
+    const handleReorderPages = (_pageIds: string[]) => {
+        // Mock / TODO: Implement Reorder API in Phase 6
+        // console.log("Reorder pages:", pageIds);
     };
 
-    if (!comic && fileSystem.length > 0) {
-        // Data is loaded but comic not found
-        return <div className="text-white p-10">Comic não encontrada. <button onClick={() => navigate('/')}>Voltar</button></div>;
+    if (isLoadingComic || isLoadingPages) {
+        return <div className="fixed inset-0 bg-[#0c0c0e] flex items-center justify-center text-white">Carregando dados do quadrinho...</div>;
     }
 
     if (!comic) {
-        // Still loading or empty
-        return null;
+        return <div className="text-white p-10">Comic não encontrada. <button onClick={() => navigate('/')}>Voltar</button></div>;
     }
+
+    // Defensive check
+    if (!comicId) return null;
 
     return (
         <div className="fixed inset-0 z-[200] bg-[#0c0c0e]">

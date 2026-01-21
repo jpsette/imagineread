@@ -33,7 +33,7 @@ async def upload_pdf(file: UploadFile = File(...), parent_id: str = Form(...), d
         crud.create_filesystem_entry(db, {
             "id": pdf_folder_id,
             "name": pdf_name,
-            "type": "folder",
+            "type": "comic",
             "parentId": parent_id,
             "createdAt": datetime.now().isoformat()
         })

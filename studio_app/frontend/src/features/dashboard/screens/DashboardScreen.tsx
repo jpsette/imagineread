@@ -8,10 +8,11 @@ import { ProjectDetail } from '../ProjectDetail';
 
 // Stores & Hooks
 import { useProjectStore } from '../../../store/useProjectStore';
-import { useFileSystemStore } from '../../../store/useFileSystemStore';
+// import { useFileSystemStore } from '../../../store/useFileSystemStore'; // Legacy removed
 import { useUIStore } from '../../../store/useUIStore';
 import { useFileActions } from '../../../hooks/useFileActions';
 import { useProjectActions } from '../../../hooks/useProjectActions';
+import { useProjects } from '../hooks/useProjects'; // New Hook
 
 // Types & Constants
 import { Project, FileEntry } from '../../../types';
@@ -20,9 +21,21 @@ import { PROJECT_THEMES } from '../../../constants/theme';
 export const DashboardScreen: React.FC = () => {
     const navigate = useNavigate();
 
-    // === GLOBAL STORES ===
-    const { projects, currentProjectId, setCurrentProjectId } = useProjectStore();
-    const { fileSystem } = useFileSystemStore();
+    // === GLOBAL STORES (Legacy - Keeping currentProjectId for selection state) ===
+    const { currentProjectId, setCurrentProjectId } = useProjectStore();
+
+    // === DATA FETCHING (React Query) ===
+    const { data: projectsData } = useProjects();
+    const projects = projectsData || [];
+
+    // Legacy FileSystem Store - We don't need it for Dashboard anymore!
+    // LazyExplorer fetches its own folders.
+    // ProjectDetail might need it? Let's check ProjectDetail.
+    // Actually ProjectDetail needs to be migrated too if it uses fileSystem.
+    // For now, let's pass empty array to components expecting fileSystem, 
+    // or keep it if ProjectDetail breaks.
+    // ProjectDetail uses fileSystem prop.
+
     const {
         showExplorer, setShowExplorer,
         showManager, setShowManager,
@@ -239,6 +252,7 @@ export const DashboardScreen: React.FC = () => {
                             onDeleteProject={handleDeleteWrapper}
                             onSelectProject={(id) => {
                                 setCurrentProjectId(id);
+                                setCurrentFolderId(null); // Fix: Reset to root to avoid stale folder view
                                 setView('project');
                             }}
                             onTogglePin={togglePin}
@@ -247,7 +261,7 @@ export const DashboardScreen: React.FC = () => {
                         <ProjectDetail
                             project={projects.find((p: any) => p.id === currentProjectId) || null}
                             currentFolderId={currentFolderId}
-                            fileSystem={fileSystem as any}
+                            fileSystem={[] as any} // LegacyFS disconnected. ProjectDetail needs check.
                             searchTerm={searchTerm}
                             PROJECT_THEMES={PROJECT_THEMES}
 

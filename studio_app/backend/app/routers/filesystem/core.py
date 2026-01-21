@@ -25,8 +25,11 @@ def get_filesystem(parentId: str = None, db: Session = Depends(get_db)):
         
     # Map back to camelCase for frontend
     # Map back to camelCase for frontend
-    return [
-        {
+    # Backend Enrichment: Check if folders are actually Comics (contain files)
+    response_list = []
+    
+    for e in entries:
+        item_dict = {
             "id": e.id,
             "name": e.name,
             "type": e.type,
@@ -41,8 +44,47 @@ def get_filesystem(parentId: str = None, db: Session = Depends(get_db)):
             "color": e.color
         }
 
-        for e in entries
-    ]
+        # Lazy Logic Fix: If it's a folder, check if it has children files (Implicit Comic)
+        if e.type == 'folder':
+            # Check for first child file (Cover)
+            # We use a localized query. Performance note: N+1 but necessary for Lazy Tree correctness involving legacy data.
+            # Ideally we would join, but for SQLite this is acceptable < 50 items.
+            first_child = db.query(FileSystemEntry).filter(
+                FileSystemEntry.parent_id == e.id, 
+                FileSystemEntry.type == 'file'
+            ).order_by(FileSystemEntry.name).first()
+            
+            if first_child:
+                item_dict['isComic'] = True
+                item_dict['coverUrl'] = first_child.url
+                # Optional: Overwrite type to 'comic' logic if we want strictness, 
+                # but let's keep it additive 'isComic' field for safety as per Dossier.
+        
+        response_list.append(item_dict)
+
+    return response_list
+
+@router.get("/files/{item_id}")
+def get_filesystem_item(item_id: str, db: Session = Depends(get_db)):
+    # SINGLE ITEM FETCH (Metadata)
+    entry = crud.get_filesystem_entry(db, item_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Item not found")
+        
+    return {
+        "id": entry.id,
+        "name": entry.name,
+        "type": entry.type,
+        "parentId": entry.parent_id,
+        "url": entry.url,
+        "cleanUrl": entry.clean_url,
+        "isCleaned": entry.is_cleaned,
+        "createdAt": entry.created_at,
+        "isPinned": entry.is_pinned,
+        "balloons": entry.balloons,
+        "order": entry.order,
+        "color": entry.color
+    }
 
 @router.post("/folders")
 def create_folder(request: CreateFolderRequest, db: Session = Depends(get_db)):

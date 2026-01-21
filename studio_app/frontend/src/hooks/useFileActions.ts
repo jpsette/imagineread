@@ -1,12 +1,20 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useFileSystemStore } from '../store/useFileSystemStore';
 import { api } from '../services/api';
 import { FileEntry } from '../types';
 
 export const useFileActions = () => {
+    const queryClient = useQueryClient();
     const {
         fileSystem,
         setFileSystem
     } = useFileSystemStore();
+
+    // Helper to invalidate queries instead of reloading store manually
+    const invalidate = () => {
+        // Invalidate specific parent or all filesystem
+        queryClient.invalidateQueries({ queryKey: ['filesystem'] });
+    };
 
     // Helper to reload data if needed, but we try to use optimistic or direct updates
     const reloadFileSystem = async () => {
@@ -21,9 +29,8 @@ export const useFileActions = () => {
     const createFolder = async (name: string, parentId: string, color?: string) => {
         try {
             await api.createFolder({ name, parentId, color });
-            // API returns { status, id, name } usually, but strict types might vary.
-            // Original code reloaded data. Let's reload to be safe and consistent.
-            await reloadFileSystem();
+            // Invalidate Cache
+            invalidate();
         } catch (e) {
             console.error("Failed to create folder", e);
             alert('Erro ao criar pasta');
@@ -34,7 +41,9 @@ export const useFileActions = () => {
     const deleteFolder = async (id: string) => {
         try {
             await api.deleteFileSystemEntry(id);
-            // Local Optimistic Update
+            invalidate();
+
+            // Local Optimistic Update (Legacy Store support)
             const newFs = fileSystem.filter(f => f.id !== id && f.parentId !== id);
             setFileSystem(newFs);
         } catch (e) {
@@ -46,6 +55,8 @@ export const useFileActions = () => {
     const deletePages = async (pageIds: string[]) => {
         try {
             await Promise.all(pageIds.map(id => api.deleteFileSystemEntry(id)));
+            invalidate();
+
             // Local Optimistic Update
             const newFs = fileSystem.filter(f => !pageIds.includes(f.id));
             setFileSystem(newFs);
@@ -79,40 +90,27 @@ export const useFileActions = () => {
         }
 
         if (uploadedPages.length > 0) {
+            invalidate();
+
             // Append to store
-            // We use direct setFileSystem with spread because we have multiple items
             setFileSystem([...fileSystem, ...uploadedPages]);
         }
     };
 
     const uploadPDF = async (file: File, targetParentId: string) => {
         try {
-            const data = await api.uploadPDF(file, targetParentId);
-            const comicId = `comic-${Date.now()}`;
+            await api.uploadPDF(file, targetParentId);
+            invalidate();
 
-            const newComic: FileEntry = {
-                id: comicId,
-                name: file.name.replace('.pdf', ''),
-                type: 'comic',
-                parentId: targetParentId,
-                createdAt: new Date().toISOString(),
-                isPinned: false,
-                order: 0,
-                url: ''
-            };
+            // Also need to support legacy store update for visual feedback if store is still used somewhere
+            // But main feedback should come from Query invalidation now.
+            // ... (legacy store update omitted for brevity/safety)
 
-            const newPages: FileEntry[] = data.pages.map((p: any, index: number) => ({
-                id: p.id,
-                name: p.name,
-                type: 'file',
-                parentId: comicId,
-                url: p.url,
-                createdAt: new Date().toISOString(),
-                order: index,
-                isPinned: false
-            }));
+            // const comicId = `comic-${Date.now()}`;
+            // ... logic adapted ...
 
-            setFileSystem([...fileSystem, newComic, ...newPages]);
+            // Just force refresh:
+            await reloadFileSystem();
             alert('Quadrinho importado com sucesso!');
 
         } catch (error) {
@@ -124,12 +122,9 @@ export const useFileActions = () => {
     const reorderItems = async (itemIds: string[]) => {
         try {
             await api.reorderItems(itemIds);
+            invalidate();
 
-            // Update local store order
-            // We need to update the 'order' field of the items in fileSystem
-            // itemIds is the list of IDs in the new order.
-
-            // Map of id -> order index
+            // Local Store update for DnD smoothing
             const orderMap = new Map<string, number>();
             itemIds.forEach((id, index) => orderMap.set(id, index));
 
@@ -150,6 +145,8 @@ export const useFileActions = () => {
     const renameItem = async (id: string, newName: string, newColor?: string) => {
         try {
             await api.renameFileSystemEntry(id, newName, newColor);
+            invalidate();
+
             // Local Optimistic Update
             const newFs = fileSystem.map(item =>
                 item.id === id ? { ...item, name: newName, color: newColor || item.color } : item
