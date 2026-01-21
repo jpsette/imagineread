@@ -4,6 +4,14 @@ from app.models_db import FileSystemEntry
 def get_all_filesystem_entries(db: Session):
     return db.query(FileSystemEntry).all()
 
+def get_filesystem_by_parent(db: Session, parent_id: str | None):
+    # If parent_id is None, filtering for ROOT items (where parent_id IS NULL)
+    # This is different from "get_all" which returns everything.
+    # Frontend logic: if parentId is provided (even if "root"), filter by it.
+    if parent_id == "root" or parent_id is None:
+         return db.query(FileSystemEntry).filter(FileSystemEntry.parent_id == None).all()
+    return db.query(FileSystemEntry).filter(FileSystemEntry.parent_id == parent_id).all()
+
 def get_filesystem_entry(db: Session, entry_id: str):
     return db.query(FileSystemEntry).filter(FileSystemEntry.id == entry_id).first()
 

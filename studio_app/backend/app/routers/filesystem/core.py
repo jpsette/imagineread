@@ -9,8 +9,21 @@ from loguru import logger
 router = APIRouter(tags=["Filesystem Core"])
 
 @router.get("/filesystem")
-def get_filesystem(db: Session = Depends(get_db)):
-    entries = crud.get_all_filesystem_entries(db)
+def get_filesystem(parentId: str = None, db: Session = Depends(get_db)):
+    if parentId is not None:
+        # Lazy Load: Get only children of this parent
+        # If parentId is "root" string from frontend, we treat it as None DB-wise if that's the convention,
+        # or if frontend passes actual null? 
+        # API convention: ?parentId=xyz. If omitted, parentId=None.
+        # But if omitted, we want ALL (Legacy).
+        # So we check if it IS NOT NONE.
+        if parentId == "null": parentId = None # Handle "null" string if passed
+        entries = crud.get_filesystem_by_parent(db, parentId)
+    else:
+        # Eager Load (Legacy / Default): Get EVERYTHING
+        entries = crud.get_all_filesystem_entries(db)
+        
+    # Map back to camelCase for frontend
     # Map back to camelCase for frontend
     return [
         {

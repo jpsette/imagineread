@@ -88,8 +88,12 @@ class ApiClient {
     }
 
     // --- Files (FileSystem) ---
-    async getFileSystem(): Promise<FileEntry[]> {
-        return this.request<FileEntry[]>(`${API_ENDPOINTS.BASE_URL}/filesystem`);
+    async getFileSystem(parentId?: string | null): Promise<FileEntry[]> {
+        const url = parentId
+            ? `${API_ENDPOINTS.BASE_URL}/filesystem?parentId=${parentId}`
+            : `${API_ENDPOINTS.BASE_URL}/filesystem`;
+
+        return this.request<FileEntry[]>(url);
     }
 
     async updateFileData(fileId: string, data: { balloons?: Balloon[], cleanUrl?: string, isCleaned?: boolean }): Promise<void> {
