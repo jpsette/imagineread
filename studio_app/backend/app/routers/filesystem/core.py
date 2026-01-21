@@ -48,17 +48,22 @@ def create_folder(request: CreateFolderRequest, db: Session = Depends(get_db)):
 
 @router.put("/files/{file_id}/data")
 def update_file_data(file_id: str, update_data: FileUpdateData, db: Session = Depends(get_db)):
-    # Check existence
-    if update_data.balloons is not None:
-        updated = crud.update_file_balloons(db, file_id, update_data.balloons)
-        if not updated:
-            logger.warning(f"Update failed: File {file_id} not found in DB.")
-            raise HTTPException(status_code=404, detail="File not found")
-        
-        logger.info(f"💾 Updated balloons for {file_id}")
-        return {"status": "success", "message": "File data updated"}
-        
-    return {"status": "success", "message": "No data to update"}
+    from app.services.persistence_service import PersistenceService
+    
+    service = PersistenceService(db)
+    success = service.save_file_data(file_id, update_data)
+    
+    if not success:
+         # Check if it was a 404 or a 500 inside the service? 
+         # The service logs errors. We assume if it returned False, something went wrong.
+         # For now, generic 500 or 404. Let's assume 404 for missing file is common.
+         # Ideally service returns a status/enum.
+         # But based on logs, if file missing -> logs error.
+         # We will return 400 or 404.
+         logger.warning(f"PersistenceService returned failure for {file_id}")
+         raise HTTPException(status_code=400, detail="Failed to save data. Check server logs.")
+
+    return {"status": "success", "message": "File data updated via PersistenceService"}
 
 
 @router.delete("/files/{item_id}")

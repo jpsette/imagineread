@@ -83,18 +83,14 @@ export const useVectorization = ({
     const isBusy = isProcessingPanels || isProcessingBalloons || isProcessingOcr || isProcessingCleaning;
 
     // --- EFFECT: RESET ON NEW IMAGE ---
+    // REMOVED: This was causing a race condition wiping data loaded by useEditorLogic.
+    // Lifecycle management is now centralized in useEditorLogic.ts
+
+    /* 
     useEffect(() => {
-        if (imageUrl) {
-            console.log("🔄 New Image Detected. Resetting Editor State...", imageUrl);
-            setBalloons([]);
-            setLocalCleanUrl(null);
-            setWorkflowStep('idle');
-            const store = useEditorStore.getState();
-            if (store.setCleanImage) {
-                store.setCleanImage(null);
-            }
-        }
-    }, [imageUrl, setBalloons, setLocalCleanUrl]);
+       ... removed destructive logic ...
+    }, ...);
+    */
 
     // --- DERIVED STATE ---
     const hasBalloons = currentBalloons.some(b => b.type.startsWith('balloon'));

@@ -5,7 +5,7 @@ import {
     Balloon,
     CreateProjectRequest,
     CreateFolderRequest,
-    FileUpdateData,
+
     OCRRequest,
     CleanRequest,
     DetectedBalloon
@@ -28,13 +28,17 @@ class ApiClient {
 
         const config = {
             ...options,
+            cache: 'no-store' as RequestCache, // FORCE FRESH DATA
             headers: {
                 ...headers,
                 ...options.headers,
+                'Pragma': 'no-cache',
+                'Cache-Control': 'no-cache, no-store, must-revalidate'
             },
         };
 
         try {
+            console.log(`🌐 [API] Request: ${options.method || 'GET'} ${url}`);
             const response = await fetch(url, config);
 
             let data;
@@ -88,12 +92,26 @@ class ApiClient {
         return this.request<FileEntry[]>(`${API_ENDPOINTS.BASE_URL}/filesystem`);
     }
 
-    async updateFileBalloons(fileId: string, balloons: Balloon[]): Promise<void> {
-        const payload: FileUpdateData = { balloons };
+    async updateFileData(fileId: string, data: { balloons?: Balloon[], cleanUrl?: string, isCleaned?: boolean }): Promise<void> {
+        // Map to Backend DTO (FileUpdateData)
+        // Backend expects: balloons, cleanUrl, isCleaned
+        const payload: any = {};
+        if (data.balloons) payload.balloons = data.balloons;
+        if (data.cleanUrl !== undefined) payload.cleanUrl = data.cleanUrl;
+        if (data.isCleaned !== undefined) payload.isCleaned = data.isCleaned;
+
+        console.log(`🌐 [API] Enviando PUT para: ${API_ENDPOINTS.BASE_URL}/files/${fileId}/data`);
+        console.log("📦 [API] Payload:", payload);
+
         return this.request<void>(`${API_ENDPOINTS.BASE_URL}/files/${fileId}/data`, {
             method: 'PUT',
             body: JSON.stringify(payload)
         });
+    }
+
+    // Deprecated wrapper for backward compatibility if needed, but better to update calls
+    async updateFileBalloons(fileId: string, balloons: Balloon[]): Promise<void> {
+        return this.updateFileData(fileId, { balloons });
     }
 
     async uploadPage(file: File, parentId: string): Promise<{ url: string, filename: string, id: string }> {

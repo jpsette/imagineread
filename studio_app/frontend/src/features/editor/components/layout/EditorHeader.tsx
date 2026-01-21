@@ -64,7 +64,10 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
             {/* RIGHT: Actions */}
             <div className="flex items-center gap-3">
                 <button
-                    onClick={onSave}
+                    onClick={() => {
+                        console.log("🖱️ [UI] Botão Salvar Clicado");
+                        onSave();
+                    }}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
                     style={{ WebkitAppRegion: 'no-drag' } as any}
                 >

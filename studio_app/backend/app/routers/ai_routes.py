@@ -30,16 +30,10 @@ async def clean_page(request: CleanRequest, db: Session = Depends(get_db)):
         
         final_clean_url = f"http://127.0.0.1:8000/temp/{clean_url}"
         
-        # PERSISTENCE LOGIC
-        if request.file_id:
-            try:
-                updated = crud.update_file_clean_status(db, request.file_id, final_clean_url)
-                if updated:
-                    logger.info(f"💾 Persisted clean URL for file {request.file_id}")
-                else:
-                    logger.warning(f"⚠️ Failed to find file {request.file_id} for persistence.")
-            except Exception as e:
-                logger.error(f"Failed to persist clean URL: {e}")
+        final_clean_url = f"http://127.0.0.1:8000/temp/{clean_url}"
+        
+        # PERSISTENCE LOGIC REMOVED (Moved to Manual Save)
+        # We only return the URLs for preview; user must explicitly Save to persist.
 
         return {
             "clean_image_url": final_clean_url,

@@ -56,6 +56,8 @@ class Balloon(BaseModel):
 class FileUpdateData(BaseModel):
     # balloons: Optional[List[dict]] = None
     balloons: Optional[List[Balloon]] = None
+    cleanUrl: Optional[str] = None
+    isCleaned: Optional[bool] = None
 
 class CreateFolderRequest(BaseModel):
     name: str

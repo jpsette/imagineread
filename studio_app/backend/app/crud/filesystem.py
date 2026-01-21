@@ -29,14 +29,8 @@ def create_filesystem_entry(db: Session, entry_data: dict):
     db.refresh(db_entry)
     return db_entry
 
-def update_file_balloons(db: Session, file_id: str, balloons: list):
-    db_entry = get_filesystem_entry(db, file_id)
-    if db_entry:
-        db_entry.balloons = balloons
-        db.commit()
-        db.refresh(db_entry)
-        return db_entry
-    return None
+# update_file_extended_data REMOVED - Use PersistenceService
+# This prevents Pydantic vs SQLAlchemy serialization issues.
 
 def update_file_clean_status(db: Session, file_id: str, clean_url: str):
     db_entry = get_filesystem_entry(db, file_id)

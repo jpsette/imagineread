@@ -221,8 +221,6 @@ const App: React.FC = () => {
                             setOpenedPageUrl('');
                             loadData(); // Reload to reflect changes
                         }}
-                        comicName={fileSystem.find((f: any) => f.id === openedComicId)?.name || 'Comic'}
-                        pageName={fileSystem.find((f: any) => f.id === openedPageId)?.name || 'Page'}
                         fileId={openedPageId!}
                         initialBalloons={fileSystem.find((f: any) => f.id === openedPageId)?.balloons}
                         cleanUrl={fileSystem.find((f: any) => f.id === openedPageId)?.cleanUrl}

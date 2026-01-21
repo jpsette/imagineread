@@ -25,7 +25,7 @@ os.makedirs(LIBRARY_DIR, exist_ok=True)
 # --- GOOGLE GENAI CONFIG ---
 PROJECT_ID = os.getenv("PROJECT_ID", "seismic-mantis-483123-g8")
 LOCATION = os.getenv("LOCATION", "us-central1")
-MODEL_ID = os.getenv("MODEL_ID", "gemini-2.5-flash-lite")
+MODEL_ID = os.getenv("MODEL_ID", "gemini-2.5-flash")
 
 # --- LOGGING SETUP ---
 LOG_BUFFER = deque(maxlen=200)

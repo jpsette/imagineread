@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Konva from 'konva';
+import { Toaster } from 'sonner';
 import { useEditorLogic } from '../../hooks/useEditorLogic';
 import { Balloon } from '../../types';
 import { EditorCanvas } from './canvas/EditorCanvas';
@@ -127,9 +128,10 @@ export const EditorView: React.FC<EditorViewProps> = ({
                 activeMode={activeMode}
                 setActiveMode={setActiveMode}
                 onBack={onBack}
-                onSave={() => console.log("Save clicked")}
+                onSave={editor.saveChanges}
                 onClose={() => window.location.href = '/'}
             />
+            <Toaster richColors position="top-center" />
 
             <div className="flex flex-1 overflow-hidden">
                 {/* 2. LEFT SIDEBAR */}

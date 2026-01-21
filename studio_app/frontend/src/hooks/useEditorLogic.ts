@@ -3,21 +3,38 @@ import { Balloon, DetectedBalloon } from '../types';
 import { api } from '../services/api';
 import { yoloToBalloons } from '../utils/balloonConverter';
 import { useAppStore } from '../store/useAppStore';
+import { useEditorStore } from '../features/editor/store';
+import { toast } from 'sonner';
 
 export const useEditorLogic = (
     fileId: string,
     initialBalloons: Balloon[] | null | undefined,
     imageUrl: string
 ) => {
-    // --- STATE ---
-    const [balloons, setBalloons] = useState<Balloon[]>(() => {
+    // --- GLOBAL STORE INTEGRATION (Fixing State Schizophrenia) ---
+    const {
+        balloons,
+        setBalloons,
+        cleanImageUrl: storeCleanUrl,
+        setCleanImage
+    } = useEditorStore();
+
+    // Sync Initial Balloons to Store on Mount
+    useEffect(() => {
+        console.log("🎣 [Logic] useEffect initialBalloons:", initialBalloons?.length);
         if (initialBalloons && Array.isArray(initialBalloons) && initialBalloons.length > 0) {
-            return initialBalloons;
+            console.log("📥 [Logic] Hydrating Store with balloons:", initialBalloons.length);
+            useEditorStore.getState().setBalloons(initialBalloons);
+        } else {
+            console.log("🧹 [Logic] No initialBalloons found. Resetting Store to empty.");
+            // SAFE RESET: Only clear if we really received nothing (new file)
+            // This prevents "leaking" balloons from previous file if we switch files without reload
+            useEditorStore.getState().setBalloons([]);
         }
-        return [];
-    });
+    }, [initialBalloons]);
 
     // Refs for accessing latest state in async/callbacks without re-bind
+    // Note: With Store, we can also use useEditorStore.getState().balloons
     const balloonsRef = useRef<Balloon[]>(balloons);
     useEffect(() => {
         balloonsRef.current = balloons;
@@ -27,51 +44,54 @@ export const useEditorLogic = (
     const [zoom, setZoom] = useState(1);
     const [imgNaturalSize, setImgNaturalSize] = useState({ w: 0, h: 0 });
 
-    // Store Actions
+    // Store Actions (Legacy History)
     const { pushToHistory } = useAppStore();
 
     // Async States
     const [analyzingYOLO, setAnalyzingYOLO] = useState(false);
     const [readingOCR, setReadingOCR] = useState(false);
     const [isCleaning, setIsCleaning] = useState(false);
-    const [cleanImageUrl, setCleanImageUrl] = useState<string | null>(null);
     const [maskPreviewUrl, setMaskPreviewUrl] = useState<string | null>(null);
+
+    // Clean Image State mapped to Store
+    const cleanImageUrl = storeCleanUrl;
     const [showClean, setShowClean] = useState(false);
 
     const [yoloDetections, setYoloDetections] = useState<DetectedBalloon[]>([]);
 
-    // --- AUTO SAVE ---
-    // Track last saved state to prevent save loops or save-on-mount
-    const lastSavedRef = useRef<string>(JSON.stringify(balloons));
+    // --- MANUAL SAVE ---
+    const saveChanges = async () => {
+        console.log("🧠 [Logic] Iniciando saveChanges...");
+        const toastId = toast.loading('Salvando alterações...');
+        try {
+            // Unified Save: Balloons (from Store) + Clean Status
+            const currentBalloons = useEditorStore.getState().balloons; // Ensure fresh state
+            console.log("📊 [Logic] Estado Atual do Store (Balões):", currentBalloons);
+            console.log("📊 [Logic] Estado Atual do Store (CleanUrl):", cleanImageUrl);
+            console.log("📊 [Logic] Estado Atual do Variable (ShowClean):", showClean);
 
-    useEffect(() => {
-        if (!fileId) return;
-
-        const currentString = JSON.stringify(balloons);
-        if (currentString === lastSavedRef.current) return;
-
-        const timer = setTimeout(async () => {
-            try {
-                await api.updateFileBalloons(fileId, balloons);
-                console.log("💾 Auto-saved balloons");
-                lastSavedRef.current = currentString;
-            } catch (e) {
-                console.error("Auto-save error", e);
-            }
-        }, 1000);
-        return () => clearTimeout(timer);
-    }, [balloons, fileId]);
+            await api.updateFileData(fileId, {
+                balloons: currentBalloons,
+                cleanUrl: cleanImageUrl || undefined,
+                isCleaned: showClean
+            });
+            console.log("✅ [Logic] api.updateFileData concluído com sucesso.");
+            toast.success('Salvo com sucesso!', { id: toastId });
+        } catch (e: any) {
+            console.error("Manual save error", e);
+            toast.error(`Erro ao salvar: ${e.message}`, { id: toastId });
+        }
+    };
 
     // --- HELPER: WRAPPED SETTER ---
     // Safely pushes to history before update
+    // Now updates the Store instead of local state
     const setBalloonsWithHistory = (label: string, newState: Balloon[] | ((prev: Balloon[]) => Balloon[])) => {
         const current = balloonsRef.current;
         pushToHistory(label, current);
 
-        setBalloons(prev => {
-            const next = typeof newState === 'function' ? newState(prev) : newState;
-            return next;
-        });
+        // Update Store
+        setBalloons(newState);
     };
 
     // --- ACTIONS ---
@@ -217,9 +237,9 @@ export const useEditorLogic = (
             const data = await api.cleanPage(imageUrl, balloons, fileId);
             if (data.debug_mask_url) {
                 setMaskPreviewUrl(data.debug_mask_url);
-                setCleanImageUrl(data.clean_image_url);
+                setCleanImage(data.clean_image_url);
             } else {
-                setCleanImageUrl(data.clean_image_url);
+                setCleanImage(data.clean_image_url);
                 setShowClean(true);
             }
         } catch (error: any) {
@@ -251,7 +271,7 @@ export const useEditorLogic = (
         setZoom,
         setSelectedBubbleId,
         setMaskPreviewUrl,
-        setCleanImageUrl,
+        setCleanImageUrl: setCleanImage,
         setShowClean,
         setImgNaturalSize,
 
@@ -267,6 +287,7 @@ export const useEditorLogic = (
         handleYOLOAnalyze,
         handleImportBalloons,
         handleOCR,
-        handleCleanPage
+        handleCleanPage,
+        saveChanges // <--- EXPOSED MANUAL SAVE
     };
 };
