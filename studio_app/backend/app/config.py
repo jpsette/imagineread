@@ -11,16 +11,21 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMP_DIR = os.path.join(BASE_DIR, "temp")
 LIBRARY_DIR = os.path.join(BASE_DIR, "library")
 DATA_FILE = os.path.join(BASE_DIR, "data.json")
-CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials.json")
+
+# --- ENV & SECURITY ---
+from dotenv import load_dotenv
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+CREDENTIALS_PATH = os.path.join(BASE_DIR, os.getenv("CREDENTIALS_PATH", "credentials.json"))
 
 # Ensure directories exist
 os.makedirs(TEMP_DIR, exist_ok=True)
 os.makedirs(LIBRARY_DIR, exist_ok=True)
 
 # --- GOOGLE GENAI CONFIG ---
-PROJECT_ID = "seismic-mantis-483123-g8"
-LOCATION = "us-central1"
-MODEL_ID = "gemini-2.0-flash-exp"
+PROJECT_ID = os.getenv("PROJECT_ID", "seismic-mantis-483123-g8")
+LOCATION = os.getenv("LOCATION", "us-central1")
+MODEL_ID = os.getenv("MODEL_ID", "gemini-2.5-flash-lite")
 
 # --- LOGGING SETUP ---
 LOG_BUFFER = deque(maxlen=200)
@@ -44,6 +49,12 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
 )
+# Add File Handler
+from logging.handlers import RotatingFileHandler
+file_handler = RotatingFileHandler("backend.log", maxBytes=5*1024*1024, backupCount=3) # 5MB
+file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+logging.getLogger().addHandler(file_handler)
+
 logging.getLogger().addHandler(InMemoryHandler())
 logger = logging.getLogger("ImagineReadAPI")
 

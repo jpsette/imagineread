@@ -12,12 +12,15 @@ from app.config import TEMP_DIR, LIBRARY_DIR
 from app.services.ai_service import init_genai_client
 from app.routers import (
     project_routes,
-    file_routes,
+    # file_routes,  <-- REMOVED (Legacy)
     ai_routes,
     system_routes,
     job_routes,
     ai_async_routes
 )
+from app.routers.filesystem import core as fs_core
+from app.routers.filesystem import uploads as fs_uploads
+from app.routers.filesystem import exports as fs_exports
 from app.database import engine, Base
 import app.models_db
 
@@ -47,6 +50,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     yield
     # SHUTDOWN
     logger.info("👋 Shutting down Imagine Read Engine...")
+    
+    # Auto-Cleanup on Shutdown
+    from app.database import SessionLocal
+    from app.services.cleanup_service import cleanup_orphans
+    try:
+        db = SessionLocal()
+        cleanup_orphans(db)
+        db.close()
+    except Exception as e:
+        logger.error(f"Shutdown cleanup failed: {e}")
 
 app = FastAPI(title="Imagine Read Engine", lifespan=lifespan)
 
@@ -74,7 +87,11 @@ app.mount("/library", CORSStaticFiles(directory=LIBRARY_DIR), name="library")
 
 # Include Routers
 app.include_router(project_routes.router)
-app.include_router(file_routes.router)
+# app.include_router(file_routes.router) <-- REMOVED
+app.include_router(fs_core.router)
+app.include_router(fs_uploads.router)
+app.include_router(fs_exports.router)
+
 app.include_router(ai_routes.router)
 app.include_router(system_routes.router)
 app.include_router(job_routes.router)

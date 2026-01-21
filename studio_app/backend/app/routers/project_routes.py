@@ -30,36 +30,34 @@ def get_projects(db: Session = Depends(get_db)):
         for p in projects
     ]
 
+from app.models import ProjectCreate, ProjectUpdate
+
 @router.post("/projects")
-def create_project(data_input: dict, db: Session = Depends(get_db)):
+def create_project(item: ProjectCreate, db: Session = Depends(get_db)):
     timestamp = int(datetime.now().timestamp() * 1000)
     
     # We construct the project data here similar to before
     new_project_data = {
         "id": f"proj-{timestamp}",
-        "name": data_input.get("name", "Novo Projeto"),
-        "color": data_input.get("color", "bg-blue-500"),
+        "name": item.name,
+        "color": item.color or "bg-blue-500",
         "rootFolderId": f"folder-{timestamp}-root",
         "createdAt": datetime.now().isoformat(),
         "lastModified": datetime.now().isoformat(),
-        "isPinned": data_input.get("isPinned", False)
+        "isPinned": item.isPinned or False
     }
     
     # Create Project in DB
     crud.create_project(db, new_project_data)
     
-    # Also need to create the Root Folder for the project in the FileSystem?
-    # Previous code didn't explicitly create a "folder" entry for the rootFolderId 
-    # in the fileSystem list, it just assigned the ID. 
-    # But for a proper FS structure, let's create it.
-    # However, existing logic might rely on it just being an ID. 
-    # Let's stick to strict replacement of logic: existing code just assigned ID.
-    
     return new_project_data
 
 @router.put("/projects/{project_id}")
-def update_project(project_id: str, data_input: dict, db: Session = Depends(get_db)):
-    updated_project = crud.update_project(db, project_id, data_input)
+def update_project(project_id: str, item: ProjectUpdate, db: Session = Depends(get_db)):
+    # Convert Pydantic model to dict, excluding unset/null values
+    updates = item.model_dump(exclude_unset=True)
+    
+    updated_project = crud.update_project(db, project_id, updates)
     if not updated_project:
         raise HTTPException(status_code=404, detail="Project not found")
         

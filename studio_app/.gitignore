@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+backend/.env
+credentials.json
+backend/credentials.json
+
+# Database
+*.db
+backend/imagine_read.db
+backend/sql_app.db
+
+# Logs
+*.log
+backend/backend.log
+
+# App Data
+backend/library/
+backend/temp/
+
+# OS
+.DS_Store

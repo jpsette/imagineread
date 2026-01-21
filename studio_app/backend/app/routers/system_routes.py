@@ -1,5 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 from app.config import logger
+from app.database import get_db
+from app.services.cleanup_service import cleanup_orphans
 
 router = APIRouter(tags=["System"])
 
@@ -15,3 +18,11 @@ def get_version():
         "status": "running",
         "component": "studio_backend"
     }
+
+@router.post("/cleanup")
+def run_cleanup(db: Session = Depends(get_db)):
+    """
+    Manually triggers the Garbage Collector to remove orphan files.
+    """
+    count = cleanup_orphans(db)
+    return {"status": "success", "deleted_files": count}

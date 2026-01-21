@@ -197,43 +197,7 @@ async def get_thumbnail(url: str, width: int = 300):
         logger.error(f"Thumbnail Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/store")
-def get_store(db: Session = Depends(get_db)):
-    # Reconstruct the legacy store object
-    projects = crud.get_projects(db)
-    entries = crud.get_all_filesystem_entries(db)
-    
-    projects_list = [{
-            "id": p.id,
-            "name": p.name,
-            "color": p.color,
-            "rootFolderId": p.root_folder_id,
-            "createdAt": p.created_at,
-            "lastModified": p.last_modified,
-            "isPinned": p.is_pinned
-    } for p in projects]
-    
-    fs_list = [{
-            "id": e.id,
-            "name": e.name,
-            "type": e.type,
-            "parentId": e.parent_id,
-            "url": e.url,
-            "cleanUrl": e.clean_url,
-            "isCleaned": e.is_cleaned,
-            "createdAt": e.created_at,
-            "isPinned": e.is_pinned,
-            "balloons": e.balloons,
-            "order": e.order
-    } for e in entries]
 
-    return {"data": {"projects": projects_list, "fileSystem": fs_list}}
-
-@router.post("/store")
-def save_store(request: StoreRequest):
-    # Deprecated for DB mode
-    logger.warning("Attempted to call /store with DB enabled. Operation ignored.")
-    return {"status": "success", "message": "Ignored in DB mode"}
 
 @router.post("/admin/reset_data")
 def reset_application_data(db: Session = Depends(get_db)):

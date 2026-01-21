@@ -10,6 +10,17 @@ class Project(BaseModel):
     rootFolderId: Optional[str] = None
     isPinned: bool = False
 
+class ProjectCreate(BaseModel):
+    name: str
+    color: Optional[str] = "bg-blue-500"
+    isPinned: Optional[bool] = False
+
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    color: Optional[str] = None
+    isPinned: Optional[bool] = None
+    lastModified: Optional[str] = None
+
 class AnalyzeRequest(BaseModel):
     image_url: str
 
@@ -31,8 +42,20 @@ class StoreRequest(BaseModel):
 class ExportRequest(BaseModel):
     format: str
 
+from typing import Union, Dict
+
+class Balloon(BaseModel):
+    id: Optional[str] = None
+    text: Optional[Union[str, Dict[str, str]]] = None
+    # We allow other fields loosely for now, or we can be strict.
+    # Given the dynamic nature of the editor, strict typing all balloon props might be overkill right now,
+    # but defining 'text' explicitly solves the i18n requirement.
+    class Config:
+        extra = "allow" 
+
 class FileUpdateData(BaseModel):
-    balloons: Optional[List[dict]] = None
+    # balloons: Optional[List[dict]] = None
+    balloons: Optional[List[Balloon]] = None
 
 class CreateFolderRequest(BaseModel):
     name: str
