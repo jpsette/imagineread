@@ -15,28 +15,18 @@ import {
 import { WorkflowStep } from '../../hooks/useVectorization';
 import { useEditorStore } from '../../store'; // Store Import
 
+import { useEditorUIStore } from '../../uiStore';
+
 interface VectorizeMenuProps {
-    // State from Hook
+    // State from Hook (Logic)
     workflowStep: WorkflowStep;
     isProcessing: boolean;
-    // localCleanUrl removed
-
-    // Actions from Hook
+    // Actions from Hook (Logic)
     onCreateMask: () => void;
     onConfirmMask: () => void;
     onDetectBalloon: () => void;
     onDetectText: () => void;
     onCleanImage: (onSuccess?: (url: string) => void) => void;
-
-    // Local Editor State (Toggles)
-    showMasks: boolean;
-    setShowMasks: (v: boolean) => void;
-    showBalloons: boolean;
-    setShowBalloons: (v: boolean) => void;
-    showText: boolean;
-    setShowText: (v: boolean) => void;
-    // isOriginalImage removed
-    // setIsOriginalImage removed
 
     // Flags
     canDetectBalloons: boolean;
@@ -51,31 +41,19 @@ interface VectorizeMenuProps {
     onSeparatePanels?: () => void;
     isPanelsConfirmed?: boolean;
     onConfirmPanels?: () => void;
-    showPanelsLayer?: boolean;
-    setShowPanelsLayer?: (v: boolean) => void;
 
     // Gallery
-    previewImages?: string[];
     onOpenPanelGallery?: () => void;
 }
 
 export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     workflowStep,
     isProcessing,
-    // localCleanUrl removed
     onCreateMask,
     onConfirmMask,
     onDetectBalloon,
     onDetectText,
     onCleanImage,
-    showMasks,
-    setShowMasks,
-    showBalloons,
-    setShowBalloons,
-    showText,
-    setShowText,
-    // isOriginalImage removed
-    // setIsOriginalImage removed
     canDetectBalloons,
     canDetectText,
     canDetectPanels,
@@ -84,15 +62,20 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     hasPanels,
     onDetectPanels,
     onSeparatePanels,
-    showPanelsLayer,
-    setShowPanelsLayer,
     isPanelsConfirmed,
     onConfirmPanels,
-    previewImages = [],
     onOpenPanelGallery
 }) => {
 
     // --- STORE HOOKS ---
+    const {
+        showMasks, setShowMasks,
+        showBalloons, setShowBalloons,
+        showText, setShowText,
+        showPanelsLayer, setShowPanelsLayer,
+        previewImages
+    } = useEditorUIStore();
+
     const cleanImageUrl = useEditorStore(state => state.cleanImageUrl);
     const isOriginalVisible = useEditorStore(state => state.isOriginalVisible);
     const toggleVisibility = useEditorStore(state => state.toggleVisibility);

@@ -3,13 +3,14 @@ import { Square, Circle, Cloud, Zap } from 'lucide-react';
 
 import { EditorTool } from '../../../../types';
 
+import { useEditorUIStore } from '../uiStore';
+
 interface RightSidebarProps {
     width: number;
-    activeTool: EditorTool;
-    setActiveTool: (tool: EditorTool) => void;
 }
 
-export const RightSidebar: React.FC<RightSidebarProps> = ({ width, activeTool, setActiveTool }) => {
+export const RightSidebar: React.FC<RightSidebarProps> = ({ width }) => {
+    const { activeTool, setActiveTool } = useEditorUIStore();
 
     const tools = [
         { id: 'balloon-square', label: 'Quadrado', icon: <Square size={18} /> },

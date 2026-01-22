@@ -8,6 +8,8 @@ export interface Project {
     isPinned: boolean;
 }
 
+// Editor Types
+export type EditorMode = 'vectorize' | 'edit' | 'translate' | 'animate';
 export type EditorTool = 'select' | 'text' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout';
 
 export interface Balloon {

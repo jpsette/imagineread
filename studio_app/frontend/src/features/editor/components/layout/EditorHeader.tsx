@@ -1,29 +1,22 @@
 import React from 'react';
 import { Save, ArrowLeft, X } from 'lucide-react';
-
-export type EditorMode = 'vectorize' | 'edit' | 'translate' | 'animate';
+import { useEditorUIStore } from '../../uiStore';
+import { editorModes } from '../../tools/definitions/editorModes';
+import { EditorMode } from '../../../../types';
 
 interface EditorHeaderProps {
-    activeMode: EditorMode;
-    setActiveMode: (mode: EditorMode) => void;
     onBack: () => void;
     onSave: () => void;
     onClose: () => void;
 }
 
 export const EditorHeader: React.FC<EditorHeaderProps> = ({
-    activeMode,
-    setActiveMode,
     onBack,
     onSave,
     onClose
 }) => {
-    const tabs = [
-        { label: 'Vetorizar', key: 'vectorize' },
-        { label: 'Editar', key: 'edit' },
-        { label: 'Traduzir', key: 'translate' },
-        { label: 'Animar', key: 'animate' },
-    ];
+    const { activeMode, setActiveMode } = useEditorUIStore();
+    const tabs = editorModes;
 
     return (
         <header className="h-14 border-b border-zinc-800 flex items-center justify-between px-4 bg-zinc-900 shrink-0 z-50 relative">

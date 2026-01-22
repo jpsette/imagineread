@@ -1,22 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Konva from 'konva';
 import { Toaster } from 'sonner';
 import { useEditorLogic } from '../../hooks/useEditorLogic';
 import { Balloon } from '../../types';
-import { EditorCanvas } from './canvas/EditorCanvas';
 import { useEditorStore } from './store';
-import { EditorTool } from '../../types';
+import { useEditorUIStore } from './uiStore';
 
 // --- NEW COMPONENTS & UTILS ---
 import { useVectorization } from './hooks/useVectorization';
-import { EditorSidebar } from './components/EditorSidebar';
-import { VectorizeMenu } from './components/menus/VectorizeMenu';
-import { TranslateMenu } from './components/menus/TranslateMenu';
-import { AnimateMenu } from './components/menus/AnimateMenu';
-import { RightSidebar } from './components/RightSidebar';
+import { useShortcutManager } from './hooks/useShortcutManager'; // NEW
 import { PanelPreviewModal } from './components/modals/PanelPreviewModal';
-import { EditorHeader, EditorMode } from './components/layout/EditorHeader';
+import { EditorHeader } from './components/layout/EditorHeader';
 import { generatePanelPreviews } from './utils/panelUtils';
+
+// LAYOUT COMPONENTS
+import { EditorLeftPanel } from './components/layout/EditorLeftPanel';
+import { EditorRightPanel } from './components/layout/EditorRightPanel';
+import { EditorCanvasContainer } from './components/layout/EditorCanvasContainer';
+import { Filmstrip } from './components/layout/Filmstrip'; // NEW
 
 interface EditorViewProps {
     imageUrl: string;
@@ -33,35 +34,25 @@ export const EditorView: React.FC<EditorViewProps> = ({
     cleanUrl,
     onBack = () => window.history.back()
 }) => {
+
     // --- GLOBAL STORE ---
-    const { balloons, addBalloon, updateBalloon, removeBalloon, panels, setPanels, removePanel } = useEditorStore();
+    const { balloons, removeBalloon, removePanel, panels } = useEditorStore();
 
     // --- STATE ---
-    const [activeTool, setActiveTool] = useState<EditorTool>('select');
-    const [activeMode, setActiveMode] = useState<EditorMode>('vectorize');
-
-    // Toggles
-    const [showMasks, setShowMasks] = useState(true);
-    const [showBalloons, setShowBalloons] = useState(true);
-    const [showText, setShowText] = useState(true);
-
-    // Panel & Preview State
-    const [showPanelsLayer, setShowPanelsLayer] = useState(true);
-    const [showPreview, setShowPreview] = useState(false);
-    const [previewImages, setPreviewImages] = useState<string[]>([]);
+    // --- UI STORE (Layout & Modals) ---
+    const {
+        showPreview, setShowPreview,
+        previewImages, setPreviewImages
+    } = useEditorUIStore();
 
     // --- REFS ---
     const stageRef = useRef<Konva.Stage>(null);
 
     // --- DERIVED ---
-    const displaySrc = cleanUrl || imageUrl;
-    const visibleBalloons = balloons.filter(b => {
-        if (b.type === 'mask') return showMasks;
-        if (b.type === 'balloon') return showBalloons;
-        return true;
-    });
-
     const editor = useEditorLogic(fileId, initialBalloons, imageUrl);
+
+    // --- HOOKS ---
+    useShortcutManager(); // SHORTCUTS MANAGER
 
     const vectorization = useVectorization({
         imageUrl,
@@ -124,8 +115,6 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
             {/* 1. REFACTORED HEADER */}
             <EditorHeader
-                activeMode={activeMode}
-                setActiveMode={setActiveMode}
                 onBack={onBack}
                 onSave={editor.saveChanges}
                 onClose={() => window.location.href = '/'}
@@ -133,97 +122,40 @@ export const EditorView: React.FC<EditorViewProps> = ({
             <Toaster richColors position="top-center" />
 
             <div className="flex flex-1 overflow-hidden">
-                {/* 2. LEFT SIDEBAR */}
-                <aside className="w-80 border-r border-zinc-800 bg-zinc-900 flex flex-col z-10">
-                    {activeMode === 'vectorize' && (
-                        <VectorizeMenu
-                            workflowStep={vectorization.workflowStep}
-                            isProcessing={vectorization.isProcessing}
-                            onCreateMask={vectorization.handleCreateMask}
-                            onConfirmMask={vectorization.handleConfirmMask}
-                            onDetectBalloon={vectorization.detectBalloon}
-                            onDetectText={vectorization.detectText}
-                            onCleanImage={vectorization.handleCleanImage}
-                            showMasks={showMasks} setShowMasks={setShowMasks}
-                            showBalloons={showBalloons} setShowBalloons={setShowBalloons}
-                            showText={showText} setShowText={setShowText}
-                            canDetectBalloons={vectorization.canDetectBalloons}
-                            canDetectText={vectorization.canDetectText}
-                            canDetectPanels={vectorization.canDetectPanels}
-                            hasBalloons={vectorization.hasBalloons}
-                            hasText={vectorization.hasText}
-                            hasPanels={vectorization.hasPanels}
-                            onDetectPanels={vectorization.detectPanels}
-                            onSeparatePanels={handleSeparatePanels} // <--- CONNECTED HERE
-                            showPanelsLayer={showPanelsLayer} setShowPanelsLayer={setShowPanelsLayer}
-                            isPanelsConfirmed={true}
-                            onConfirmPanels={() => { }}
-                            previewImages={previewImages}
-                            onOpenPanelGallery={() => setShowPreview(true)}
+                {/* 2. LEFT SIDEBAR (Smart Container) */}
+                <EditorLeftPanel
+                    vectorization={vectorization}
+                    editProps={{
+                        selectedId: editor.selectedBubbleId,
+                        balloons: balloons,
+                        onDelete: (id: string) => {
+                            if (id?.startsWith('panel')) removePanel(id);
+                            else removeBalloon(id);
+                        },
+                        balloon: balloons.find(b => b.id === editor.selectedBubbleId)
+                    }}
+                    handleSeparatePanels={handleSeparatePanels}
+                    previewImages={previewImages}
+                    onOpenPanelGallery={() => setShowPreview(true)}
+                />
+
+
+
+                {/* CENTER CANVAS AREA */}
+                <div className="flex-1 relative flex flex-col min-w-0 bg-[#1e1e1e]">
+                    <div className="flex-1 relative overflow-hidden">
+                        <EditorCanvasContainer
+                            ref={stageRef}
+                            editor={editor}
+                            imageUrl={imageUrl}
+                            cleanUrl={cleanUrl}
                         />
-                    )}
+                    </div>
+                    <Filmstrip fileId={fileId} />
+                </div>
 
-                    {activeMode === 'edit' && (
-                        <EditorSidebar
-                            editProps={{
-                                selectedId: editor.selectedBubbleId,
-                                balloons: balloons,
-                                onDelete: (id: string) => {
-                                    if (id?.startsWith('panel')) removePanel(id);
-                                    else removeBalloon(id);
-                                },
-                                balloon: balloons.find(b => b.id === editor.selectedBubbleId)
-                            }}
-                            activeTool={activeTool}
-                            setActiveTool={setActiveTool}
-                        />
-                    )}
-
-                    {/* NEW MODULAR MENUS */}
-                    {activeMode === 'translate' && <TranslateMenu />}
-                    {activeMode === 'animate' && <AnimateMenu />}
-                </aside>
-
-                {/* 3. CANVAS AREA */}
-                <main className="flex-1 relative bg-[#121214] overflow-hidden flex items-center justify-center min-w-0">
-                    <EditorCanvas
-                        ref={stageRef}
-                        imageUrl={displaySrc}
-                        balloons={visibleBalloons}
-                        panels={panels}
-                        showPanels={showPanelsLayer}
-                        selectedId={editor.selectedBubbleId}
-                        activeTool={activeTool}
-                        setActiveTool={setActiveTool}
-                        onSelect={(id) => editor.setSelectedBubbleId(id)}
-                        onUpdate={(id, attrs) => {
-                            if (panels.find(p => p.id === id)) {
-                                const newPanels = panels.map(p => p.id === id ? { ...p, ...attrs } : p);
-                                // @ts-ignore
-                                setPanels(newPanels);
-                            } else {
-                                updateBalloon(id, attrs);
-                            }
-                        }}
-                        onImageLoad={(w, h) => editor.setImgNaturalSize({ w, h })}
-                        onBalloonAdd={addBalloon}
-                        editingId={null}
-                        setEditingId={() => { }}
-                    />
-                </main>
-
-                {/* 4. RIGHT SIDEBAR */}
-                <aside className="w-80 border-l border-zinc-800 bg-zinc-900 flex flex-col z-10 shrink-0 transition-all">
-                    {activeMode === 'edit' && (
-                        <div className="h-full overflow-y-auto">
-                            <RightSidebar
-                                width={300}
-                                activeTool={activeTool}
-                                setActiveTool={(t) => setActiveTool(t)}
-                            />
-                        </div>
-                    )}
-                </aside>
+                {/* 4. RIGHT SIDEBAR (Smart Container) */}
+                <EditorRightPanel />
             </div>
 
             {/* MODAL FOR PREVIEWS */}
