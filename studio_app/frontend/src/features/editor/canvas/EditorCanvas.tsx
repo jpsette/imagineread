@@ -6,6 +6,7 @@ import { BalloonShape } from './BalloonShape';
 import { PanelShape } from './PanelShape';
 import { Balloon, Panel, EditorTool } from '../../../types';
 import { useEditorStore } from '../store';
+import { useEditorUIStore } from '../uiStore';
 
 // HOOKS
 import { useCanvasNavigation } from './hooks/useCanvasNavigation';
@@ -75,9 +76,12 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
     const cleanImageUrl = useEditorStore(state => state.cleanImageUrl);
     const isOriginalVisible = useEditorStore(state => state.isOriginalVisible);
 
+    // UI Store for Global Toggles
+    const { showBalloons, showText, showMasks } = useEditorUIStore();
+
     // --- IMAGES (CORS ENABLED) ---
     const [imgOriginal, statusOriginal] = useImage(imageUrl, 'anonymous');
-    const [imgClean] = useImage(cleanImageUrl || undefined, 'anonymous');
+    const [imgClean] = useImage(cleanImageUrl || '', 'anonymous');
 
     // --- HOOKS ---
     const { scale, position, handleWheel } = useCanvasNavigation({
@@ -152,22 +156,32 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                     </Layer>
                 )}
 
-                {/* 3. BALLOONS LAYER */}
+                {/* 3. BALLOONS LAYER (With Logic for Masks vs Balloons) */}
                 <Layer>
-                    {balloons.map((balloon) => (
-                        <BalloonShape
-                            key={balloon.id}
-                            balloon={balloon}
-                            isSelected={balloon.id === selectedId}
-                            // @ts-ignore
-                            isEditing={editingId === balloon.id}
-                            onSelect={() => onSelect(balloon.id)}
-                            onChange={(newAttrs) => onUpdate(balloon.id, newAttrs)}
-                            onEditRequest={() => handleEditRequest(balloon)}
-                            // @ts-ignore
-                            onEditingBlur={() => setEditingId(null)}
-                        />
-                    ))}
+                    {balloons.map((balloon) => {
+                        // Logic: Is this a mask or a balloon?
+                        const isMask = balloon.type === 'mask';
+                        const shouldShowShape = isMask ? showMasks : showBalloons;
+
+                        return (
+                            <BalloonShape
+                                key={balloon.id}
+                                balloon={balloon}
+                                isSelected={balloon.id === selectedId}
+                                // @ts-ignore
+                                isEditing={editingId === balloon.id}
+                                // VISIBILITY PROPS
+                                showBalloon={shouldShowShape}
+                                showText={showText}
+
+                                onSelect={() => onSelect(balloon.id)}
+                                onChange={(newAttrs) => onUpdate(balloon.id, newAttrs)}
+                                onEditRequest={() => handleEditRequest(balloon)}
+                                // @ts-ignore
+                                onEditingBlur={() => setEditingId(null)}
+                            />
+                        );
+                    })}
                 </Layer>
             </Stage>
         </div>

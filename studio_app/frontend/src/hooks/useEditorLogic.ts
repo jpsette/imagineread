@@ -9,7 +9,8 @@ import { toast } from 'sonner';
 export const useEditorLogic = (
     fileId: string,
     initialBalloons: Balloon[] | null | undefined,
-    imageUrl: string
+    imageUrl: string,
+    cleanUrl?: string | null // Added optional cleanUrl
 ) => {
     // --- GLOBAL STORE INTEGRATION (Fixing State Schizophrenia) ---
     const {
@@ -19,19 +20,42 @@ export const useEditorLogic = (
         setCleanImage
     } = useEditorStore();
 
-    // Sync Initial Balloons to Store on Mount
+    // Use AppStore for History
+    const { clearHistory, pushToHistory } = useAppStore();
+
+    // STRICT RESET: When fileId changes, we MUST clean the house.
+    // Since we are now using a stable shell, the context persists.
     useEffect(() => {
-        console.log("🎣 [Logic] useEffect initialBalloons:", initialBalloons?.length);
+        // 1. Clear History (Don't want to Undo back into the previous page)
+        clearHistory();
+
+        // 2. Clear Selection
+        setSelectedBubbleId(null);
+
+        // 3. Reset Zoom (Optional - keeps UX consistent)
+        setZoom(1);
+
+        // 4. Hydrate Logic
+        console.log("🎣 [Logic] Switch File -> Hydrating:", fileId);
         if (initialBalloons && Array.isArray(initialBalloons) && initialBalloons.length > 0) {
             console.log("📥 [Logic] Hydrating Store with balloons:", initialBalloons.length);
             useEditorStore.getState().setBalloons(initialBalloons);
         } else {
             console.log("🧹 [Logic] No initialBalloons found. Resetting Store to empty.");
-            // SAFE RESET: Only clear if we really received nothing (new file)
-            // This prevents "leaking" balloons from previous file if we switch files without reload
             useEditorStore.getState().setBalloons([]);
         }
-    }, [initialBalloons]);
+
+        // 5. Hydrate Clean Image (or clear it)
+        if (cleanUrl) {
+            console.log("💧 [Logic] Hydrating Clean Image from props:", cleanUrl);
+            setCleanImage(cleanUrl);
+        } else {
+            setCleanImage(null); // IMPORTANT: Clear if page has no clean url
+        }
+
+    }, [fileId, initialBalloons, cleanUrl, setCleanImage, clearHistory]);
+
+    // Refs for accessing latest state in async/callbacks without re-bind
 
     // Refs for accessing latest state in async/callbacks without re-bind
     // Note: With Store, we can also use useEditorStore.getState().balloons
@@ -45,7 +69,7 @@ export const useEditorLogic = (
     const [imgNaturalSize, setImgNaturalSize] = useState({ w: 0, h: 0 });
 
     // Store Actions (Legacy History)
-    const { pushToHistory } = useAppStore();
+    // Removed duplicate pushToHistory declaration
 
     // Async States
     const [analyzingYOLO, setAnalyzingYOLO] = useState(false);

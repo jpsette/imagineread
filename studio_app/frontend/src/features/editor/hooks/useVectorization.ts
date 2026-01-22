@@ -33,6 +33,9 @@ export const useVectorization = ({
     // --- GLOBAL STORE ---
     const { balloons, setBalloons } = useEditorStore();
 
+    // NOTE: Hydration Logic has been moved to useEditorLogic.ts
+    // This hook is now strictly for Tool/AI workflows.
+
     // --- LOCAL STATE ---
     const [workflowStep, setWorkflowStep] = useState<WorkflowStep>('idle');
 
@@ -82,19 +85,9 @@ export const useVectorization = ({
     // --- UNIFIED LOADING STATE ---
     const isBusy = isProcessingPanels || isProcessingBalloons || isProcessingOcr || isProcessingCleaning;
 
-    // --- EFFECT: RESET ON NEW IMAGE ---
-    // REMOVED: This was causing a race condition wiping data loaded by useEditorLogic.
-    // Lifecycle management is now centralized in useEditorLogic.ts
-
-    /* 
-    useEffect(() => {
-       ... removed destructive logic ...
-    }, ...);
-    */
-
     // --- DERIVED STATE ---
     const hasBalloons = currentBalloons.some(b => b.type.startsWith('balloon'));
-    const hasMasks = currentBalloons.some(b => b.type === 'mask'); // Added helper check
+    const hasMasks = currentBalloons.some(b => b.type === 'mask');
     const hasText = currentBalloons.some(b =>
         b.type === 'text' ||
         (b.text && b.text.trim().length > 0 && b.text !== 'Texto' && b.text !== 'Novo Texto')
@@ -123,7 +116,7 @@ export const useVectorization = ({
         localCleanUrl,
         setLocalCleanUrl,
 
-        // Actions (Direct access if needed)
+        // Actions
         handleCreateMask,
         handleConfirmMask,
         handleDetectBalloon,
@@ -131,15 +124,14 @@ export const useVectorization = ({
         handleCleanImage,
         detectText,
 
-        // Wrappers (Smart Logic)
+        // Wrappers
         detectBalloon: async () => {
-            // FIX: Smart switching between Detection and Conversion
             if (hasMasks && !hasBalloons) {
                 console.log("🎭 Masks found, converting to balloons...");
-                handleDetectBalloon(); // Convert
+                handleDetectBalloon();
             } else if (!hasMasks && !hasBalloons) {
                 console.log("🔍 No masks, running YOLO...");
-                await handleCreateMask(); // Detect
+                await handleCreateMask();
             }
         },
         handleDetectText: detectText,
@@ -150,6 +142,12 @@ export const useVectorization = ({
         canDetectPanels: !isBusy && !hasPanels,
         hasBalloons,
         hasText,
-        hasPanels
+        hasPanels,
+
+        // Granular Processing States
+        isProcessingPanels,
+        isProcessingBalloons,
+        isProcessingOcr,
+        isProcessingCleaning
     };
 };

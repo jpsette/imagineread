@@ -21,6 +21,12 @@ interface VectorizeMenuProps {
     // State from Hook (Logic)
     workflowStep: WorkflowStep;
     isProcessing: boolean;
+    // Granular Loading
+    isProcessingBalloons: boolean;
+    isProcessingCleaning: boolean;
+    isProcessingPanels: boolean;
+    isProcessingOcr: boolean;
+
     // Actions from Hook (Logic)
     onCreateMask: () => void;
     onConfirmMask: () => void;
@@ -49,6 +55,12 @@ interface VectorizeMenuProps {
 export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     workflowStep,
     isProcessing,
+    // Destructure Granular Flags
+    isProcessingBalloons,
+    isProcessingCleaning,
+    isProcessingPanels,
+    isProcessingOcr,
+
     onCreateMask,
     onConfirmMask,
     onDetectBalloon,
@@ -111,19 +123,20 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
             <div className="mb-4">
                 <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">1. Máscara</label>
 
-                {workflowStep === 'idle' || isProcessing ? (
+                {workflowStep === 'idle' || isProcessingBalloons ? (
                     // STATE 1: IDLE / PROCESSING
                     <button
                         onClick={onCreateMask}
-                        disabled={isProcessing}
-                        className={getButtonStyle(isProcessing, 'blue')}
+                        disabled={isProcessingBalloons || isProcessing} // Disable if THIS is processing or GLOBAL is busy
+                        className={getButtonStyle(isProcessingBalloons || isProcessing, 'blue')}
                     >
-                        {isProcessing ? (
+                        {isProcessingBalloons ? (
                             <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> <span>Processando...</span></>
                         ) : (
                             <><Scan className="w-5 h-5" /> <span>Gerar Máscaras</span></>
                         )}
                     </button>
+                    /* ... continued logic ... */
                 ) : workflowStep === 'mask' ? (
                     // STATE 2: REVIEW (Confirm + Redo)
                     <div className="flex flex-col gap-2">
@@ -178,11 +191,15 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     </div>
                 ) : (
                     <button
-                        className={getButtonStyle(!canDetectBalloons)}
-                        disabled={!canDetectBalloons}
+                        className={getButtonStyle(!canDetectBalloons || isProcessingBalloons)}
+                        disabled={!canDetectBalloons || isProcessingBalloons} // Use granular
                         onClick={onDetectBalloon}
                     >
-                        <MessageCircle className="w-5 h-5" /> <span>Detectar Balão</span>
+                        {isProcessingBalloons ? (
+                            <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> <span>Detectando...</span></>
+                        ) : (
+                            <><MessageCircle className="w-5 h-5" /> <span>Detectar Balão</span></>
+                        )}
                     </button>
                 )}
             </div>
@@ -205,11 +222,15 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     </div>
                 ) : (
                     <button
-                        className={getButtonStyle(!canDetectText)}
-                        disabled={!canDetectText}
+                        className={getButtonStyle(!canDetectText || isProcessingOcr)}
+                        disabled={!canDetectText || isProcessingOcr} // Use granular
                         onClick={onDetectText}
                     >
-                        <Type className="w-5 h-5" /> <span>Detectar Texto</span>
+                        {isProcessingOcr ? (
+                            <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> <span>Lendo Texto...</span></>
+                        ) : (
+                            <><Type className="w-5 h-5" /> <span>Detectar Texto</span></>
+                        )}
                     </button>
                 )}
             </div>
@@ -225,13 +246,13 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     {/* 1. Main Clean Button (Grow to fill space) */}
                     <button
                         onClick={handleCleanClick}
-                        disabled={isProcessing}
+                        disabled={isProcessingCleaning} // Use granular
                         className={`flex-1 rounded-md py-2 px-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${cleanImageUrl
                             ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                             : 'bg-blue-600 hover:bg-blue-700 text-white'
                             }`}
                     >
-                        {isProcessing ? (
+                        {isProcessingCleaning ? (
                             <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> <span>Limpando...</span></>
                         ) : cleanImageUrl ? (
                             <>
@@ -278,11 +299,15 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                 {!hasPanels ? (
                     // STATE 1: IDLE
                     <button
-                        className={getButtonStyle(!canDetectPanels)}
-                        disabled={!canDetectPanels}
+                        className={getButtonStyle(!canDetectPanels || isProcessingPanels)}
+                        disabled={!canDetectPanels || isProcessingPanels} // Use granular
                         onClick={onDetectPanels}
                     >
-                        <Layout className="w-5 h-5" /> <span>Detectar Quadros</span>
+                        {isProcessingPanels ? (
+                            <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> <span>Detectando...</span></>
+                        ) : (
+                            <><Layout className="w-5 h-5" /> <span>Detectar Quadros</span></>
+                        )}
                     </button>
                 ) : !isPanelsConfirmed ? (
                     // STATE 2: REVIEW (Confirm + Redo) - VERTICAL STACK

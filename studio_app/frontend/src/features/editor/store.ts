@@ -68,7 +68,7 @@ export const useEditorStore = create<EditorState>()(
             partialize: (state) => ({
                 balloons: state.balloons,
                 panels: state.panels,
-                cleanImageUrl: state.cleanImageUrl // Persist the clean image too
+                // Removed cleanImageUrl to prevent "ghost" state on reload
             }),
         }
     )

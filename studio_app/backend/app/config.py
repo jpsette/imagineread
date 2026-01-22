@@ -8,19 +8,64 @@ from datetime import datetime
 # --- PATHS ---
 # backend/app/config.py -> backend/app -> backend -> ROOT
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
-TEMP_DIR = os.path.join(BASE_DIR, "temp")
-LIBRARY_DIR = os.path.join(BASE_DIR, "library")
-DATA_FILE = os.path.join(BASE_DIR, "data.json")
+
+# --- DESKTOP STORAGE RESOLUTION ---
+def get_app_data_path(app_name="Imagine Read"):
+    """
+    Returns a safe, writable directory for application data based on the OS.
+    Standard:
+    - Mac: ~/Library/Application Support/Imagine Read
+    - Windows: %APPDATA%/Imagine Read
+    - Linux: ~/.local/share/Imagine Read
+    
+    Dev Mode Override:
+    If a .env file exists in the active source directory, we assume Dev Mode 
+    and use the local folder to avoid polluting system paths during dev.
+    """
+    # 1. Check for Dev Mode (Local .env existence)
+    if os.path.exists(os.path.join(BASE_DIR, ".env")):
+        return BASE_DIR
+
+    # 2. Resolve System Path
+    home = Path.home()
+    if sys.platform == "win32":
+        return home / "AppData" / "Roaming" / app_name
+    elif sys.platform == "darwin":
+        return home / "Library" / "Application Support" / app_name
+    else:
+        return home / ".local" / "share" / app_name
+
+# DETERMINE ROOT DATA PATH
+APP_DATA_DIR = get_app_data_path()
+# Convert to string if it's a Path object
+if isinstance(APP_DATA_DIR, Path):
+    APP_DATA_DIR = str(APP_DATA_DIR)
+
+# DEFINE SUBDIRECTORIES
+TEMP_DIR = os.path.join(APP_DATA_DIR, "temp")
+LIBRARY_DIR = os.path.join(APP_DATA_DIR, "library")
+# Database is also moved to safe storage
+DATABASE_URL = f"sqlite:///{os.path.join(APP_DATA_DIR, 'imagine_read.db')}"
 
 # --- ENV & SECURITY ---
 from dotenv import load_dotenv
-load_dotenv(os.path.join(BASE_DIR, ".env"))
+# Try loading .env from BASE_DIR (Source) first, then APP_DATA_DIR (User Config)
+load_dotenv(os.path.join(BASE_DIR, ".env")) # Dev/Source priorities
+load_dotenv(os.path.join(APP_DATA_DIR, ".env")) # User overrides
 
 CREDENTIALS_PATH = os.path.join(BASE_DIR, os.getenv("CREDENTIALS_PATH", "credentials.json"))
+# Also check APP_DATA_DIR for credentials if not found in source (for installed apps)
+if not os.path.exists(CREDENTIALS_PATH):
+    user_creds = os.path.join(APP_DATA_DIR, "credentials.json")
+    if os.path.exists(user_creds):
+        CREDENTIALS_PATH = user_creds
 
 # Ensure directories exist
 os.makedirs(TEMP_DIR, exist_ok=True)
 os.makedirs(LIBRARY_DIR, exist_ok=True)
+
+logger = logging.getLogger("ImagineReadConfig")
+logger.info(f"📂 Storage Root: {APP_DATA_DIR}")
 
 # --- GOOGLE GENAI CONFIG ---
 PROJECT_ID = os.getenv("PROJECT_ID", "seismic-mantis-483123-g8")

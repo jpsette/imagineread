@@ -1,7 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { api } from '../../../services/api';
 
-export const useFileItem = (fileId: string | null) => {
+interface UseFileItemOptions {
+    keepPreviousData?: boolean;
+}
+
+export const useFileItem = (fileId: string | null, options?: UseFileItemOptions) => {
     return useQuery({
         queryKey: ['file', fileId],
         queryFn: async () => {
@@ -10,5 +14,6 @@ export const useFileItem = (fileId: string | null) => {
         },
         enabled: !!fileId, // Only run if ID is present
         staleTime: 1000 * 60 * 5, // 5 minutes
+        placeholderData: options?.keepPreviousData ? keepPreviousData : undefined
     });
 };

@@ -52,6 +52,11 @@ export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
                         <VectorizeMenu
                             workflowStep={vectorization.workflowStep}
                             isProcessing={vectorization.isProcessing}
+                            // Granular Loading
+                            isProcessingBalloons={vectorization.isProcessingBalloons}
+                            isProcessingCleaning={vectorization.isProcessingCleaning}
+                            isProcessingPanels={vectorization.isProcessingPanels}
+                            isProcessingOcr={vectorization.isProcessingOcr}
                             onCreateMask={vectorization.handleCreateMask}
                             onConfirmMask={vectorization.handleConfirmMask}
                             onDetectBalloon={vectorization.detectBalloon}

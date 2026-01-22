@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import Konva from 'konva';
 import { Toaster } from 'sonner';
 import { useEditorLogic } from '../../hooks/useEditorLogic';
@@ -8,16 +8,16 @@ import { useEditorUIStore } from './uiStore';
 
 // --- NEW COMPONENTS & UTILS ---
 import { useVectorization } from './hooks/useVectorization';
-import { useShortcutManager } from './hooks/useShortcutManager'; // NEW
+import { useShortcutManager } from './hooks/useShortcutManager';
+import { usePanelWorkflow } from './hooks/usePanelWorkflow';
 import { PanelPreviewModal } from './components/modals/PanelPreviewModal';
 import { EditorHeader } from './components/layout/EditorHeader';
-import { generatePanelPreviews } from './utils/panelUtils';
 
 // LAYOUT COMPONENTS
 import { EditorLeftPanel } from './components/layout/EditorLeftPanel';
 import { EditorRightPanel } from './components/layout/EditorRightPanel';
 import { EditorCanvasContainer } from './components/layout/EditorCanvasContainer';
-import { Filmstrip } from './components/layout/Filmstrip'; // NEW
+import { Filmstrip } from './components/layout/Filmstrip';
 
 interface EditorViewProps {
     imageUrl: string;
@@ -38,22 +38,22 @@ export const EditorView: React.FC<EditorViewProps> = ({
     // --- GLOBAL STORE ---
     const { balloons, removeBalloon, removePanel, panels } = useEditorStore();
 
-    // --- STATE ---
-    // --- UI STORE (Layout & Modals) ---
+    // --- UI STORE ---
     const {
         showPreview, setShowPreview,
-        previewImages, setPreviewImages
+        previewImages
     } = useEditorUIStore();
 
     // --- REFS ---
     const stageRef = useRef<Konva.Stage>(null);
 
-    // --- DERIVED ---
-    const editor = useEditorLogic(fileId, initialBalloons, imageUrl);
+    // --- LOGIC HOOKS ---
+    const editor = useEditorLogic(fileId, initialBalloons, imageUrl, cleanUrl);
 
-    // --- HOOKS ---
-    useShortcutManager(); // SHORTCUTS MANAGER
+    // 1. Shortcuts (Handles Delete/Undo/Redo)
+    useShortcutManager(editor);
 
+    // 2. Vectorization (Data independent)
     const vectorization = useVectorization({
         imageUrl,
         fileId,
@@ -64,56 +64,25 @@ export const EditorView: React.FC<EditorViewProps> = ({
         currentPanels: panels
     });
 
-    // --- HANDLERS ---
-
-    // THE FIX: Use the utility to crop images from the stage
-    const handleSeparatePanels = async () => {
-        console.log("🎬 Initiating Panel Separation...");
-
-        // Call the utility function we created in Step 1
-        const croppedImages = generatePanelPreviews(stageRef.current, panels);
-
-        if (croppedImages.length > 0) {
-            console.log(`✅ Success! ${croppedImages.length} panels cropped.`);
-            setPreviewImages(croppedImages);
-            setShowPreview(true);
-        } else {
-            console.warn("⚠️ No panels were cropped. Check stage ref or panel data.");
-        }
-    };
-
-    // --- KEYBOARD SHORTCUTS ---
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target as HTMLElement).isContentEditable) return;
-
-            // DELETE
-            if (e.key === 'Delete' || e.key === 'Backspace') {
-                if (editor.selectedBubbleId) {
-                    if (editor.selectedBubbleId.startsWith('panel')) {
-                        removePanel(editor.selectedBubbleId);
-                        editor.setSelectedBubbleId(null);
-                    } else {
-                        removeBalloon(editor.selectedBubbleId);
-                        editor.setSelectedBubbleId(null);
-                    }
-                }
-            }
-            // UNDO / REDO
-            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
-                e.preventDefault();
-                const { undo, redo } = useEditorStore.temporal.getState();
-                e.shiftKey ? redo() : undo();
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [editor.selectedBubbleId, balloons, removeBalloon, editor, removePanel]);
+    // 3. Panel Workflow (Separated logic)
+    const { handleSeparatePanels } = usePanelWorkflow({
+        stageRef,
+        panels
+    });
 
     return (
-        <div className="flex flex-col h-screen bg-[#121214] text-white overflow-hidden">
+        <div
+            className="flex flex-col h-screen bg-[#121214] text-white overflow-hidden"
+            style={{ animation: 'editorFadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)' }}
+        >
+            <style>{`
+                @keyframes editorFadeIn {
+                    from { opacity: 0; transform: scale(0.99); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+            `}</style>
 
-            {/* 1. REFACTORED HEADER */}
+            {/* HEADER */}
             <EditorHeader
                 onBack={onBack}
                 onSave={editor.saveChanges}
@@ -121,8 +90,10 @@ export const EditorView: React.FC<EditorViewProps> = ({
             />
             <Toaster richColors position="top-center" />
 
+            {/* MAIN CONTENT */}
             <div className="flex flex-1 overflow-hidden">
-                {/* 2. LEFT SIDEBAR (Smart Container) */}
+
+                {/* LEFT SIDEBAR */}
                 <EditorLeftPanel
                     vectorization={vectorization}
                     editProps={{
@@ -139,10 +110,12 @@ export const EditorView: React.FC<EditorViewProps> = ({
                     onOpenPanelGallery={() => setShowPreview(true)}
                 />
 
-
-
-                {/* CENTER CANVAS AREA */}
-                <div className="flex-1 relative flex flex-col min-w-0 bg-[#1e1e1e]">
+                {/* CENTER CANVAS AREA - Animating ONLY this part */}
+                <div
+                    key={fileId} // ISOLATED RESET ZONE: Only this part remounts on file change
+                    className="flex-1 relative flex flex-col min-w-0 bg-[#1e1e1e]"
+                    style={{ animation: 'editorFadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)' }}
+                >
                     <div className="flex-1 relative overflow-hidden">
                         <EditorCanvasContainer
                             ref={stageRef}
@@ -154,11 +127,11 @@ export const EditorView: React.FC<EditorViewProps> = ({
                     <Filmstrip fileId={fileId} />
                 </div>
 
-                {/* 4. RIGHT SIDEBAR (Smart Container) */}
+                {/* RIGHT SIDEBAR */}
                 <EditorRightPanel />
             </div>
 
-            {/* MODAL FOR PREVIEWS */}
+            {/* MODALS */}
             <PanelPreviewModal
                 isOpen={showPreview}
                 onClose={() => setShowPreview(false)}

@@ -2,8 +2,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Parallel Setup: Using a new DB file to avoid conflicts
-SQLALCHEMY_DATABASE_URL = "sqlite:///./imagine_read.db"
+from app.config import DATABASE_URL
+
+# Parallel Setup: Using dynamic DB file from config
+SQLALCHEMY_DATABASE_URL = DATABASE_URL
 
 # connect_args={"check_same_thread": False} is needed for SQLite
 engine = create_engine(
