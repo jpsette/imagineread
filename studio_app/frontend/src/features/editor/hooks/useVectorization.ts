@@ -39,6 +39,11 @@ export const useVectorization = ({
     // --- LOCAL STATE ---
     const [workflowStep, setWorkflowStep] = useState<WorkflowStep>('idle');
 
+    // RESET STATE ON FILE CHANGE (Stable Shell Fix)
+    useEffect(() => {
+        setWorkflowStep('idle');
+    }, [fileId]);
+
     // --- 1. HOOK: PANELS ---
     const { detectPanels, isProcessingPanels } = usePanelDetection({
         imageUrl,

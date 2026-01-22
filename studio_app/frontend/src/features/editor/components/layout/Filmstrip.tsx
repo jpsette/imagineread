@@ -11,6 +11,45 @@ export const Filmstrip: React.FC<FilmstripProps> = ({ fileId }) => {
     const { pages, currentPageId, isLoading } = useComicContext(fileId);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+    // --- DRAG TO SCROLL LOGIC ---
+    const [isDragging, setIsDragging] = React.useState(false);
+    const isDown = useRef(false);
+    const startX = useRef(0);
+    const scrollLeft = useRef(0);
+    const isDragRef = useRef(false); // To distinguish click vs drag
+
+    const startDragging = (e: React.MouseEvent) => {
+        isDown.current = true;
+        isDragRef.current = false; // Reset drag flag
+        setIsDragging(true);
+        if (scrollContainerRef.current) {
+            startX.current = e.pageX - scrollContainerRef.current.offsetLeft;
+            scrollLeft.current = scrollContainerRef.current.scrollLeft;
+        }
+    };
+
+    const stopDragging = () => {
+        isDown.current = false;
+        setIsDragging(false);
+    };
+
+    const onDrag = (e: React.MouseEvent) => {
+        if (!isDown.current) return;
+        e.preventDefault();
+
+        if (scrollContainerRef.current) {
+            const x = e.pageX - scrollContainerRef.current.offsetLeft;
+            const walk = (x - startX.current) * 2; // Scroll-fast factor
+
+            // Mark as dragging if moved significantly
+            if (Math.abs(walk) > 5) {
+                isDragRef.current = true;
+            }
+
+            scrollContainerRef.current.scrollLeft = scrollLeft.current - walk;
+        }
+    };
+
     // Auto-scroll to selected item
     useEffect(() => {
         if (scrollContainerRef.current) {
@@ -65,8 +104,13 @@ export const Filmstrip: React.FC<FilmstripProps> = ({ fileId }) => {
                 {/* Scrollable Area */}
                 <div
                     ref={scrollContainerRef}
-                    className="flex overflow-x-auto gap-3 py-2 px-1 custom-scrollbar max-w-4xl"
+                    className={`flex overflow-x-auto gap-3 py-2 px-1 custom-scrollbar max-w-4xl select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'
+                        }`}
                     style={{ scrollbarWidth: 'none' }} // Hide scrollbar for cleaner look
+                    onMouseDown={startDragging}
+                    onMouseLeave={stopDragging}
+                    onMouseUp={stopDragging}
+                    onMouseMove={onDrag}
                 >
                     {pages.map((page, index) => {
                         const isActive = page.id === currentPageId;
@@ -74,22 +118,31 @@ export const Filmstrip: React.FC<FilmstripProps> = ({ fileId }) => {
                             <button
                                 key={page.id}
                                 id={`filmstrip-item-${page.id}`}
-                                onClick={() => handlePageClick(page.id)}
+                                onClick={(e) => {
+                                    // Prevent navigation if we were dragging
+                                    if (isDragRef.current) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        return;
+                                    }
+                                    handlePageClick(page.id);
+                                }}
                                 className={`relative flex-shrink-0 h-24 aspect-[2/3] rounded-lg overflow-hidden transition-all duration-300 ${isActive
                                     ? 'ring-2 ring-neon-blue shadow-[0_0_15px_rgba(59,130,246,0.4)] scale-110 z-10'
                                     : 'opacity-60 hover:opacity-100 hover:scale-105 hover:z-10'
-                                    }`}
+                                    } select-none draggable-false`} // Prevent native image drag
+                                onDragStart={(e) => e.preventDefault()} // Disable native image dragging
                             >
                                 {/* Image Thumbnail */}
                                 <img
                                     src={page.coverUrl || page.url}
                                     alt={page.name}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover pointer-events-none" // Ensure image doesn't steal events
                                     loading="lazy"
                                 />
 
                                 {/* Number Overlay */}
-                                <div className="absolute bottom-0 right-0 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded-tl-md font-mono backdrop-blur-sm">
+                                <div className="absolute bottom-0 right-0 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded-tl-md font-mono backdrop-blur-sm pointer-events-none">
                                     {index + 1}
                                 </div>
                             </button>

@@ -11,6 +11,7 @@ import { useEditorUIStore } from '../uiStore';
 // HOOKS
 import { useCanvasNavigation } from './hooks/useCanvasNavigation';
 import { useCanvasTools } from './hooks/useCanvasTools';
+import { useBufferedImage } from './hooks/useBufferedImage';
 
 interface EditorCanvasProps {
     imageUrl: string;
@@ -80,8 +81,9 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
     const { showBalloons, showText, showMasks } = useEditorUIStore();
 
     // --- IMAGES (CORS ENABLED) ---
-    const [imgOriginal, statusOriginal] = useImage(imageUrl, 'anonymous');
-    const [imgClean] = useImage(cleanImageUrl || '', 'anonymous');
+    // Use Buffered Image to prevent blinking on page switch
+    const [imgOriginal, statusOriginal] = useBufferedImage(imageUrl, 'anonymous');
+    const [imgClean] = useImage(cleanImageUrl || '', 'anonymous'); // Clean image can blink, it's overlay
 
     // --- HOOKS ---
     const { scale, position, handleWheel } = useCanvasNavigation({

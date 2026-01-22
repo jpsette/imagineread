@@ -111,20 +111,26 @@ export const EditorView: React.FC<EditorViewProps> = ({
                 />
 
                 {/* CENTER CANVAS AREA - Animating ONLY this part */}
-                <div
-                    key={fileId} // ISOLATED RESET ZONE: Only this part remounts on file change
-                    className="flex-1 relative flex flex-col min-w-0 bg-[#1e1e1e]"
-                    style={{ animation: 'editorFadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)' }}
-                >
-                    <div className="flex-1 relative overflow-hidden">
-                        <EditorCanvasContainer
-                            ref={stageRef}
-                            editor={editor}
-                            imageUrl={imageUrl}
-                            cleanUrl={cleanUrl}
-                        />
+                {/* CENTER CANVAS AREA - STATIC BACKGROUND CONTAINER */}
+                <div className="flex-1 relative flex flex-col min-w-0 bg-[#1e1e1e]"> {/* STABLE BACKGROUND */}
+
+                    {/* DYNAMIC CONTENT - Remounts on file change */}
+                    <div
+                        // key={fileId} <-- REMOVING THIS IS CRITICAL
+                        className="flex-1 relative overflow-hidden flex flex-col"
+                    // style={{ animation: 'editorFadeIn 0.35s ease-out' }} <-- REMOVING ANIMATION
+                    >
+                        <div className="flex-1 relative overflow-hidden">
+                            <EditorCanvasContainer
+                                ref={stageRef}
+                                editor={editor}
+                                imageUrl={imageUrl}
+                                cleanUrl={cleanUrl}
+                            />
+                        </div>
+                        <Filmstrip fileId={fileId} />
                     </div>
-                    <Filmstrip fileId={fileId} />
+
                 </div>
 
                 {/* RIGHT SIDEBAR */}
