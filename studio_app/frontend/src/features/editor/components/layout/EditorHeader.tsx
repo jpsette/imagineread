@@ -1,6 +1,7 @@
 import React from 'react';
-import { Save, ArrowLeft, X } from 'lucide-react';
+import { Save, ArrowLeft, X, Undo, Redo } from 'lucide-react';
 import { useEditorUIStore } from '../../uiStore';
+import { useEditorStore } from '../../store';
 import { editorModes } from '../../tools/definitions/editorModes';
 import { EditorMode } from '../../../../types';
 
@@ -56,6 +57,25 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
 
             {/* RIGHT: Actions */}
             <div className="flex items-center gap-3">
+
+                {/* UNDO / REDO */}
+                <div className="flex items-center gap-1 mr-2 border-r border-zinc-800 pr-4 h-6">
+                    <button
+                        onClick={() => useEditorStore.temporal.getState().undo()}
+                        className="text-zinc-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed p-1.5 transition-colors"
+                        title="Desfazer (Ctrl+Z)"
+                    >
+                        <Undo size={18} />
+                    </button>
+                    <button
+                        onClick={() => useEditorStore.temporal.getState().redo()}
+                        className="text-zinc-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed p-1.5 transition-colors"
+                        title="Refazer (Ctrl+Shift+Z)"
+                    >
+                        <Redo size={18} />
+                    </button>
+                </div>
+
                 <button
                     onClick={() => {
                         console.log("🖱️ [UI] Botão Salvar Clicado");

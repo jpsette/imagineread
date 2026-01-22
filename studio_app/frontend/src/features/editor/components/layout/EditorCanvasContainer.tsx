@@ -10,7 +10,7 @@ interface EditorCanvasContainerProps {
     cleanUrl?: string | null;
 }
 
-export const EditorCanvasContainer = forwardRef<Konva.Stage, EditorCanvasContainerProps>(({
+const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerProps>(({
     editor,
     imageUrl,
     cleanUrl
@@ -59,4 +59,6 @@ export const EditorCanvasContainer = forwardRef<Konva.Stage, EditorCanvasContain
     );
 });
 
-EditorCanvasContainer.displayName = 'EditorCanvasContainer';
+EditorCanvasContainerBase.displayName = 'EditorCanvasContainer';
+
+export const EditorCanvasContainer = React.memo(EditorCanvasContainerBase);
