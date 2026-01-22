@@ -156,110 +156,140 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
 
     return (
         <>
-            <div className="fixed inset-0 bg-[#09090b] z-50 flex flex-col">
-                {/* Header */}
-                <div className="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-[#0c0c0e]">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-lg font-bold text-white">{comic.name}</h1>
-                        <span className="text-sm text-white/40">{orderedPages.length} páginas</span>
-                        {selectedPageIds.size > 0 && (
-                            <span className="text-sm text-accent-blue font-medium">
-                                {selectedPageIds.size} selecionada(s)
-                            </span>
-                        )}
-                    </div>
+            {/* MASTER CONTAINER - Relative & Full Screen for Floating UI */}
+            <div className="fixed inset-0 bg-app-bg z-50 overflow-hidden flex flex-col">
 
-                    <div className="flex items-center gap-2">
-                        {/* Export Button */}
-                        <button
-                            onClick={() => setIsExportModalOpen(true)}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-bold transition-all text-white/80 hover:text-white border border-white/5 hover:border-white/10"
-                        >
-                            <Download size={14} />
-                            Exportar
-                        </button>
+                {/* Background Atmosphere */}
+                <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#1a1a20] via-[#09090b] to-[#050505] opacity-80" />
 
-                        {/* Edit Button - Enabled when 1 page selected */}
-                        <button
-                            onClick={handleEditPage}
-                            disabled={selectedPageIds.size !== 1}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedPageIds.size === 1
-                                ? 'bg-accent-blue text-white hover:bg-blue-600'
-                                : 'bg-white/5 text-text-secondary opacity-50 cursor-not-allowed'
-                                }`}
-                        >
-                            <Edit3 size={12} />
-                            Editar Página
-                        </button>
+                {/* Grid Pattern Overlay */}
+                <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]"
+                    style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+                />
 
-                        {/* Bulk Delete Button */}
-                        <button
-                            onClick={handleBulkDelete}
-                            disabled={selectedPageIds.size === 0}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedPageIds.size > 0
-                                ? 'bg-red-900/50 text-red-100 hover:bg-red-800'
-                                : 'bg-white/5 text-text-secondary opacity-50 cursor-not-allowed'
-                                }`}
-                        >
-                            <Trash2 size={12} />
-                            Excluir {selectedPageIds.size > 0 ? `(${selectedPageIds.size})` : ''}
-                        </button>
+                {/* MAIN CONTENT LAYER - Z-10 */}
+                <div className="relative z-10 w-full h-full flex flex-col">
 
-                        <button
-                            onClick={handleClose}
-                            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                        >
-                            <X size={20} className="text-white/60" />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Pages Grid with DnD */}
-                <div className="flex-1 overflow-y-auto p-8">
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <SortableContext
-                            items={orderedPages.map(p => p.id)}
-                            strategy={rectSortingStrategy}
-                        >
-                            <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-                                {orderedPages.map((page) => {
-                                    const isSelected = selectedPageIds.has(page.id);
-
-                                    return (
-                                        <SortableItem key={page.id} id={page.id}>
-                                            <PageCard
-                                                page={page}
-                                                isSelected={isSelected}
-                                                onClick={(e) => handlePageClick(page.id, e)}
-                                                onEdit={() => handleSelectPage(page.id)}
-                                            />
-                                        </SortableItem>
-                                    );
-                                })}
-
-                                {/* Add Page Button */}
-                                <div className="aspect-[3/4] rounded-xl border border-dashed border-border-color bg-app-bg/50 flex flex-col items-center justify-center gap-3 hover:border-accent-blue hover:bg-accent-blue/5 transition-all cursor-pointer relative">
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        multiple
-                                        accept="image/*"
-                                        onChange={handleAddPages}
-                                        className="absolute inset-0 opacity-0 cursor-pointer"
-                                    />
-                                    <div className="p-4 rounded-full bg-white/5 pointer-events-none">
-                                        <Plus size={32} className="text-white/40" />
-                                    </div>
-                                    <span className="text-sm text-white/40 pointer-events-none">Adicionar Página</span>
-                                </div>
+                    {/* Header Area (Now Transparent/Floating Container) */}
+                    <div className="shrink-0 z-50 px-6 pt-4 pb-2 flex items-start justify-between pointer-events-none">
+                        <div className="pointer-events-auto">
+                            {/* Header will go here or be injected via slots/children if we refactor further. 
+                                For now, we keep the structure but prepare it for the Floating Header component. 
+                            */}
+                            <div className="flex items-center gap-4">
+                                <h1 className="text-xl font-bold text-white tracking-tight drop-shadow-md">{comic.name}</h1>
+                                <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[10px] text-zinc-400 font-mono">
+                                    {orderedPages.length} PAGES
+                                </span>
                             </div>
-                        </SortableContext>
-                    </DndContext>
+                        </div>
+
+                        {/* Top Right Actions Area */}
+                        <div className="flex items-center gap-2 pointer-events-auto">
+
+                            {/* Edit Button */}
+                            <button
+                                onClick={handleEditPage}
+                                disabled={selectedPageIds.size !== 1}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border ${selectedPageIds.size === 1
+                                    ? 'bg-accent-blue text-white shadow-glow-sm border-accent-blue hover:bg-blue-600'
+                                    : 'bg-black/20 text-zinc-600 border-white/5 opacity-50 cursor-not-allowed'
+                                    }`}
+                            >
+                                <Edit3 size={14} />
+                                <span className="hidden sm:inline">Editar</span>
+                            </button>
+
+                            {/* Delete Button */}
+                            <button
+                                onClick={handleBulkDelete}
+                                disabled={selectedPageIds.size === 0}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border ${selectedPageIds.size > 0
+                                    ? 'bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20 shadow-glow-sm'
+                                    : 'bg-black/20 text-zinc-600 border-white/5 opacity-50 cursor-not-allowed'
+                                    }`}
+                            >
+                                <Trash2 size={14} />
+                                <span className="hidden sm:inline">Excluir {selectedPageIds.size > 0 ? `(${selectedPageIds.size})` : ''}</span>
+                            </button>
+
+                            <div className="w-px h-6 bg-white/10 mx-1" />
+
+                            {/* Export Button */}
+                            <button
+                                onClick={() => setIsExportModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full text-xs font-bold text-zinc-300 border border-white/5 hover:bg-white/5 hover:text-white transition-all hover:shadow-glow-sm hover:border-white/10"
+                            >
+                                <Download size={14} />
+                                <span className="hidden sm:inline">Exportar</span>
+                            </button>
+
+                            <button
+                                onClick={handleClose}
+                                className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/5 text-zinc-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 transition-all ml-1"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Pages Grid Area */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={orderedPages.map(p => p.id)}
+                                strategy={rectSortingStrategy}
+                            >
+                                <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6 pb-32">
+                                    {orderedPages.map((page) => {
+                                        const isSelected = selectedPageIds.has(page.id);
+
+                                        return (
+                                            <SortableItem key={page.id} id={page.id}>
+                                                <PageCard
+                                                    page={page}
+                                                    isSelected={isSelected}
+                                                    onClick={(e) => handlePageClick(page.id, e)}
+                                                    onEdit={() => handleSelectPage(page.id)}
+                                                />
+                                            </SortableItem>
+                                        );
+                                    })}
+
+                                    {/* Add Page Button - Glass Style */}
+                                    <div className="aspect-[3/4] rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-accent-blue/50 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer relative group">
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            multiple
+                                            accept="image/*"
+                                            onChange={handleAddPages}
+                                            className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                                        />
+                                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-glass-inset">
+                                            <Plus size={24} className="text-white/40 group-hover:text-accent-blue transition-colors" />
+                                        </div>
+                                        <span className="text-xs font-medium text-white/30 group-hover:text-accent-blue/80 transition-colors">Adicionar Página</span>
+                                    </div>
+                                </div>
+                            </SortableContext>
+                        </DndContext>
+                    </div>
+
+                    {/* Floating Toolbar Area (Bottom) - Placeholder for Filmstrip if we move it here */}
                 </div>
+
+                {/* Global Overlays */}
+                {/* <EditorHeader ... /> would typically be rendered here if it was global, but currently it is inside routes/workstation. 
+                    This specific file is the 'ComicWorkstation' which acts as the dashboard for the comic. 
+                    The actual Editor (for a single page) is a different view. 
+                    So my audit might have confused 'ComicWorkstation' (the grid view) with 'EditorView' (the canvas).
+                    I need to verify this assumption.
+                */}
             </div>
 
             {comic && (

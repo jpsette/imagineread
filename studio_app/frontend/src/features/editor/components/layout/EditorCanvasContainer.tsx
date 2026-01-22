@@ -30,7 +30,7 @@ const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerP
     });
 
     return (
-        <main className="flex-1 relative bg-[#121214] overflow-hidden flex items-center justify-center min-w-0">
+        <main className="flex-1 relative bg-transparent overflow-hidden flex items-center justify-center min-w-0">
             <EditorCanvas
                 ref={ref}
                 imageUrl={displaySrc}

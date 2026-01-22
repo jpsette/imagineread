@@ -6,10 +6,10 @@ export const EditorRightPanel: React.FC = () => {
     const { activeMode } = useEditorUIStore();
 
     return (
-        <aside className="w-80 border-l border-zinc-800 bg-zinc-900 flex flex-col z-10 shrink-0 transition-all duration-300 ease-in-out">
+        <aside className="absolute right-4 top-24 bottom-24 w-fit z-40 bg-transparent flex flex-col pointer-events-none">
             {activeMode === 'edit' && (
-                <div className="h-full overflow-y-auto custom-scrollbar animate-in slide-in-from-right-4">
-                    <RightSidebar width={300} />
+                <div className="w-72 h-full bg-black/60 backdrop-blur-md rounded-2xl border border-glass-border shadow-glow-sm overflow-hidden animate-in slide-in-from-right-4 pointer-events-auto flex flex-col">
+                    <RightSidebar />
                 </div>
             )}
         </aside>

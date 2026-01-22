@@ -26,38 +26,61 @@ export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
     const { activeMode } = useEditorUIStore();
 
     return (
-        <aside className="w-80 border-r border-zinc-800 bg-zinc-900 flex flex-col z-10 transition-all duration-300 ease-in-out">
-            {activeMode === 'vectorize' && (
-                <VectorizeMenu
-                    workflowStep={vectorization.workflowStep}
-                    isProcessing={vectorization.isProcessing}
-                    onCreateMask={vectorization.handleCreateMask}
-                    onConfirmMask={vectorization.handleConfirmMask}
-                    onDetectBalloon={vectorization.detectBalloon}
-                    onDetectText={vectorization.detectText}
-                    onCleanImage={vectorization.handleCleanImage}
-                    canDetectBalloons={vectorization.canDetectBalloons}
-                    canDetectText={vectorization.canDetectText}
-                    canDetectPanels={vectorization.canDetectPanels}
-                    hasBalloons={vectorization.hasBalloons}
-                    hasText={vectorization.hasText}
-                    hasPanels={vectorization.hasPanels}
-                    onDetectPanels={vectorization.detectPanels}
-                    onSeparatePanels={handleSeparatePanels}
-                    isPanelsConfirmed={true}
-                    onConfirmPanels={() => { }}
-                    onOpenPanelGallery={onOpenPanelGallery}
-                />
-            )}
+        <aside className="absolute left-4 top-24 bottom-24 w-fit z-40 bg-transparent flex flex-col pointer-events-none">
+            {/* DOCK CONTAINER */}
+            <div className="w-[350px] bg-black/60 backdrop-blur-md rounded-2xl border border-glass-border shadow-glow-sm flex flex-col items-center py-4 overflow-hidden pointer-events-auto h-full">
 
-            {activeMode === 'edit' && (
-                <EditorSidebar
-                    editProps={editProps}
-                />
-            )}
+                {/* Content Area - Logic to switch between icons mode (collapsed) and full mode (expanded) is handled via CSS/Group hover for now 
+                    or we keep it simple: The panel IS the dock. 
+                    
+                    However, `VectorizeMenu` and `EditorSidebar` are complex components. 
+                    If we squeeze them into a dock, they might break.
+                    
+                    Strategy:
+                    The "Dock" should likely be a container that expands on hover or click.
+                    Given the complexity of `EditorSidebar` (tool grid), a 64px width won't suffice unless we redesign `EditorSidebar` completely.
+                    
+                    Alternative Plan for "Floating Dock":
+                    Keep the panel width (e.g. 280px) but make it floating and separated from the edge.
+                    Glass background, rounded corners.
+                    
+                    Let's go with "Floating Panel" rather than "Tiny Icon Dock" to preserve the `EditorSidebar` layout without deep rewrites.
+                */}
 
-            {activeMode === 'translate' && <TranslateMenu />}
-            {activeMode === 'animate' && <AnimateMenu />}
+                <div className="w-full h-full bg-transparent px-4">
+                    {activeMode === 'vectorize' && (
+                        <VectorizeMenu
+                            workflowStep={vectorization.workflowStep}
+                            isProcessing={vectorization.isProcessing}
+                            onCreateMask={vectorization.handleCreateMask}
+                            onConfirmMask={vectorization.handleConfirmMask}
+                            onDetectBalloon={vectorization.detectBalloon}
+                            onDetectText={vectorization.detectText}
+                            onCleanImage={vectorization.handleCleanImage}
+                            canDetectBalloons={vectorization.canDetectBalloons}
+                            canDetectText={vectorization.canDetectText}
+                            canDetectPanels={vectorization.canDetectPanels}
+                            hasBalloons={vectorization.hasBalloons}
+                            hasText={vectorization.hasText}
+                            hasPanels={vectorization.hasPanels}
+                            onDetectPanels={vectorization.detectPanels}
+                            onSeparatePanels={handleSeparatePanels}
+                            isPanelsConfirmed={true}
+                            onConfirmPanels={() => { }}
+                            onOpenPanelGallery={onOpenPanelGallery}
+                        />
+                    )}
+
+                    {activeMode === 'edit' && (
+                        <EditorSidebar
+                            editProps={editProps}
+                        />
+                    )}
+
+                    {activeMode === 'translate' && <TranslateMenu />}
+                    {activeMode === 'animate' && <AnimateMenu />}
+                </div>
+            </div>
         </aside>
     );
 };
