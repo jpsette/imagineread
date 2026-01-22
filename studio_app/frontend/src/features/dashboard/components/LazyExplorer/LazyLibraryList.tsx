@@ -23,11 +23,11 @@ export const LazyLibraryList: React.FC<LazyLibraryListProps> = ({
     const { data: contents, isLoading } = useFolderContents(rootFolderId || null);
 
     if (isLoading) {
-        return <div className="pl-4 py-1 text-[10px] text-zinc-600 italic">Carregando bibliotecas...</div>;
+        return <div className="pl-4 py-1 text-[10px] text-text-muted italic">Carregando bibliotecas...</div>;
     }
 
     if (!contents || contents.length === 0) {
-        return <div className="pl-4 py-1 text-[10px] text-zinc-600 italic">Vazio</div>;
+        return <div className="pl-4 py-1 text-[10px] text-text-muted italic">Vazio</div>;
     }
 
     const folders = contents.filter(f => f.type === 'folder');

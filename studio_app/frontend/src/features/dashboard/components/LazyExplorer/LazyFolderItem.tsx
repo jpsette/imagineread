@@ -58,7 +58,7 @@ export const LazyFolderItem: React.FC<LazyFolderItemProps> = ({
         <div className="flex flex-col">
             {/* ROW RENDER */}
             <div
-                className={`px-2 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-white/5 group transition-colors ${isSelected ? 'bg-blue-500/20 text-white' : 'text-zinc-400'}`}
+                className={`px-2 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-surface-hover group transition-colors ${isSelected ? 'bg-accent-blue/20 text-white' : 'text-text-secondary'}`}
                 style={{ paddingLeft: `${depth * 10}px` }}
                 onClick={handleSelect}
             >
@@ -71,17 +71,17 @@ export const LazyFolderItem: React.FC<LazyFolderItemProps> = ({
 
                 <Folder size={14} className={iconColor} />
 
-                <span className="truncate flex-1 font-medium text-white">{folder.name}</span>
+                <span className="truncate flex-1 font-medium text-text-primary">{folder.name}</span>
 
                 {/* Count Hint (only if loaded, else '...') */}
-                <span className="text-[10px] text-zinc-600 group-hover:text-zinc-500">
+                <span className="text-[10px] text-text-muted group-hover:text-text-secondary">
                     ({contents ? contents.length : '...'})
                 </span>
 
                 <div className="hidden group-hover:flex gap-1 ml-auto">
                     <button
                         onClick={(e) => { e.stopPropagation(); onEditFolder(folder); }}
-                        className="p-1 hover:text-white text-zinc-600 transition-colors"
+                        className="p-1 hover:text-white text-text-muted transition-colors"
                     >
                         <Pencil size={11} />
                     </button>
@@ -90,7 +90,7 @@ export const LazyFolderItem: React.FC<LazyFolderItemProps> = ({
                             e.stopPropagation();
                             if (confirm('Tem certeza que deseja excluir esta pasta?')) onDeleteFolder(folder.id);
                         }}
-                        className="p-1 hover:text-red-400 text-zinc-600 transition-colors"
+                        className="p-1 hover:text-red-400 text-text-muted transition-colors"
                     >
                         <Trash2 size={11} />
                     </button>
@@ -100,7 +100,7 @@ export const LazyFolderItem: React.FC<LazyFolderItemProps> = ({
             {/* CHILDREN RENDER */}
             {isExpanded && (
                 <div className="flex flex-col gap-0.5 border-l border-white/5 ml-2">
-                    {isLoading && <div className="pl-6 py-1 text-[10px] text-zinc-600 italic">Carregando...</div>}
+                    {isLoading && <div className="pl-6 py-1 text-[10px] text-text-muted italic">Carregando...</div>}
 
                     {subFolders.map(child => (
                         <LazyFolderItem
@@ -130,7 +130,7 @@ export const LazyFolderItem: React.FC<LazyFolderItemProps> = ({
                     ))}
 
                     {isEmpty && (
-                        <span className="text-[10px] text-zinc-700 py-1 pl-6 italic">Vazio</span>
+                        <span className="text-[10px] text-text-muted py-1 pl-6 italic">Vazio</span>
                     )}
                 </div>
             )}

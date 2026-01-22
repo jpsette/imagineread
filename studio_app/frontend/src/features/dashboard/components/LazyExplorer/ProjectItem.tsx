@@ -48,7 +48,7 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
     return (
         <div className="flex flex-col">
             <div
-                className={`px-3 py-2 rounded-lg flex items-center gap-2 cursor-pointer transition-colors text-sm group ${isSelected ? 'bg-[#27272a] text-white' : 'text-text-secondary hover:text-text-primary hover:bg-app-bg'}`}
+                className={`px-3 py-2 rounded-lg flex items-center gap-2 cursor-pointer transition-colors text-sm group ${isSelected ? 'bg-surface-hover text-white' : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'}`}
                 onClick={() => onSelectProject(project.id)}
             >
                 <button
@@ -64,14 +64,14 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
                 <div className="hidden group-hover:flex gap-1">
                     <button
                         onClick={(e) => { e.stopPropagation(); onPinProject(project.id); }}
-                        className={`p-1 hover:text-white ${project.isPinned ? 'text-accent-blue' : 'text-gray-500'}`}
+                        className={`p-1 hover:text-white ${project.isPinned ? 'text-accent-blue' : 'text-text-muted'}`}
                         title={project.isPinned ? 'Desafixar' : 'Fixar'}
                     >
                         <Pin size={12} className={project.isPinned ? "fill-current" : ""} />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onEditProject(project); }}
-                        className="p-1 hover:text-white text-gray-500"
+                        className="p-1 hover:text-white text-text-muted"
                     >
                         <Pencil size={12} />
                     </button>
@@ -80,7 +80,7 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
                             e.stopPropagation();
                             onDeleteProject(project.id);
                         }}
-                        className="p-1 hover:text-red-400 text-gray-500"
+                        className="p-1 hover:text-red-400 text-text-muted"
                     >
                         <Trash2 size={12} />
                     </button>

@@ -45,7 +45,7 @@ def get_filesystem(parentId: str = None, db: Session = Depends(get_db)):
         }
 
         # Lazy Logic Fix: If it's a folder, check if it has children files (Implicit Comic)
-        if e.type == 'folder':
+        if e.type == 'folder' or e.type == 'comic':
             # Check for first child file (Cover)
             # We use a localized query. Performance note: N+1 but necessary for Lazy Tree correctness involving legacy data.
             # Ideally we would join, but for SQLite this is acceptable < 50 items.

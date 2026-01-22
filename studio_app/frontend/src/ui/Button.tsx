@@ -17,19 +17,20 @@ export const Button: React.FC<ButtonProps> = ({
     className = '',
     ...props
 }) => {
-    const baseStyles = "rounded-md font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed";
+    // Added active:scale-95 and tracking-wide for Inter
+    const baseStyles = "rounded-md font-medium transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95";
 
     const variants = {
-        primary: "bg-blue-600 text-white hover:bg-blue-500", // matching accent-blue
-        secondary: "bg-[#27272a] text-gray-400 hover:text-white hover:bg-[#3f3f46] border border-[#3f3f46]",
-        ghost: "bg-transparent text-gray-400 hover:text-white hover:bg-white/10",
+        primary: "bg-accent-blue text-white hover:bg-accent-hover shadow-lg shadow-blue-500/20",
+        secondary: "bg-surface-hover text-text-secondary hover:text-white hover:bg-border-highlight border border-border-color",
+        ghost: "bg-transparent text-text-secondary hover:text-white hover:bg-white/5",
         danger: "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
     };
 
     const sizes = {
-        sm: "text-xs px-2 py-1",
-        md: "text-xs px-3 py-1.5", // Default from ProjectManager
-        icon: "p-1.5"
+        sm: "text-xs px-2 py-1.5",
+        md: "text-sm px-4 py-2", // Increased for better touch/click targets
+        icon: "p-2"
     };
 
     return (
@@ -38,7 +39,7 @@ export const Button: React.FC<ButtonProps> = ({
             disabled={isLoading || props.disabled}
             {...props}
         >
-            {isLoading ? <span className="animate-spin">⌛</span> : Icon && <Icon size={14} />}
+            {isLoading ? <span className="animate-spin">⌛</span> : Icon && <Icon size={16} />}
             {children}
         </button>
     );

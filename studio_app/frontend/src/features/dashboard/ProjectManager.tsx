@@ -76,22 +76,22 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             <header className="flex flex-col gap-6 mb-8 pt-4 px-2">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h2 className="text-3xl font-bold tracking-tight">Projetos</h2>
-                        <p className="text-text-secondary mt-1">Gerencie suas publicações</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-white mb-1">Projetos</h2>
+                        <p className="text-text-secondary text-sm">Gerencie suas publicações e séries</p>
                     </div>
 
                     {/* Actions Container */}
                     <div className="flex items-center gap-3">
                         {/* Search & Sort Toolbar */}
-                        <div className="flex items-center gap-2 bg-[#18181b] p-1 rounded-md border border-border-color">
+                        <div className="flex items-center gap-2 bg-surface p-1 rounded-lg border border-border-color shadow-sm">
                             <Input
                                 icon={Search}
                                 placeholder="Pesquisar..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-48 !bg-transparent !border-none !text-xs !pl-9 !py-1"
+                                className="w-48 !bg-transparent !border-none !text-xs !pl-9 !py-1 placeholder:text-text-muted text-text-primary"
                             />
-                            <div className="w-[1px] h-4 bg-border-color/50 mx-1" />
+                            <div className="w-[1px] h-4 bg-border-color mx-1" />
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -105,25 +105,25 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </header>
 
             {/* Projects Grid */}
-            <div className="grid grid-cols-[repeat(auto-fill,280px)] gap-6 content-start justify-start p-2">
+            <div className="grid grid-cols-[repeat(auto-fill,280px)] gap-6 content-start justify-start p-2 pb-20">
                 {/* New Project Card */}
                 {!isCreatingProject && (
                     <Card
                         onClick={() => setIsCreatingProject(true)}
-                        className="group relative p-6 border-dashed bg-app-bg hover:border-accent-blue hover:bg-accent-blue/5 flex flex-col items-center justify-center gap-3 h-52 shadow-sm hover:shadow-md cursor-pointer transition-all"
+                        className="group relative p-6 border-dashed border-border-color bg-surface/50 hover:bg-surface-hover hover:border-accent-blue/50 flex flex-col items-center justify-center gap-3 h-52 shadow-sm hover:shadow-xl cursor-pointer transition-all duration-300"
                     >
-                        <div className="p-3 rounded-full bg-[#27272a] text-text-secondary group-hover:bg-accent-blue group-hover:text-white transition-colors">
+                        <div className="p-4 rounded-full bg-surface text-text-muted group-hover:bg-accent-blue group-hover:text-white transition-all duration-300 shadow-inner group-hover:scale-110">
                             <Plus size={24} />
                         </div>
-                        <span className="text-sm font-bold text-text-secondary group-hover:text-accent-blue transition-colors">Novo Projeto</span>
+                        <span className="text-sm font-semibold text-text-muted group-hover:text-accent-blue transition-colors">Novo Projeto</span>
                     </Card>
                 )}
 
                 {/* Inline Creator for Project */}
                 {isCreatingProject && (
-                    <Card className="p-6 border-accent-blue bg-app-bg shadow-xl shadow-blue-500/10 min-h-[210px] flex flex-col justify-between">
+                    <Card className="p-6 border-accent-blue bg-surface shadow-2xl shadow-blue-500/10 min-h-[210px] flex flex-col justify-between ring-1 ring-accent-blue/20">
                         <div>
-                            <h3 className="text-sm font-bold mb-2 text-accent-blue">Novo Projeto</h3>
+                            <h3 className="text-sm font-bold mb-3 text-accent-blue uppercase tracking-wider">Novo Projeto</h3>
                             <Input
                                 autoFocus
                                 placeholder="Nome do projeto..."
@@ -133,14 +133,14 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                     if (e.key === 'Enter') handleCreateProject();
                                     if (e.key === 'Escape') setIsCreatingProject(false);
                                 }}
-                                className="mb-3"
+                                className="mb-4"
                             />
                             <div className="grid grid-cols-8 gap-0.5">
                                 {PROJECT_THEMES.map(theme => (
                                     <button
                                         key={theme.bg}
                                         onClick={() => setNewItemColor(theme.bg)}
-                                        className={`w-4 h-4 rounded-full transition-all ${theme.bg} ${newItemColor === theme.bg ? 'ring-2 ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                                        className={`w-5 h-5 rounded-full transition-all duration-200 border border-transparent ${theme.bg} ${newItemColor === theme.bg ? 'ring-2 ring-offset-2 ring-offset-surface ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100 hover:border-white/20'}`}
                                     />
                                 ))}
                             </div>
@@ -165,9 +165,9 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                     .map(project => (
                         <div key={project.id} className="h-52 relative">
                             {editingProject?.id === project.id ? (
-                                <div className="absolute inset-0 z-50 bg-[#18181b] border-2 border-blue-500 shadow-xl rounded-xl p-6 flex flex-col justify-between">
+                                <div className="absolute inset-0 z-50 bg-surface border-2 border-accent-blue shadow-2xl rounded-xl p-6 flex flex-col justify-between animate-in zoom-in-95 duration-200">
                                     <div>
-                                        <h3 className="text-sm font-bold mb-2 text-accent-blue">Editar Projeto</h3>
+                                        <h3 className="text-sm font-bold mb-3 text-accent-blue uppercase tracking-wider">Editar Projeto</h3>
                                         <Input
                                             autoFocus
                                             placeholder="Nome do projeto..."
@@ -177,14 +177,14 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                                 if (e.key === 'Enter') handleUpdateProject();
                                                 if (e.key === 'Escape') setEditingProject(null);
                                             }}
-                                            className="mb-3"
+                                            className="mb-4"
                                         />
                                         <div className="grid grid-cols-8 gap-0.5">
                                             {PROJECT_THEMES.map(theme => (
                                                 <button
                                                     key={theme.bg}
                                                     onClick={() => setEditColor(theme.bg)}
-                                                    className={`w-4 h-4 rounded-full transition-all ${theme.bg} ${editColor === theme.bg ? 'ring-2 ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                                                    className={`w-5 h-5 rounded-full transition-all duration-200 border border-transparent ${theme.bg} ${editColor === theme.bg ? 'ring-2 ring-offset-2 ring-offset-surface ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100 hover:border-white/20'}`}
                                                 />
                                             ))}
                                         </div>
@@ -195,8 +195,8 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                     </div>
                                 </div>
                             ) : (
-                                <Card onClick={() => handleSelectProject(project.id)} hoverEffect className="h-52 p-6 flex flex-col justify-between relative group">
-                                    <div className={`absolute top-0 right-0 p-4 transition-opacity flex gap-2 ${project.isPinned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                <Card onClick={() => handleSelectProject(project.id)} hoverEffect className="h-52 p-6 flex flex-col justify-between relative group bg-surface hover:bg-surface-hover">
+                                    <div className={`absolute top-0 right-0 p-3 transition-all duration-300 flex gap-1 ${project.isPinned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0'}`}>
                                         <Button
                                             variant="ghost"
                                             size="icon"
@@ -204,16 +204,16 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                                 e.stopPropagation();
                                                 togglePin(project.id);
                                             }}
-                                            className={`${project.isPinned ? 'text-accent-blue' : ''}`}
+                                            className={`${project.isPinned ? 'text-accent-blue hover:text-accent-hover' : 'text-text-muted'}`}
                                         >
-                                            <Pin size={14} className={project.isPinned ? "fill-current" : ""} />
+                                            <Pin size={16} className={project.isPinned ? "fill-current" : ""} />
                                         </Button>
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={(e) => { e.stopPropagation(); setEditingProject(project); setEditName(project.name); setEditColor(project.color); }}
                                         >
-                                            <Pencil size={14} />
+                                            <Pencil size={16} />
                                         </Button>
                                         <Button
                                             variant="ghost"
@@ -226,15 +226,17 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                                 }
                                             }}
                                         >
-                                            <Trash2 size={14} />
+                                            <Trash2 size={16} />
                                         </Button>
-                                        <ChevronRight className="text-text-secondary" />
+                                        <ChevronRight className="text-text-muted/30 ml-1" />
                                     </div>
-                                    <div className="mb-3">
-                                        <Folder size={40} className={`${PROJECT_THEMES.find(t => t.bg === project.color)?.text || 'text-gray-500'} fill-current`} />
+                                    <div className="mb-3 transform group-hover:scale-105 transition-transform duration-300 origin-left">
+                                        <Folder size={48} className={`${PROJECT_THEMES.find(t => t.bg === project.color)?.text || 'text-gray-500'} fill-current drop-shadow-lg`} />
                                     </div>
-                                    <h3 className={`font-bold text-lg mb-1 ${PROJECT_THEMES.find(t => t.bg === project.color)?.lightText || 'text-white'}`}>{project.name}</h3>
-                                    <p className="text-xs text-text-secondary">{project.createdAt ? new Date(project.createdAt).toLocaleDateString() : '...'}</p>
+                                    <div>
+                                        <h3 className={`font-bold text-lg mb-1 tracking-tight leading-snug ${PROJECT_THEMES.find(t => t.bg === project.color)?.lightText || 'text-white'}`}>{project.name}</h3>
+                                        <p className="text-xs text-text-muted font-medium">{project.createdAt ? new Date(project.createdAt).toLocaleDateString() : '...'}</p>
+                                    </div>
                                 </Card>
                             )}
                         </div>
@@ -242,9 +244,9 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
 
                 {/* Empty State */}
                 {projects.length === 0 && !isCreatingProject && (
-                    <div className="col-span-full h-64 flex flex-col items-center justify-center border-2 border-dashed border-border-color rounded-xl opacity-50">
-                        <p className="font-medium text-lg">Nenhum projeto ainda</p>
-                        <button onClick={() => setIsCreatingProject(true)} className="text-accent-blue hover:underline text-sm mt-2">Criar primeiro projeto</button>
+                    <div className="col-span-full h-64 flex flex-col items-center justify-center border-2 border-dashed border-border-color rounded-2xl opacity-50 bg-surface/20">
+                        <p className="font-medium text-lg text-text-muted">Nenhum projeto ainda</p>
+                        <button onClick={() => setIsCreatingProject(true)} className="text-accent-blue hover:text-accent-hover font-semibold text-sm mt-2 transition-colors">Criar primeiro projeto</button>
                     </div>
                 )}
             </div >

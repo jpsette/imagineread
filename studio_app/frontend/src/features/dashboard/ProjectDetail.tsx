@@ -1,5 +1,5 @@
-import React, { useRef, useMemo, useState } from 'react';
-import { Folder, ArrowLeft, Upload, ChevronRight, Image as ImageIcon, Pin, Pencil, Trash2 } from 'lucide-react';
+import React, { useRef, useMemo } from 'react';
+import { Folder, Upload } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { Input } from '../../ui/Input';
@@ -35,6 +35,11 @@ interface ProjectDetailProps {
 }
 
 import { useFolderContents } from './hooks/useFolderContents'; // NEW HOOK
+import { useProjectSelection } from './components/ProjectDetail/hooks/useProjectSelection';
+import { useProjectRenaming } from './components/ProjectDetail/hooks/useProjectRenaming';
+import { useProjectNavigation } from './components/ProjectDetail/hooks/useProjectNavigation';
+import { ProjectItemCard } from './components/ProjectDetail/ProjectItemCard';
+import { ProjectHeader } from './components/ProjectDetail/ProjectHeader';
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     project, currentFolderId, fileSystem: _legacyFiles, searchTerm, PROJECT_THEMES,
@@ -48,56 +53,32 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
     // --- DATA FETCHING (Independent) ---
     const rootId = project?.rootFolderId;
-    const targetParent = currentFolderId || rootId;
+    const targetParent = currentFolderId || rootId || null;
 
     // We fetch contents for the CURRENT view (folder or root)
     const { data: fetchedItems } = useFolderContents(targetParent || null);
 
     // --- SELECTION STATE ---
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const { selectedIds, toggleSelection } = useProjectSelection();
 
     // --- RENAMING STATE ---
-    const [renamingId, setRenamingId] = useState<string | null>(null);
-    const [renameValue, setRenameValue] = useState('');
-    const [renamingColor, setRenamingColor] = useState('');
-
-    const toggleSelection = (id: string) => {
-        const newSet = new Set(selectedIds);
-        if (newSet.has(id)) newSet.delete(id);
-        else newSet.add(id);
-        setSelectedIds(newSet);
-    };
-
-    // --- HELPER: Resolve Folder Color ---
-    const getFolderColorClass = (color: string | undefined) => {
-        if (!color) return 'text-blue-500';
-
-        // 1. Try finding in themes (best match)
-        const theme = PROJECT_THEMES?.find((t: any) => t.bg === color);
-        if (theme) return theme.text;
-
-        // 2. If it's a bg- class, swap to text-
-        if (color.startsWith('bg-')) {
-            return color.replace('bg-', 'text-');
-        }
-
-        // 3. If standard hex or other unknown, default
-        return 'text-blue-500';
-    };
-
-    const handleRenameSubmit = () => {
-        if (renamingId && renameValue.trim()) {
-            onRenameFolder(renamingId, renameValue.trim(), renamingColor);
-            setRenamingId(null);
-            setRenameValue('');
-            setRenamingColor('');
-        } else {
-            setRenamingId(null);
-        }
-    };
+    const {
+        renamingId, renameValue, setRenameValue,
+        renamingColor, setRenamingColor,
+        initiateRename, cancelRename, submitRename
+    } = useProjectRenaming({ onRenameFolder });
 
     // --- SAFETY CHECK ---
     const safeFileSystem = fetchedItems || []; // Use Fetched Data
+
+    // --- NAVIGATION LOGIC ---
+    const { handleNavigate } = useProjectNavigation({
+        fileSystem: safeFileSystem,
+        currentFolderId: targetParent,
+        onOpenItem,
+        onOpenComic
+    });
+
 
     // --- LOGIC TO GET ITEMS ---
     // Since useFolderContents ALREADY filters by parentId, we just filter by search
@@ -162,60 +143,42 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     }
 
     if (!project && !currentFolderId && items.length === 0) {
-        return <div className="p-8 text-center text-zinc-500">Selecione um projeto para começar.</div>;
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-text-muted gap-4">
+                <div className="p-6 rounded-full bg-surface shadow-inner">
+                    <Folder size={48} className="opacity-20" />
+                </div>
+                <p className="text-sm font-medium">Selecione um projeto para começar</p>
+            </div>
+        );
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#0c0c0e] text-zinc-100 overflow-hidden">
-            {/* HEADER WITH BREADCRUMBS */}
-            <div className="h-14 border-b border-white/10 flex items-center justify-between px-4 bg-[#18181b] shrink-0">
-                <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" onClick={onBack}>
-                        <ArrowLeft size={20} />
-                    </Button>
-
-                    <div className="flex items-center text-sm font-medium">
-                        <span className="text-zinc-500 mr-2">Projetos</span>
-                        <ChevronRight size={14} className="text-zinc-600 mx-1" />
-
-                        {breadcrumbs.map((crumb, index) => {
-                            const isLast = index === breadcrumbs.length - 1;
-                            return (
-                                <div key={crumb.id} className="flex items-center">
-                                    <button
-                                        onClick={() => handleBreadcrumbClick(crumb.id)}
-                                        className={`hover:text-white transition-colors ${isLast ? 'text-white font-bold cursor-default' : 'text-zinc-400 hover:underline'}`}
-                                        disabled={isLast}
-                                    >
-                                        {crumb.name}
-                                    </button>
-                                    {!isLast && <ChevronRight size={14} className="text-zinc-600 mx-1" />}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-                <div className="text-xs text-zinc-500">
-                    {items.length} itens
-                </div>
-            </div>
+        <div className="flex flex-col h-full bg-app-bg text-text-primary overflow-hidden">
+            {/* ... header ... */}
+            <ProjectHeader
+                onBack={onBack}
+                breadcrumbs={breadcrumbs}
+                onBreadcrumbClick={handleBreadcrumbClick}
+                totalItems={items.length}
+            />
 
             {/* CONTENT */}
-            <div className="flex-1 overflow-y-auto p-6">
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
+            <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6 pb-20">
 
                     {/* CARD 1: CREATE FOLDER */}
                     {isCreatingFolder ? (
-                        <Card className="h-72 p-4 border border-blue-500 bg-[#18181b] flex flex-col justify-center gap-2 shadow-lg shadow-blue-500/10">
-                            <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">Nova Biblioteca</span>
-                            <Input autoFocus value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Nome..." className="text-sm py-2" />
+                        <Card className="h-72 p-4 border border-accent-blue bg-surface flex flex-col justify-center gap-2 shadow-lg shadow-blue-500/10 animate-in zoom-in-95 duration-200">
+                            <span className="text-xs font-bold text-accent-blue uppercase tracking-wider mb-2">Nova Biblioteca</span>
+                            <Input autoFocus value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Nome..." className="text-sm py-2 mb-2" />
 
-                            <div className="flex flex-wrap gap-1 mb-1 mt-2">
+                            <div className="flex flex-wrap gap-1 mb-2 mt-2">
                                 {PROJECT_THEMES && PROJECT_THEMES.map((theme: any) => (
                                     <button
                                         key={theme.bg}
                                         onClick={(e) => { e.stopPropagation(); setNewFolderColor(theme.bg); }}
-                                        className={`w-4 h-4 rounded-full transition-all ${theme.bg} ${newFolderColor === theme.bg ? 'ring-2 ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                                        className={`w-5 h-5 rounded-full transition-all duration-200 border border-transparent ${theme.bg} ${newFolderColor === theme.bg ? 'ring-2 ring-offset-2 ring-offset-surface ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100 hover:border-white/20'}`}
                                     />
                                 ))}
                             </div>
@@ -227,32 +190,31 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         </Card>
                     ) : (
                         <Card onClick={() => setIsCreatingFolder(true)}
-                            className="h-72 border border-dashed border-white/10 hover:border-blue-500/50 hover:bg-white/5 cursor-pointer flex flex-col items-center justify-center gap-4 transition-all group">
-                            <div className="p-4 rounded-full bg-zinc-800/50 text-zinc-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                            className="h-72 border border-dashed border-border-color hover:border-accent-blue/50 hover:bg-surface-hover cursor-pointer flex flex-col items-center justify-center gap-4 transition-all group bg-surface/30 opacity-70 hover:opacity-100">
+                            <div className="p-4 rounded-full bg-surface text-text-muted group-hover:bg-accent-blue group-hover:text-white transition-all duration-300 group-hover:scale-110 shadow-inner">
                                 <Folder size={32} />
                             </div>
-                            <span className="text-xs font-bold text-zinc-500 group-hover:text-blue-400 uppercase tracking-wider transition-colors">Nova Biblioteca</span>
+                            <span className="text-xs font-bold text-text-muted group-hover:text-accent-blue uppercase tracking-wider transition-colors">Nova Biblioteca</span>
                         </Card>
                     )}
 
                     {/* CARD 2: IMPORT */}
                     <Card onClick={() => fileInputRef.current?.click()}
-                        className="h-72 border border-dashed border-white/10 hover:border-purple-500/50 hover:bg-white/5 cursor-pointer flex flex-col items-center justify-center gap-4 transition-all group">
-                        <div className="p-4 rounded-full bg-zinc-800/50 text-zinc-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                        className="h-72 border border-dashed border-border-color hover:border-purple-500/50 hover:bg-surface-hover cursor-pointer flex flex-col items-center justify-center gap-4 transition-all group bg-surface/30 opacity-70 hover:opacity-100">
+                        <div className="p-4 rounded-full bg-surface text-text-muted group-hover:bg-purple-500 group-hover:text-white transition-all duration-300 group-hover:scale-110 shadow-inner">
                             <Upload size={32} />
                         </div>
-                        <span className="text-xs font-bold text-zinc-500 group-hover:text-purple-400 uppercase tracking-wider transition-colors">Importar</span>
+                        <span className="text-xs font-bold text-text-muted group-hover:text-purple-400 uppercase tracking-wider transition-colors">Importar</span>
                     </Card>
+
+                    {/* DATA ITEMS */}
 
                     {/* DATA ITEMS */}
                     {items.map(item => {
                         // FIX: Use backend-provided coverUrl if available (Lazy Loading support)
                         const coverImage = item.coverUrl || (item.type === 'folder' ? getFolderCover(item.id) : item.url);
-                        const folderColor = getFolderColorClass(item.color);
                         const isSelected = selectedIds.has(item.id);
                         const isRenaming = renamingId === item.id;
-                        // Use active renaming color if renaming this item (and color is set), otherwise use item color
-                        const activeColorClass = isRenaming && renamingColor ? getFolderColorClass(renamingColor) : folderColor;
 
                         const handleClick = (e: React.MouseEvent) => {
                             if (isRenaming) return; // Prevent nav if renaming
@@ -264,132 +226,35 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                 return;
                             }
 
-                            // 2. Handle Folder/Comic Navigation Logic
-
-                            // Check for Explicit OR Implicit Comic (Lazy Loading)
-                            const isComic = item.type === 'comic' || item.isComic;
-
-                            if (isComic) {
-                                onOpenComic(item.id);
-                                return;
-                            }
-
-                            if (item.type === 'folder') {
-                                const children = safeFileSystem.filter(f => f.parentId === item.id);
-                                const hasPages = children.some(f => f.type === 'file');
-                                const hasSubFolders = children.some(f => f.type === 'folder');
-
-                                if (hasPages && !hasSubFolders) {
-                                    onOpenComic(item.id);
-                                } else {
-                                    onOpenItem(item);
-                                }
-                            }
-                            else {
-                                const parentId = currentFolderId || item.parentId;
-                                if (parentId) onOpenComic(parentId);
-                            }
+                            // 2. Navigation
+                            handleNavigate(item);
                         };
 
                         return (
-                            <Card key={item.id}
+                            <ProjectItemCard
+                                key={item.id}
+                                item={item}
+                                coverImage={coverImage}
+                                isSelected={isSelected}
+                                isRenaming={isRenaming}
+
+                                // Rename flow
+                                renameValue={renameValue}
+                                onRenameChange={setRenameValue}
+                                renamingColor={renamingColor}
+                                onRenamingColorChange={setRenamingColor}
+                                onRenameSubmit={submitRename}
+                                onRenameCancel={cancelRename}
+                                onInitiateRename={initiateRename}
+
+                                // Actions
                                 onClick={handleClick}
-                                className={`h-72 relative group cursor-pointer border bg-[#18181b] overflow-hidden hover:ring-2 hover:ring-blue-500 hover:shadow-2xl transition-all ${isSelected ? 'ring-2 ring-blue-500 border-blue-500' : 'border-white/5'}`}
-                            >
+                                onDelete={onDeleteFolder}
 
-                                {/* COVER IMAGE */}
-                                {coverImage ? (
-                                    <>
-                                        <div className="absolute inset-0 bg-zinc-900">
-                                            <img src={coverImage} alt={item.name} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-                                        </div>
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
-                                    </>
-                                ) : (
-                                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-zinc-800 to-zinc-900 group-hover:from-zinc-800 group-hover:to-zinc-800 transition-colors">
-                                        {item.type === 'folder' ? (
-                                            <Folder size={48} className={`${activeColorClass} opacity-80 group-hover:opacity-100 transition-colors`} />
-                                        ) : (
-                                            <ImageIcon size={48} className="text-zinc-600 group-hover:text-purple-500 transition-colors" />
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* ACTION BUTTONS - Hide when renaming */}
-                                {!isRenaming && (
-                                    <div className="absolute top-2 right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 rounded-lg p-1 backdrop-blur-sm">
-                                        <button className="p-1.5 hover:bg-white/20 rounded text-zinc-400 hover:text-white transition-colors" onClick={(e) => e.stopPropagation()}>
-                                            <Pin size={14} />
-                                        </button>
-                                        <button
-                                            className="p-1.5 hover:bg-white/20 rounded text-zinc-400 hover:text-blue-400 transition-colors"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setRenamingId(item.id);
-                                                setRenameValue(item.name);
-                                                setRenamingColor(item.color || '');
-                                            }}
-                                        >
-                                            <Pencil size={14} />
-                                        </button>
-                                        <button
-                                            className="p-1.5 hover:bg-red-500/20 rounded text-zinc-400 hover:text-red-400 transition-colors"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (confirm('Excluir este item?')) onDeleteFolder(item.id);
-                                            }}
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* META INFO */}
-                                <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col gap-1">
-                                    <div className="flex items-center gap-2 mb-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300">
-                                        <span className={`text-[10px] uppercase font-bold tracking-widest ${activeColorClass} bg-white/5 px-2 py-0.5 rounded border border-white/10`}>
-                                            {(item.type === 'comic' || item.isComic) ? 'Comic' : (item.type === 'folder' ? 'Biblioteca' : 'Comic')}
-                                        </span>
-                                    </div>
-
-                                    {isRenaming ? (
-                                        <div onClick={e => e.stopPropagation()} className="flex flex-col gap-2">
-                                            <Input
-                                                autoFocus
-                                                value={renameValue}
-                                                onChange={e => setRenameValue(e.target.value)}
-                                                onKeyDown={e => {
-                                                    if (e.key === 'Enter') handleRenameSubmit();
-                                                    if (e.key === 'Escape') setRenamingId(null);
-                                                }}
-                                                className="h-8 py-1 text-sm font-bold bg-zinc-900/90 border-blue-500 text-white"
-                                            />
-                                            {/* COLOR PICKER FOR RENAMING */}
-                                            <div className="flex flex-wrap gap-1">
-                                                {PROJECT_THEMES && PROJECT_THEMES.map((theme: any) => (
-                                                    <button
-                                                        key={theme.bg}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setRenamingColor(theme.bg);
-                                                        }}
-                                                        className={`w-3 h-3 rounded-full transition-all ${theme.bg} ${renamingColor === theme.bg ? 'ring-2 ring-white scale-125' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
-                                                    />
-                                                ))}
-                                            </div>
-                                            <Button size="sm" onClick={handleRenameSubmit} className="h-6 text-[10px] mt-1">Salvar</Button>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm font-bold text-white truncate leading-tight drop-shadow-md">{item.name}</p>
-                                    )}
-
-                                    {item.type === 'folder' && (
-                                        <p className="text-[10px] text-zinc-400 font-medium">
-                                            {safeFileSystem.filter(f => f.parentId === item.id).length} itens
-                                        </p>
-                                    )}
-                                </div>
-                            </Card>
+                                // Data
+                                childrenCount={safeFileSystem.filter(f => f.parentId === item.id).length}
+                                projectThemes={PROJECT_THEMES}
+                            />
                         );
                     })}
                 </div>

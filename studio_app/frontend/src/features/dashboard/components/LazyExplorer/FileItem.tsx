@@ -30,24 +30,24 @@ export const FileItem: React.FC<FileItemProps> = ({
 
     return (
         <div
-            className={`px-3 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-white/5 group transition-colors ${isSelected ? 'bg-blue-500/20 text-white' : 'text-zinc-400'}`}
+            className={`px-3 py-1.5 rounded flex items-center gap-2 cursor-pointer text-[12px] hover:bg-surface-hover group transition-colors ${isSelected ? 'bg-accent-blue/20 text-white' : 'text-text-muted'}`}
             style={{ paddingLeft: `${(depth * 16) + 12}px` }} // Dynamic Indentation
             onClick={() => onSelect(file.id)}
         >
-            <File size={14} className="text-white" />
-            <span className="truncate flex-1 font-medium text-white">{file.name}</span>
+            <File size={14} className="text-text-primary" />
+            <span className="truncate flex-1 font-medium text-text-primary">{file.name}</span>
             {/* Optional count if we had it, but for file it's just name */}
 
             <div className="hidden group-hover:flex gap-1 ml-auto">
                 <button
                     onClick={(e) => onEdit(file, e)}
-                    className="p-1 hover:text-white text-zinc-600 transition-colors"
+                    className="p-1 hover:text-white text-text-muted transition-colors"
                 >
                     <Pencil size={11} />
                 </button>
                 <button
                     onClick={(e) => onDelete(file.id, e)}
-                    className="p-1 hover:text-red-400 text-zinc-600 transition-colors"
+                    className="p-1 hover:text-red-400 text-text-muted transition-colors"
                 >
                     <Trash2 size={11} />
                 </button>
