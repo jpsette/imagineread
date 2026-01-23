@@ -22,4 +22,7 @@ export default defineConfig({
             renderer: {},
         }),
     ],
+    optimizeDeps: {
+        include: ['react-virtualized-auto-sizer', 'react-window'],
+    },
 })
