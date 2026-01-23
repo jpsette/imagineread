@@ -75,7 +75,7 @@ export const useBalloonDetection = ({
                     borderWidth: 2,
                     borderRadius: 4,
                     opacity: 1
-                } as unknown as Balloon;
+                } as Balloon;
             }).filter((item): item is Balloon => item !== null);
 
             if (newMasks.length > 0) {
@@ -124,7 +124,7 @@ export const useBalloonDetection = ({
                     borderRadius: 10,
                     opacity: 1,
                     text: b.text || ""
-                } as unknown as Balloon;
+                } as Balloon;
                 return [b, speechBalloon];
             }
             return [b];

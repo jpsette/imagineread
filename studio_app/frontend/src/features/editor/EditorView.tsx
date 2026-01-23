@@ -25,6 +25,7 @@ interface EditorViewProps {
     initialBalloons?: Balloon[] | null;
     initialPanels?: Panel[] | null; // Added initialPanels
     cleanUrl?: string | null;
+    isCleaned?: boolean;
     onBack?: () => void;
 }
 
@@ -34,6 +35,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
     initialBalloons,
     initialPanels, // Added initialPanels
     cleanUrl,
+    isCleaned,
     onBack = () => window.history.back()
 }) => {
 
@@ -107,9 +109,9 @@ export const EditorView: React.FC<EditorViewProps> = ({
                         },
                         balloon: balloons.find(b => b.id === editor.selectedBubbleId)
                     }}
-                    handleSeparatePanels={handleSeparatePanels}
-                    previewImages={previewImages}
                     onOpenPanelGallery={handleOpenGallery}
+                    cleanUrl={cleanUrl}
+                    isCleaned={isCleaned}
                 />
 
                 {/* CENTER CANVAS AREA - Animating ONLY this part */}

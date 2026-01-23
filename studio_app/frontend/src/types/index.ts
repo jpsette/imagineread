@@ -26,7 +26,7 @@ export interface Balloon {
     roughness?: number;
     tailTip?: { x: number, y: number } | null;
     tailControl?: { x: number, y: number } | null;
-    tailCurve?: any; // Deprecated or for older format compatibility
+    tailCurve?: string | null; // Stronger typing from 'any'
     points?: { x: number, y: number }[]; // For freeform vertex editing
 
     // Style Props
@@ -41,6 +41,17 @@ export interface Balloon {
     rotation?: number;
     direction?: string;
     tail_box_2d?: number[];
+
+    // Konva Spatial Props (Optional, present during runtime editing)
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    scaleX?: number;
+    scaleY?: number;
+
+    // Index signature for Konva extensibility / legacy props
+    [key: string]: unknown;
 }
 
 export interface DetectedBalloon {
@@ -67,7 +78,11 @@ export interface FileEntry {
     name: string;
     type: 'file' | 'folder' | 'comic';
     url: string;
+
+    // Canonical Properties (ADAPTED)
     cleanUrl?: string | null;
+    // REMOVED LEGACY ALIASES: clean_image_url, clean_url
+
     isCleaned?: boolean;
     balloons?: Balloon[] | null;
     panels?: Panel[] | null;

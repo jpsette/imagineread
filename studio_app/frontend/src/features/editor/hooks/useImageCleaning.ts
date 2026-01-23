@@ -35,14 +35,14 @@ export const useImageCleaning = ({
 
             // Prepare Payload (Convert to 1000x1000 relative coordinates)
             const cleanPayload = balloons.map(b => {
-                const anyB = b as any;
-                let bx = anyB.x;
-                let by = anyB.y;
-                let bw = anyB.width;
-                let bh = anyB.height;
+                // Konva properties are now part of Balloon type (optional)
+                let bx = b.x;
+                let by = b.y;
+                let bw = b.width;
+                let bh = b.height;
 
                 // Handle box_2d fallback
-                if (bx === undefined || bw === undefined) {
+                if (bx === undefined || by === undefined || bw === undefined || bh === undefined) {
                     if (b.box_2d && b.box_2d.length === 4) {
                         const [y1, x1, y2, x2] = b.box_2d;
                         bx = x1;
@@ -55,8 +55,8 @@ export const useImageCleaning = ({
                 }
 
                 // Apply Scale
-                const scaleX = anyB.scaleX || 1;
-                const scaleY = anyB.scaleY || 1;
+                const scaleX = b.scaleX || 1;
+                const scaleY = b.scaleY || 1;
                 const finalW = bw * scaleX;
                 const finalH = bh * scaleY;
 
@@ -75,6 +75,8 @@ export const useImageCleaning = ({
             console.log("Payload Inpainting:", cleanPayload.length, "items");
             const result = await api.cleanPage(imageUrl, cleanPayload as any, fileId);
 
+            // ADAPTER PATTERN: The API returns a raw backend response (clean_image_url).
+            // We use it directly here to update local state, which flows into our system as 'cleanUrl'.
             if (result && result.clean_image_url) {
                 setLocalCleanUrl(result.clean_image_url);
                 console.log("✅ Image Cleaned Successfully:", result.clean_image_url);

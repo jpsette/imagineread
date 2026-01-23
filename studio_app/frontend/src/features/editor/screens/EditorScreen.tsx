@@ -48,7 +48,10 @@ export const EditorScreen: React.FC = () => {
                         fileId={file.id}
                         initialBalloons={file.balloons || undefined}
                         initialPanels={file.panels || undefined}
+
+                        // ROBUST: Uses normalized cleanUrl from Adapter
                         cleanUrl={file.cleanUrl || undefined}
+                        isCleaned={file.isCleaned}
                     />
                 )}
             </EditorLayout>

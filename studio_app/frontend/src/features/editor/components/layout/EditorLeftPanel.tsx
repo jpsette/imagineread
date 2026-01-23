@@ -11,19 +11,18 @@ import { AnimateMenu } from '../menus/AnimateMenu';
 interface EditorLeftPanelProps {
     vectorization: any; // The return type of useVectorization hook
     editProps: any; // Props for EditorSidebar (Delete logic etc)
-    handleSeparatePanels: () => void;
-    previewImages: string[];
     onOpenPanelGallery: () => void;
     cleanUrl?: string | null;
+    isCleaned?: boolean;
 }
 
 export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
     vectorization,
     editProps,
-    handleSeparatePanels,
-    previewImages,
     onOpenPanelGallery,
-    cleanUrl }) => {
+    cleanUrl,
+    isCleaned
+}) => {
     const { activeMode } = useEditorUIStore();
 
     return (
@@ -71,10 +70,10 @@ export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
                             hasText={vectorization.hasText}
                             hasPanels={vectorization.hasPanels}
                             onDetectPanels={vectorization.detectPanels}
-                            onSeparatePanels={handleSeparatePanels}
                             isPanelsConfirmed={true}
                             onConfirmPanels={() => { }}
                             onOpenPanelGallery={onOpenPanelGallery}
+                            isCleaned={isCleaned}
                         />
                     )}
 

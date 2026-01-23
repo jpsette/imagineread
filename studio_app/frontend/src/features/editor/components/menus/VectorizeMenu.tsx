@@ -49,6 +49,7 @@ interface VectorizeMenuProps {
     // Gallery
     onOpenPanelGallery?: () => void;
     initialCleanUrl?: string | null;
+    isCleaned?: boolean; // Backend flag indicating if file was previously cleaned
 }
 
 export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
@@ -75,7 +76,8 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     isPanelsConfirmed,
     onConfirmPanels,
     onOpenPanelGallery,
-    initialCleanUrl
+    initialCleanUrl,
+    isCleaned
 }) => {
 
     // --- STORE HOOKS ---
@@ -101,9 +103,10 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
         });
     };
 
-    // --- DERIVED STATE (Optimistic) ---
-    // Use Store (Reactive) OR Prop (Stable) to prevent flicker
-    const hasCleanImage = !!(cleanImageUrl || initialCleanUrl);
+    // --- DERIVED STATE ---
+    // SIMPLE FIX: Check if we have the URL OR if backend says it was cleaned
+    // This prevents blue flicker when URL is temporarily unavailable on load
+    const hasCleanImage = !!(cleanImageUrl || initialCleanUrl || isCleaned);
 
     // --- STYLES CONSTANTS ---
     const H_HEIGHT = "h-[38px]"; // Standard Height
@@ -232,8 +235,8 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     {/* 1. Main Clean Button (Grow to fill space) */}
                     <button
                         onClick={handleCleanClick}
-                        disabled={isProcessingCleaning}
-                        className={`${isProcessingCleaning ? BTN_DISABLED : (hasCleanImage ? BTN_SUCCESS_CLICKABLE : BTN_PRIMARY)} whitespace-nowrap`}
+                        disabled={isProcessingCleaning || isProcessing}
+                        className={`${(isProcessingCleaning || isProcessing) ? BTN_DISABLED : (hasCleanImage ? BTN_SUCCESS_CLICKABLE : BTN_PRIMARY)} whitespace-nowrap`}
                     >
                         {isProcessingCleaning ? (
                             <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full min-w-[16px]"></span> <span>Limpando...</span></>

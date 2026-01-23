@@ -18,7 +18,7 @@ interface BalloonShapeProps {
     onEditingBlur?: () => void;
 }
 
-export const BalloonShape: React.FC<BalloonShapeProps> = ({
+const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
     balloon,
     isSelected,
     isEditing,
@@ -31,6 +31,7 @@ export const BalloonShape: React.FC<BalloonShapeProps> = ({
 }) => {
     const shapeRef = useRef<any>(null);
     const trRef = useRef<any>(null);
+    const isDragging = useRef(false); // Transient state flag
 
     // Calculate dimensions from box_2d [top, left, bottom, right]
     const y = balloon.box_2d[0];
@@ -47,7 +48,17 @@ export const BalloonShape: React.FC<BalloonShapeProps> = ({
     }, [isSelected, isEditing]);
 
     // HANDLE DRAG & TRANSFORM UPDATES
+    // TRANSIENT UPDATE SCHEME:
+    // 1. We start dragging (Konva handles pixel movement).
+    // 2. We do NOT update the store onDragMove (expensive).
+    // 3. We only commit to store onDragEnd.
+
+    const handleDragStart = () => {
+        isDragging.current = true;
+    };
+
     const handleDragEnd = (e: any) => {
+        isDragging.current = false;
         const node = e.target;
         onChange({
             box_2d: [
@@ -93,6 +104,7 @@ export const BalloonShape: React.FC<BalloonShapeProps> = ({
                 onClick={(e) => { e.cancelBubble = true; onSelect(); }}
                 onTap={(e) => { e.cancelBubble = true; onSelect(); }}
                 onDblClick={(e) => { e.cancelBubble = true; onEditRequest(); }}
+                onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onTransformEnd={handleTransformEnd}
             >
@@ -129,3 +141,16 @@ export const BalloonShape: React.FC<BalloonShapeProps> = ({
         </>
     );
 };
+
+// MEMOIZATION:
+// Comparison function ignores 'on...' handlers to prevent re-renders when parent creates inline functions.
+// This is critical for preventing "Snap-back" if parent renders during a global event.
+export const BalloonShape = React.memo(BalloonShapeComponent, (prev, next) => {
+    return (
+        prev.balloon === next.balloon &&
+        prev.isSelected === next.isSelected &&
+        prev.isEditing === next.isEditing &&
+        prev.showBalloon === next.showBalloon &&
+        prev.showText === next.showText
+    );
+});

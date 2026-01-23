@@ -1,4 +1,5 @@
 import { API_ENDPOINTS } from '../config';
+import { normalizeFile, toBackendPayload } from './adapters';
 import {
     Project,
     FileEntry,
@@ -93,21 +94,18 @@ class ApiClient {
             ? `${API_ENDPOINTS.BASE_URL}/filesystem?parentId=${parentId}`
             : `${API_ENDPOINTS.BASE_URL}/filesystem`;
 
-        return this.request<FileEntry[]>(url);
+        const rawFiles = await this.request<any[]>(url);
+        return rawFiles.map(normalizeFile); // ADAPTER APPLIED
     }
 
     async getFile(fileId: string): Promise<FileEntry> {
-        return this.request<FileEntry>(`${API_ENDPOINTS.BASE_URL}/files/${fileId}`);
+        const rawFile = await this.request<any>(`${API_ENDPOINTS.BASE_URL}/files/${fileId}`);
+        return normalizeFile(rawFile); // ADAPTER APPLIED
     }
 
     async updateFileData(fileId: string, data: { balloons?: Balloon[], panels?: any[], cleanUrl?: string, isCleaned?: boolean }): Promise<void> {
-        // Map to Backend DTO (FileUpdateData)
-        // Backend expects: balloons, panels, cleanUrl, isCleaned
-        const payload: any = {};
-        if (data.balloons) payload.balloons = data.balloons;
-        if (data.panels) payload.panels = data.panels;
-        if (data.cleanUrl !== undefined) payload.cleanUrl = data.cleanUrl;
-        if (data.isCleaned !== undefined) payload.isCleaned = data.isCleaned;
+        // Use Adapter to ensure payload matches backend expectations
+        const payload = toBackendPayload(data);
 
         console.log(`🌐 [API] Enviando PUT para: ${API_ENDPOINTS.BASE_URL}/files/${fileId}/data`);
         console.log("📦 [API] Payload:", payload);
