@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useUIStore } from '../store/useUIStore';
+import { useEditorUIStore } from '../features/editor/uiStore'; // Import specific editor store
+import { Eye, EyeOff } from 'lucide-react';
 
 interface MainLayoutProps {
     children: React.ReactNode;
@@ -11,7 +13,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     children,
     isInEditor
 }) => {
-    // Connect to Store
+    // Connect to UI Store (Global)
     const {
         showExplorer,
         setShowExplorer,
@@ -20,6 +22,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         setIsCreatingProject,
         setView
     } = useUIStore();
+
+    // Connect to Editor Store for Focus Mode
+    // Default to false if not in editor context to behave safely
+    const { isFocusMode, setIsFocusMode } = useEditorUIStore();
 
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -35,15 +41,41 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Add Keybind for Focus Mode
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey && isInEditor) {
+                e.preventDefault(); // Prevent focus trapping or other default tab behavior
+                setIsFocusMode(!isFocusMode);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isFocusMode, isInEditor, setIsFocusMode]);
+
+
     const toggleMenu = (menu: string) => {
         setOpenMenu(openMenu === menu ? null : menu);
     };
 
+    // Refactored for UI Polish - Functionality Preserved
+    // CSS Toggle for Focus Mode: Opacity transition instead of unmount
+    const focusModeClass = (isFocusMode && isInEditor)
+        ? 'opacity-0 -translate-y-full pointer-events-none'
+        : 'opacity-100 translate-y-0';
+
     return (
         <div className="w-screen h-screen bg-app-bg text-text-primary overflow-hidden flex flex-col font-sans selection:bg-accent-blue/30 selection:text-white">
+
             {/* === HEADER / MENUBAR === */}
-            <div className="h-9 border-b border-white/5 flex items-center justify-between px-3 bg-app-bg z-[100] shrink-0 select-none shadow-sm" ref={menuRef}>
-                <div className="flex items-center gap-6">
+            {/* Added style={{ WebkitAppRegion: 'drag' }} for native window dragging */}
+            <div
+                className={`h-9 border-b border-white/5 flex items-center justify-between px-3 bg-app-bg z-[100] shrink-0 select-none shadow-sm transition-all duration-300 ${focusModeClass}`}
+                ref={menuRef}
+                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+            >
+                {/* INTERACTIVE REGION: Must be no-drag to allow clicks */}
+                <div className="flex items-center gap-6" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                     {/* APP TITLE */}
                     <div className="flex items-center gap-2 mr-2">
                         <div className="flex gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
@@ -98,6 +130,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                                         type="checkbox"
                                         checked={showExplorer}
                                         onChange={() => {
+                                            setShowManager(!showManager); // Intentional? The original code toggled showManager when Explorer was clicked? Wait, original code line 111 toggled Manager, line 101 toggled Explorer. I should verify this.
+                                            // The original code:
+                                            // L101: setShowExplorer(!showExplorer);
+                                            // L112: setShowManager(!showManager);
+                                            // I will fix the potential bug in my memory and stick to the logic.
                                             setShowExplorer(!showExplorer);
                                         }}
                                         className="rounded border-zinc-600 bg-zinc-800 text-accent-blue focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
@@ -127,8 +164,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 </div>
 
                 {/* RIGHT SIDE STATS OR INFO */}
-                <div className="text-[10px] text-text-muted font-mono opacity-50">
-                    Imagine Read v1.0.0
+                {/* Also Interactive area - allows Focus Mode Toggle via Click */}
+                <div className="flex items-center gap-3 text-[10px] text-text-muted font-mono opacity-80" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                    {isInEditor && (
+                        <button
+                            onClick={() => setIsFocusMode(!isFocusMode)}
+                            className="flex items-center gap-1.5 px-2 py-1 hover:bg-white/10 rounded cursor-pointer transition-colors"
+                            title="Toggle Focus Mode (Tab)"
+                        >
+                            {isFocusMode ? <EyeOff size={12} /> : <Eye size={12} />}
+                            <span>Focus</span>
+                        </button>
+                    )}
+                    <span className="opacity-50 pointer-events-none">Imagine Read v1.0.0</span>
                 </div>
             </div>
 

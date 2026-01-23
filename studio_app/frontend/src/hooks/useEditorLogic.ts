@@ -35,6 +35,8 @@ export const useEditorLogic = (
     useEffect(() => {
         // 1. Clear History (Don't want to Undo back into the previous page)
         clearHistory();
+        // CRITICAL: Prevent Ghost History from previous file (Zundo)
+        useEditorStore.temporal.getState().clear();
 
         // 2. Clear Selection
         setSelectedBubbleId(null);

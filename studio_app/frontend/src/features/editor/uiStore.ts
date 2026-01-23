@@ -25,7 +25,12 @@ interface EditorUIState {
     setShowText: (show: boolean) => void;
     setShowPanelsLayer: (show: boolean) => void;
     setShowPreview: (show: boolean) => void;
+    setShowPreview: (show: boolean) => void;
     setPreviewImages: (images: string[]) => void;
+
+    // Focus Mode
+    isFocusMode: boolean;
+    setIsFocusMode: (v: boolean) => void;
 }
 
 export const useEditorUIStore = create<EditorUIState>((set) => ({
@@ -47,5 +52,10 @@ export const useEditorUIStore = create<EditorUIState>((set) => ({
     setShowText: (show) => set({ showText: show }),
     setShowPanelsLayer: (show) => set({ showPanelsLayer: show }),
     setShowPreview: (show) => set({ showPreview: show }),
+    setShowPreview: (show) => set({ showPreview: show }),
     setPreviewImages: (images) => set({ previewImages: images }),
+
+    // Focus Mode
+    isFocusMode: false,
+    setIsFocusMode: (v) => set({ isFocusMode: v }),
 }));

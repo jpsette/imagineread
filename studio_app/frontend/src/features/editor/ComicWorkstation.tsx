@@ -5,6 +5,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStr
 import { CSS } from '@dnd-kit/utilities';
 import { Grid, CellComponentProps } from 'react-window';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
+import { Button } from '../../ui/Button';
 
 import { ExportModal } from './ExportModal';
 import { FileEntry } from '../../types';
@@ -298,19 +299,45 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
 
                         {/* Actions */}
                         <div className="flex items-center gap-2 pointer-events-auto">
-                            <button onClick={handleEditPage} disabled={selectedPageIds.size !== 1} className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border ${selectedPageIds.size === 1 ? 'bg-accent-blue text-white shadow-glow-sm border-accent-blue hover:bg-blue-600' : 'bg-black/20 text-zinc-600 border-white/5 opacity-50 cursor-not-allowed'}`}>
-                                <Edit3 size={14} /> <span className="hidden sm:inline">Editar</span>
-                            </button>
-                            <button onClick={handleBulkDelete} disabled={selectedPageIds.size === 0} className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border ${selectedPageIds.size > 0 ? 'bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20 shadow-glow-sm' : 'bg-black/20 text-zinc-600 border-white/5 opacity-50 cursor-not-allowed'}`}>
-                                <Trash2 size={14} /> <span className="hidden sm:inline">Excluir {selectedPageIds.size > 0 ? `(${selectedPageIds.size})` : ''}</span>
-                            </button>
+                            <Button
+                                onClick={handleEditPage}
+                                disabled={selectedPageIds.size !== 1}
+                                variant={selectedPageIds.size === 1 ? 'primary' : 'ghost'}
+                                size="sm"
+                                icon={Edit3}
+                                className={selectedPageIds.size !== 1 ? 'opacity-50 cursor-not-allowed text-zinc-600' : ''}
+                            >
+                                <span className="hidden sm:inline">Editar</span>
+                            </Button>
+
+                            <Button
+                                onClick={handleBulkDelete}
+                                disabled={selectedPageIds.size === 0}
+                                variant="danger"
+                                size="sm"
+                                icon={Trash2}
+                                className={selectedPageIds.size === 0 ? 'opacity-50 cursor-not-allowed bg-black/20 border-white/5 text-zinc-600' : ''}
+                            >
+                                <span className="hidden sm:inline">Excluir {selectedPageIds.size > 0 ? `(${selectedPageIds.size})` : ''}</span>
+                            </Button>
+
                             <div className="w-px h-6 bg-white/10 mx-1" />
-                            <button onClick={() => setIsExportModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full text-xs font-bold text-zinc-300 border border-white/5 hover:bg-white/5 hover:text-white transition-all hover:shadow-glow-sm">
-                                <Download size={14} /> <span className="hidden sm:inline">Exportar</span>
-                            </button>
-                            <button onClick={handleClose} className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/5 text-zinc-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 transition-all ml-1">
-                                <X size={18} />
-                            </button>
+
+                            <Button
+                                onClick={() => setIsExportModalOpen(true)}
+                                variant="ghost"
+                                size="sm"
+                                icon={Download}
+                            >
+                                <span className="hidden sm:inline">Exportar</span>
+                            </Button>
+                            <Button
+                                onClick={handleClose}
+                                variant="ghost"
+                                size="sm"
+                                icon={X}
+                                className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/5 text-zinc-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 transition-all ml-1 p-0"
+                            />
                         </div>
                     </div>
 
@@ -367,7 +394,7 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
                             {/* DRAG OVERLAY PORTAL */}
                             <DragOverlay dropAnimation={dropAnimationConfig}>
                                 {activeId && activeId !== 'ADD_BUTTON' ? (
-                                    <div className="w-[220px] aspect-[3/4]">
+                                    <div className="w-[220px] aspect-[3/4] rotate-3 scale-105 shadow-2xl cursor-grabbing ring-2 ring-accent-blue/50 rounded-xl">
                                         <PageCard
                                             page={orderedPages.find(p => p.id === activeId)!}
                                             isSelected={true}
@@ -430,7 +457,14 @@ const PageCard = React.memo<{
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 pt-8 transition-all translate-y-full group-hover:translate-y-0">
                 <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-white truncate flex-1">{page.name}</span>
-                    <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="px-3 py-1 bg-accent-blue hover:bg-blue-600 rounded text-xs font-bold text-white transition-colors shadow-sm">Editar</button>
+                    <Button
+                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                        variant="primary"
+                        size="sm"
+                        className="h-6 text-[10px] px-2"
+                    >
+                        Editar
+                    </Button>
                 </div>
             </div>
         </div>
