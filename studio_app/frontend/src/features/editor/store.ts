@@ -17,6 +17,12 @@ interface EditorState {
     isOriginalVisible: boolean;
     setCleanImage: (url: string | null) => void;
     toggleVisibility: () => void;
+
+    // State Tracking
+    isDirty: boolean; // Needs Save?
+    isSaved: boolean; // Just Saved?
+    setIsDirty: (v: boolean) => void;
+    setIsSaved: (v: boolean) => void;
 }
 
 export const useEditorStore = create<EditorState>()(
@@ -24,30 +30,48 @@ export const useEditorStore = create<EditorState>()(
         (set) => ({
             balloons: [],
 
+            // --- STATE TRACKING ---
+            isDirty: false,
+            isSaved: false, // NEW: Track explicit save success
+            setIsDirty: (v) => set({ isDirty: v }),
+            setIsSaved: (v) => set({ isSaved: v }),
+
             // Supports both value and functional updates
             setBalloons: (input) => set((state) => ({
-                balloons: typeof input === 'function' ? input(state.balloons) : [...input]
+                balloons: typeof input === 'function' ? input(state.balloons) : [...input],
+                isDirty: true, // Mutation = Dirty
+                isSaved: false // Mutation = Not Saved
             })),
 
             addBalloon: (balloon) => set((state) => ({
-                balloons: [...state.balloons, balloon]
+                balloons: [...state.balloons, balloon],
+                isDirty: true,
+                isSaved: false
             })),
 
             updateBalloon: (id, updates) => set((state) => ({
-                balloons: state.balloons.map(b => b.id === id ? { ...b, ...updates } : b)
+                balloons: state.balloons.map(b => b.id === id ? { ...b, ...updates } : b),
+                isDirty: true,
+                isSaved: false
             })),
 
             removeBalloon: (id) => set((state) => ({
-                balloons: state.balloons.filter(b => b.id !== id)
+                balloons: state.balloons.filter(b => b.id !== id),
+                isDirty: true,
+                isSaved: false
             })),
 
             // PANELS
             panels: [],
             setPanels: (input) => set((state) => ({
-                panels: typeof input === 'function' ? input(state.panels) : [...input]
+                panels: typeof input === 'function' ? input(state.panels) : [...input],
+                isDirty: true,
+                isSaved: false
             })),
             removePanel: (id) => set((state) => ({
-                panels: state.panels.filter(p => p.id !== id)
+                panels: state.panels.filter(p => p.id !== id),
+                isDirty: true,
+                isSaved: false
             })),
 
             // --- NEW IMPLEMENTATION ---
@@ -56,7 +80,9 @@ export const useEditorStore = create<EditorState>()(
 
             setCleanImage: (url) => set({
                 cleanImageUrl: url,
-                isOriginalVisible: false // Auto-switch to clean view when new image arrives
+                isOriginalVisible: false, // Auto-switch to clean view when new image arrives
+                isDirty: true, // Cleaning = Change
+                isSaved: false
             }),
 
             toggleVisibility: () => set((state) => ({

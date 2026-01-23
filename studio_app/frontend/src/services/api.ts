@@ -100,11 +100,12 @@ class ApiClient {
         return this.request<FileEntry>(`${API_ENDPOINTS.BASE_URL}/files/${fileId}`);
     }
 
-    async updateFileData(fileId: string, data: { balloons?: Balloon[], cleanUrl?: string, isCleaned?: boolean }): Promise<void> {
+    async updateFileData(fileId: string, data: { balloons?: Balloon[], panels?: any[], cleanUrl?: string, isCleaned?: boolean }): Promise<void> {
         // Map to Backend DTO (FileUpdateData)
-        // Backend expects: balloons, cleanUrl, isCleaned
+        // Backend expects: balloons, panels, cleanUrl, isCleaned
         const payload: any = {};
         if (data.balloons) payload.balloons = data.balloons;
+        if (data.panels) payload.panels = data.panels;
         if (data.cleanUrl !== undefined) payload.cleanUrl = data.cleanUrl;
         if (data.isCleaned !== undefined) payload.isCleaned = data.isCleaned;
 

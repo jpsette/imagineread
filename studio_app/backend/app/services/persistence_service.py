@@ -42,6 +42,12 @@ class PersistenceService:
                 except Exception as e:
                     logger.error(f"   -> Error processing balloons: {e}")
                     raise e
+            
+            # 1.5 Handle Panels (Added)
+            if data.panels is not None:
+                 entry.panels = data.panels
+                 updates_made = True
+                 logger.debug(f"   -> Assigned {len(data.panels)} panels to entry.")
 
             # 2. Handle Clean Status
             if data.cleanUrl is not None:

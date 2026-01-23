@@ -40,6 +40,7 @@ def get_filesystem(parentId: str = None, db: Session = Depends(get_db)):
             "createdAt": e.created_at,
             "isPinned": e.is_pinned,
             "balloons": e.balloons,
+            "panels": e.panels, # Added panels
             "order": e.order,
             "color": e.color
         }
@@ -82,6 +83,7 @@ def get_filesystem_item(item_id: str, db: Session = Depends(get_db)):
         "createdAt": entry.created_at,
         "isPinned": entry.is_pinned,
         "balloons": entry.balloons,
+        "panels": entry.panels, # Added panels
         "order": entry.order,
         "color": entry.color
     }

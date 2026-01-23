@@ -47,6 +47,7 @@ export const EditorScreen: React.FC = () => {
                         onBack={handleBack}
                         fileId={file.id}
                         initialBalloons={file.balloons || undefined}
+                        initialPanels={file.panels || undefined}
                         cleanUrl={file.cleanUrl || undefined}
                     />
                 )}

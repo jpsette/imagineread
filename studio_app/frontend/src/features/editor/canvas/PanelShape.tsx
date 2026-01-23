@@ -27,13 +27,16 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
     }
 
     // Calculate Bounding Box to position the Delete Button (Top-Right)
+    // Calculate Bounding Box and Center
     const xs = points.filter((_, i) => i % 2 === 0);
     const ys = points.filter((_, i) => i % 2 === 1);
     const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
     const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
 
-    // Calculate center point for the order badge
-    const badgePos = { x: minX + 20, y: minY + 20 };
+    // Center point for the large number
+    const centerPos = { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
 
     // Handle Anchor Drag
     const handleAnchorDragMove = (e: Konva.KonvaEventObject<DragEvent>, index: number) => {
@@ -54,10 +57,10 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
             <Line
                 points={panel.points}
                 closed={true}
-                stroke={isSelected ? "#10b981" : "#10b981"} // Always green
-                strokeWidth={isSelected ? 4 : 2}
+                stroke={isSelected ? "#0033CC" : "#0047FF"} // Darker Blue (Selected) / Vibrant Blue (Unselected)
+                strokeWidth={isSelected ? 5 : 3} // Thicker lines
                 dash={isSelected ? [] : [10, 5]} // Solid if selected
-                fill={isSelected ? "rgba(16, 185, 129, 0.1)" : "rgba(16, 185, 129, 0.05)"}
+                fill={isSelected ? "rgba(0, 71, 255, 0.6)" : "rgba(0, 71, 255, 0.35)"} // Much higher opacity
                 shadowColor={isSelected ? "rgba(0,0,0,0.5)" : "transparent"}
                 shadowBlur={isSelected ? 5 : 0}
                 onClick={onSelect} // Trigger selection
@@ -74,27 +77,25 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
                 }}
             />
 
-            {/* Order Badge */}
-            <Group x={badgePos.x} y={badgePos.y} listening={false}>
-                <Circle
-                    radius={12}
-                    fill={isSelected ? "#047857" : "#10b981"}
-                    shadowColor="black"
-                    shadowBlur={4}
-                    shadowOpacity={0.3}
-                />
-                <Text
-                    text={(panel.order || "?").toString()}
-                    fontSize={12}
-                    fontFamily="Arial"
-                    fontStyle="bold"
-                    fill="white"
-                    align="center"
-                    verticalAlign="middle"
-                    offsetX={6}
-                    offsetY={6}
-                />
-            </Group>
+            {/* Large Centered Number (No Circle) */}
+            <Text
+                x={centerPos.x}
+                y={centerPos.y}
+                text={(panel.order || "?").toString()}
+                fontSize={64} // Large font
+                fontFamily="Arial"
+                fontStyle="bold"
+                fill="white"
+                stroke="black"
+                strokeWidth={2}
+                shadowColor="rgba(0,0,0,0.5)"
+                shadowBlur={10}
+                align="center"
+                verticalAlign="middle"
+                offsetX={20} // Approximate center offset for a generic number
+                offsetY={32} // Approximate center offset (half font size)
+                listening={false} // Click-through
+            />
 
             {/* Draggable Anchors (Only if selected & editable) */}
             {isSelected && editable && vertices.map((v, i) => (
@@ -104,7 +105,7 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
                     y={v.y}
                     radius={6}
                     fill="#fff"
-                    stroke="#10b981"
+                    stroke="#0033CC"
                     strokeWidth={2}
                     draggable
                     onDragMove={(e) => handleAnchorDragMove(e, v.index)}

@@ -7,20 +7,19 @@ import { useEditorUIStore } from '../../uiStore';
 interface EditorCanvasContainerProps {
     editor: any; // The editor logic hook return
     imageUrl: string;
-    cleanUrl?: string | null;
 }
 
 const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerProps>(({
     editor,
     imageUrl,
-    cleanUrl
 }, ref) => {
     // Stores
     const { balloons, addBalloon, updateBalloon, removeBalloon, panels, setPanels } = useEditorStore();
     const { activeTool, setActiveTool, showMasks, showBalloons, showText, showPanelsLayer } = useEditorUIStore();
 
-    // Derived Logic
-    const displaySrc = cleanUrl || imageUrl;
+    // FIXED: Always pass the original image as base. 
+    // The EditorCanvas handles the Clean Image overlay internally via Store.
+    const displaySrc = imageUrl;
 
     // Filter Balloons based on visibility settings
     const visibleBalloons = balloons.filter(b => {

@@ -11,7 +11,7 @@ import { useEditorUIStore } from '../uiStore';
 // HOOKS
 import { useCanvasNavigation } from './hooks/useCanvasNavigation';
 import { useCanvasTools } from './hooks/useCanvasTools';
-import { useBufferedImage } from './hooks/useBufferedImage';
+
 
 interface EditorCanvasProps {
     imageUrl: string;
@@ -81,8 +81,8 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
     const { showBalloons, showText, showMasks } = useEditorUIStore();
 
     // --- IMAGES (CORS ENABLED) ---
-    // Use Buffered Image to prevent blinking on page switch
-    const [imgOriginal, statusOriginal] = useBufferedImage(imageUrl, 'anonymous');
+    // Standard useImage hook to ensure correct state synchronization in stable shell
+    const [imgOriginal, statusOriginal] = useImage(imageUrl, 'anonymous');
     const [imgClean] = useImage(cleanImageUrl || '', 'anonymous'); // Clean image can blink, it's overlay
 
     // --- HOOKS ---
@@ -146,15 +146,18 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                 {/* 2. PANELS LAYER */}
                 {showPanels && (
                     <Layer>
-                        {panels.map((panel) => (
-                            <PanelShape
-                                key={panel.id}
-                                panel={panel}
-                                isSelected={panel.id === selectedId}
-                                onSelect={() => onSelect(panel.id)}
-                                onUpdate={(id, attrs) => onUpdate(id, attrs as any)}
-                            />
-                        ))}
+                        {/* Z-INDEX LOGIC: Sort panels so selected one renders last (on top) */}
+                        {[...panels]
+                            .sort((a, b) => (a.id === selectedId ? 1 : b.id === selectedId ? -1 : 0))
+                            .map((panel) => (
+                                <PanelShape
+                                    key={panel.id}
+                                    panel={panel}
+                                    isSelected={panel.id === selectedId}
+                                    onSelect={() => onSelect(panel.id)}
+                                    onUpdate={(id, attrs) => onUpdate(id, attrs as any)}
+                                />
+                            ))}
                     </Layer>
                 )}
 

@@ -56,6 +56,7 @@ class Balloon(BaseModel):
 class FileUpdateData(BaseModel):
     # balloons: Optional[List[dict]] = None
     balloons: Optional[List[Balloon]] = None
+    panels: Optional[List[dict]] = None # Added panels
     cleanUrl: Optional[str] = None
     isCleaned: Optional[bool] = None
 

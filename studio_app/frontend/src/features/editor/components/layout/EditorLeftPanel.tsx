@@ -14,6 +14,7 @@ interface EditorLeftPanelProps {
     handleSeparatePanels: () => void;
     previewImages: string[];
     onOpenPanelGallery: () => void;
+    cleanUrl?: string | null;
 }
 
 export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
@@ -21,8 +22,8 @@ export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
     editProps,
     handleSeparatePanels,
     previewImages,
-    onOpenPanelGallery
-}) => {
+    onOpenPanelGallery,
+    cleanUrl }) => {
     const { activeMode } = useEditorUIStore();
 
     return (
@@ -62,6 +63,7 @@ export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
                             onDetectBalloon={vectorization.detectBalloon}
                             onDetectText={vectorization.detectText}
                             onCleanImage={vectorization.handleCleanImage}
+                            initialCleanUrl={cleanUrl}
                             canDetectBalloons={vectorization.canDetectBalloons}
                             canDetectText={vectorization.canDetectText}
                             canDetectPanels={vectorization.canDetectPanels}

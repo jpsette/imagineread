@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Save, ArrowLeft, X, Undo, Redo, Check, Loader2 } from 'lucide-react';
 import { useEditorUIStore } from '../../uiStore';
 import { useEditorStore } from '../../store';
@@ -20,34 +20,24 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
     const tabs = editorModes;
 
     // --- SMART SAVE STATE ---
-    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+    // Now powered by Central Store (Truth)
+    const { isDirty, isSaved } = useEditorStore();
+    const [isSaving, setIsSaving] = useState(false);
 
-    // Subscribe to Store Changes to detect "Dirty" state
-    const balloons = useEditorStore(state => state.balloons);
-    const panels = useEditorStore(state => state.panels);
-    // Track first run to avoid setting dirty on mount
-    const isFirstRun = useRef(true);
-
-    useEffect(() => {
-        if (isFirstRun.current) {
-            isFirstRun.current = false;
-            return;
-        }
-        // If content changes and we are 'saved', revert to 'idle' (dirty)
-        if (saveStatus === 'saved') {
-            setSaveStatus('idle');
-        }
-    }, [balloons, panels]);
+    // Compute Status based on Store & Local Async State
+    // If saving -> 'saving'
+    // If isSaved (Explicit Success) -> 'saved' (Green)
+    // Else (Dirty OR Fresh Load) -> 'idle' (Blue/Active)
+    const saveStatus = isSaving ? 'saving' : (isSaved && !isDirty ? 'saved' : 'idle');
 
     const handleSmartSave = async () => {
-        if (saveStatus === 'saving') return;
+        if (isSaving || (isSaved && !isDirty)) return; // Don't save if already saved/saving
 
-        setSaveStatus('saving');
+        setIsSaving(true);
         // Retrieve promise from prop
         await onSave();
-
-        // Transition to Saved
-        setSaveStatus('saved');
+        setIsSaving(false);
+        // Store will update isSaved -> true, causing re-render to 'saved'
     };
 
     return (
@@ -117,10 +107,10 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
                         onClick={handleSmartSave}
                         disabled={saveStatus === 'saving' || saveStatus === 'saved'}
                         className={`group flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 active:scale-95 ${saveStatus === 'saved'
-                                ? 'bg-green-500/10 border border-green-500/50 text-green-500'
-                                : saveStatus === 'saving'
-                                    ? 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 cursor-wait'
-                                    : 'bg-neon-blue/10 border border-neon-blue/50 text-neon-blue hover:bg-neon-blue hover:text-white hover:shadow-glow-md'
+                            ? 'bg-green-500/10 border border-green-500/50 text-green-500'
+                            : saveStatus === 'saving'
+                                ? 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 cursor-wait'
+                                : 'bg-neon-blue/10 border border-neon-blue/50 text-neon-blue hover:bg-neon-blue hover:text-white hover:shadow-glow-md'
                             }`}
                     >
                         {saveStatus === 'saved' ? (

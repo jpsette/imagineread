@@ -70,6 +70,7 @@ export interface FileEntry {
     cleanUrl?: string | null;
     isCleaned?: boolean;
     balloons?: Balloon[] | null;
+    panels?: Panel[] | null;
     order?: number;
     isPinned?: boolean;
     createdAt?: string;
@@ -94,6 +95,7 @@ export interface CreateFolderRequest {
 
 export interface FileUpdateData {
     balloons: Balloon[];
+    panels?: Panel[];
     cleanUrl?: string; // Unified Persistence
     isCleaned?: boolean;
 }

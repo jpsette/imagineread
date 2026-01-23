@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Balloon } from '../../../types';
 import { api } from '../../../services/api';
-import { useEditorStore } from '../store';
-import { WorkflowStep } from './useVectorization'; // We might need to move this type or redefine it
+import { useEditorUIStore } from '../uiStore';
 
 // Redefine locally to avoid circular dependency if needed, or export from types
 export type LocalWorkflowStep = 'idle' | 'mask' | 'confirmed';
@@ -83,6 +82,10 @@ export const useBalloonDetection = ({
                 const existingNonMasks = balloons.filter(b => b.type !== 'mask');
                 setBalloons([...existingNonMasks, ...newMasks]);
                 setWorkflowStep('mask');
+
+                // FORCE VISIBILITY
+                const { setShowMasks } = useEditorUIStore.getState();
+                setShowMasks(true);
 
                 // AUTO-SELECT FIRST MASK
                 if (newMasks[0]) {

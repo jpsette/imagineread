@@ -1,24 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Balloon, DetectedBalloon } from '../types';
+import { useQueryClient } from '@tanstack/react-query';
+import { Balloon, DetectedBalloon, Panel } from '../types';
 import { api } from '../services/api';
 import { yoloToBalloons } from '../utils/balloonConverter';
 import { useAppStore } from '../store/useAppStore';
 import { useEditorStore } from '../features/editor/store';
 import { toast } from 'sonner';
+import { useEditorUIStore } from '../features/editor/uiStore';
 
 export const useEditorLogic = (
     fileId: string,
     initialBalloons: Balloon[] | null | undefined,
     imageUrl: string,
-    cleanUrl?: string | null // Added optional cleanUrl
+    cleanUrl?: string | null, // Added optional cleanUrl
+    initialPanels?: Panel[] | null // Removed default [] to fix infinite loop
 ) => {
     // --- GLOBAL STORE INTEGRATION (Fixing State Schizophrenia) ---
     const {
         balloons,
         setBalloons,
+        panels,
+        setPanels,
         cleanImageUrl: storeCleanUrl,
         setCleanImage
     } = useEditorStore();
+
+    const queryClient = useQueryClient();
 
     // Use AppStore for History
     const { clearHistory, pushToHistory } = useAppStore();
@@ -35,7 +42,7 @@ export const useEditorLogic = (
         // 3. Reset Zoom (Optional - keeps UX consistent)
         setZoom(1);
 
-        // 4. Hydrate Logic
+        // 4. Hydrate Logic (Balloons)
         console.log("🎣 [Logic] Switch File -> Hydrating:", fileId);
         if (initialBalloons && Array.isArray(initialBalloons) && initialBalloons.length > 0) {
             console.log("📥 [Logic] Hydrating Store with balloons:", initialBalloons.length);
@@ -45,7 +52,20 @@ export const useEditorLogic = (
             useEditorStore.getState().setBalloons([]);
         }
 
-        // 5. Hydrate Clean Image (or clear it)
+        // 5. Hydrate Logic (Panels)
+        if (initialPanels && Array.isArray(initialPanels) && initialPanels.length > 0) {
+            console.log("📥 [Logic] Hydrating Store with panels:", initialPanels.length);
+            useEditorStore.getState().setPanels(initialPanels);
+        } else {
+            console.log("🧹 [Logic] No initialPanels found. Resetting Store to empty.");
+            useEditorStore.getState().setPanels([]);
+        }
+
+        // 5.1 CLEAR PREVIEWS (UI Store)
+        // Fixes issue where gallery shows previous page's panels
+        useEditorUIStore.getState().setPreviewImages([]);
+
+        // 6. Hydrate Clean Image (or clear it)
         if (cleanUrl) {
             console.log("💧 [Logic] Hydrating Clean Image from props:", cleanUrl);
             setCleanImage(cleanUrl);
@@ -53,7 +73,24 @@ export const useEditorLogic = (
             setCleanImage(null); // IMPORTANT: Clear if page has no clean url
         }
 
-    }, [fileId, initialBalloons, cleanUrl, setCleanImage, clearHistory]);
+        // 7. RESET DIRTY/SAVED FLAG (Based on Content)
+        setTimeout(() => {
+            const store = useEditorStore.getState();
+            store.setIsDirty(false);
+
+            // HEURISTIC: If we have content, assume it's a "Saved" status.
+            // If empty, it's a "New" status (Blue Button).
+            const hasContent =
+                (initialBalloons && initialBalloons.length > 0) ||
+                (initialPanels && initialPanels.length > 0) ||
+                !!cleanUrl;
+
+            store.setIsSaved(!!hasContent);
+
+            console.log(`✨ [Logic] Hydration Complete. Has Content: ${hasContent} -> Saved: ${!!hasContent}`);
+        }, 0);
+
+    }, [fileId, initialBalloons, initialPanels, cleanUrl, setCleanImage, clearHistory]);
 
     // Refs for accessing latest state in async/callbacks without re-bind
 
@@ -90,16 +127,28 @@ export const useEditorLogic = (
         try {
             // Unified Save: Balloons (from Store) + Clean Status
             const currentBalloons = useEditorStore.getState().balloons; // Ensure fresh state
+            const currentPanels = useEditorStore.getState().panels;
             console.log("📊 [Logic] Estado Atual do Store (Balões):", currentBalloons);
+            console.log("📊 [Logic] Estado Atual do Store (Paineis):", currentPanels);
             console.log("📊 [Logic] Estado Atual do Store (CleanUrl):", cleanImageUrl);
             console.log("📊 [Logic] Estado Atual do Variable (ShowClean):", showClean);
 
             await api.updateFileData(fileId, {
                 balloons: currentBalloons,
+                panels: currentPanels,
                 cleanUrl: cleanImageUrl || undefined,
                 isCleaned: showClean
             });
             console.log("✅ [Logic] api.updateFileData concluído com sucesso.");
+
+            // --- CACHE INVALIDATION ---
+            // Force React Query to refetch this file next time (e.g. after navigation)
+            queryClient.invalidateQueries({ queryKey: ['file', fileId] });
+
+            const store = useEditorStore.getState();
+            store.setIsDirty(false); // MARK AS CLEAN
+            store.setIsSaved(true);  // MARK AS SAVED (Green)
+
             toast.success('Salvo com sucesso!', { id: toastId });
         } catch (e: any) {
             console.error("Manual save error", e);
@@ -280,6 +329,8 @@ export const useEditorLogic = (
         // State
         balloons,
         setBalloons, // Exposed for direct history restore
+        panels, // Added panels
+        setPanels, // Added setPanels
         selectedBubbleId,
         zoom,
         analyzingYOLO,

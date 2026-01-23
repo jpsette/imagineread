@@ -8,7 +8,6 @@ import {
     Type,
     Eraser,
     Layout,
-    Scissors,
     RotateCcw,
     Images
 } from 'lucide-react';
@@ -44,12 +43,12 @@ interface VectorizeMenuProps {
     onDetectPanels?: () => void;
 
     // Panel Logic
-    onSeparatePanels?: () => void;
     isPanelsConfirmed?: boolean;
     onConfirmPanels?: () => void;
 
     // Gallery
     onOpenPanelGallery?: () => void;
+    initialCleanUrl?: string | null;
 }
 
 export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
@@ -73,10 +72,10 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     hasText,
     hasPanels,
     onDetectPanels,
-    onSeparatePanels,
     isPanelsConfirmed,
     onConfirmPanels,
-    onOpenPanelGallery
+    onOpenPanelGallery,
+    initialCleanUrl
 }) => {
 
     // --- STORE HOOKS ---
@@ -84,8 +83,7 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
         showMasks, setShowMasks,
         showBalloons, setShowBalloons,
         showText, setShowText,
-        showPanelsLayer, setShowPanelsLayer,
-        previewImages
+        showPanelsLayer, setShowPanelsLayer
     } = useEditorUIStore();
 
     const cleanImageUrl = useEditorStore(state => state.cleanImageUrl);
@@ -103,18 +101,27 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
         });
     };
 
-    // Helper for consistency
-    const getButtonStyle = (disabled: boolean, variant: 'default' | 'blue' = 'default') => {
-        const base = `w-full py-2 px-4 mb-2 text-left rounded-md text-sm font-medium transition-all flex items-center gap-3 select-none border border-transparent`;
+    // --- DERIVED STATE (Optimistic) ---
+    // Use Store (Reactive) OR Prop (Stable) to prevent flicker
+    const hasCleanImage = !!(cleanImageUrl || initialCleanUrl);
 
-        if (disabled) return `${base} bg-[#333] text-gray-500 cursor-not-allowed opacity-50`;
+    // --- STYLES CONSTANTS ---
+    const H_HEIGHT = "h-[38px]"; // Standard Height
 
-        if (variant === 'blue') {
-            return `${base} bg-blue-600 hover:bg-blue-500 text-white shadow-sm active:transform active:scale-[0.98]`;
-        }
+    const BTN_BASE = `w-full ${H_HEIGHT} px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 select-none border`;
 
-        return `${base} bg-[#3f3f46] hover:bg-[#52525b] text-white shadow-sm active:transform active:scale-[0.98]`;
-    };
+    const BTN_PRIMARY = `${BTN_BASE} bg-blue-600 hover:bg-blue-500 text-white border-transparent shadow-sm active:transform active:scale-[0.98]`;
+    const BTN_DISABLED = `${BTN_BASE} bg-[#333] text-gray-500 border-transparent cursor-not-allowed opacity-50`;
+
+    // Success/Done State (Ghost Green) - Standardized for all sections
+    const BTN_SUCCESS = `flex-1 ${H_HEIGHT} bg-emerald-600/20 text-emerald-500 border-emerald-600/30 rounded flex items-center justify-center gap-2 text-sm font-medium cursor-default border`;
+    const BTN_SUCCESS_CLICKABLE = `${BTN_SUCCESS} cursor-pointer hover:bg-emerald-600/30 active:scale-[0.99] transition-all`;
+
+    // Secondary Actions (Gray)
+    const BTN_SECONDARY = `${BTN_BASE} bg-zinc-700 hover:bg-zinc-600 text-zinc-300 border-zinc-600`;
+
+    // Eye Button
+    const BTN_EYE = (active: boolean) => `w-12 ${H_HEIGHT} flex items-center justify-center rounded border transition-colors ${active ? 'bg-zinc-700 text-zinc-300 border-zinc-600' : 'bg-zinc-800 text-zinc-500 border-zinc-700'} hover:text-white`;
 
     return (
         <div className="flex flex-col gap-1">
@@ -127,8 +134,8 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     // STATE 1: IDLE / PROCESSING
                     <button
                         onClick={onCreateMask}
-                        disabled={isProcessingBalloons || isProcessing} // Disable if THIS is processing or GLOBAL is busy
-                        className={getButtonStyle(isProcessingBalloons || isProcessing, 'blue')}
+                        disabled={isProcessingBalloons || isProcessing}
+                        className={isProcessingBalloons || isProcessing ? BTN_DISABLED : BTN_PRIMARY}
                     >
                         {isProcessingBalloons ? (
                             <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> <span>Processando...</span></>
@@ -136,35 +143,23 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                             <><Scan className="w-5 h-5" /> <span>Gerar Máscaras</span></>
                         )}
                     </button>
-                    /* ... continued logic ... */
                 ) : workflowStep === 'mask' ? (
-                    // STATE 2: REVIEW (Confirm + Redo)
+                    // STATE 2: REVIEW
                     <div className="flex flex-col gap-2">
-                        <button
-                            onClick={onConfirmMask}
-                            className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded flex items-center justify-center gap-2 text-sm font-medium transition-colors shadow-sm"
-                        >
+                        <button onClick={onConfirmMask} className={`${BTN_BASE} bg-emerald-600 hover:bg-emerald-500 text-white border-transparent`}>
                             <Check className="w-4 h-4" /> Confirmar
                         </button>
-                        <button
-                            onClick={onCreateMask} // Redo
-                            className="w-full py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded flex items-center justify-center gap-2 text-sm font-medium transition-colors"
-                            title="Refazer Máscara"
-                        >
+                        <button onClick={onCreateMask} className={BTN_SECONDARY} title="Refazer Máscara">
                             <RotateCcw className="w-4 h-4" /> Refazer
                         </button>
                     </div>
                 ) : (
-                    // STATE 3: DONE (Status + Eye)
-                    <div className="flex gap-2 h-[38px]">
-                        <div className="flex-1 bg-emerald-600/20 text-emerald-500 border border-emerald-600/30 rounded flex items-center justify-center gap-2 text-sm font-medium cursor-default">
+                    // STATE 3: DONE
+                    <div className="flex gap-2">
+                        <div className={BTN_SUCCESS}>
                             <Check className="w-4 h-4" /> <span>Máscara Confirmada</span>
                         </div>
-                        <button
-                            onClick={() => setShowMasks(!showMasks)}
-                            className={`w-12 flex items-center justify-center rounded border transition-colors ${showMasks ? 'bg-zinc-700 text-zinc-300 border-zinc-600' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}
-                            title={showMasks ? 'Esconder' : 'Mostrar'}
-                        >
+                        <button onClick={() => setShowMasks(!showMasks)} className={BTN_EYE(showMasks)} title={showMasks ? 'Esconder' : 'Mostrar'}>
                             {showMasks ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                         </button>
                     </div>
@@ -177,22 +172,18 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
             <div className="mb-4">
                 <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">2. Balões</label>
                 {hasBalloons ? (
-                    <div className="flex gap-2 h-[38px]">
-                        <div className="flex-1 bg-emerald-600/20 text-emerald-500 border border-emerald-600/30 rounded flex items-center justify-center gap-2 text-sm font-medium cursor-default">
+                    <div className="flex gap-2">
+                        <div className={BTN_SUCCESS}>
                             <Check className="w-4 h-4" /> <span>Detectados</span>
                         </div>
-                        <button
-                            onClick={() => setShowBalloons(!showBalloons)}
-                            className={`w-12 flex items-center justify-center rounded border transition-colors ${showBalloons ? 'bg-zinc-700 text-zinc-300 border-zinc-600' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}
-                            title={showBalloons ? 'Esconder' : 'Mostrar'}
-                        >
+                        <button onClick={() => setShowBalloons(!showBalloons)} className={BTN_EYE(showBalloons)} title={showBalloons ? 'Esconder' : 'Mostrar'}>
                             {showBalloons ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                         </button>
                     </div>
                 ) : (
                     <button
-                        className={getButtonStyle(!canDetectBalloons || isProcessingBalloons)}
-                        disabled={!canDetectBalloons || isProcessingBalloons} // Use granular
+                        className={!canDetectBalloons || isProcessingBalloons ? BTN_DISABLED : BTN_PRIMARY}
+                        disabled={!canDetectBalloons || isProcessingBalloons}
                         onClick={onDetectBalloon}
                     >
                         {isProcessingBalloons ? (
@@ -208,22 +199,18 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
             <div className="mb-4">
                 <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">3. Texto</label>
                 {hasText ? (
-                    <div className="flex gap-2 h-[38px]">
-                        <div className="flex-1 bg-emerald-600/20 text-emerald-500 border border-emerald-600/30 rounded flex items-center justify-center gap-2 text-sm font-medium cursor-default">
+                    <div className="flex gap-2">
+                        <div className={BTN_SUCCESS}>
                             <Check className="w-4 h-4" /> <span>Detectado</span>
                         </div>
-                        <button
-                            onClick={() => setShowText(!showText)}
-                            className={`w-12 flex items-center justify-center rounded border transition-colors ${showText ? 'bg-zinc-700 text-zinc-300 border-zinc-600' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}
-                            title={showText ? 'Esconder' : 'Mostrar'}
-                        >
+                        <button onClick={() => setShowText(!showText)} className={BTN_EYE(showText)} title={showText ? 'Esconder' : 'Mostrar'}>
                             {showText ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                         </button>
                     </div>
                 ) : (
                     <button
-                        className={getButtonStyle(!canDetectText || isProcessingOcr)}
-                        disabled={!canDetectText || isProcessingOcr} // Use granular
+                        className={!canDetectText || isProcessingOcr ? BTN_DISABLED : BTN_PRIMARY}
+                        disabled={!canDetectText || isProcessingOcr}
                         onClick={onDetectText}
                     >
                         {isProcessingOcr ? (
@@ -238,48 +225,37 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
             <div className="h-px bg-[#333] w-full my-2"></div>
 
             {/* 4. LIMPEZA (INPAINTING) */}
-            <div className="flex flex-col gap-2 mb-4">
+            <div className="mb-4">
                 <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">4. Limpeza</label>
 
-                <div className="flex gap-2"> {/* Flex Row container */}
-
+                <div className="flex gap-2">
                     {/* 1. Main Clean Button (Grow to fill space) */}
                     <button
                         onClick={handleCleanClick}
-                        disabled={isProcessingCleaning} // Use granular
-                        className={`flex-1 rounded-md py-2 px-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${cleanImageUrl
-                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                            : 'bg-blue-600 hover:bg-blue-700 text-white'
-                            }`}
+                        disabled={isProcessingCleaning}
+                        className={`${isProcessingCleaning ? BTN_DISABLED : (hasCleanImage ? BTN_SUCCESS_CLICKABLE : BTN_PRIMARY)} whitespace-nowrap`}
                     >
                         {isProcessingCleaning ? (
-                            <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> <span>Limpando...</span></>
-                        ) : cleanImageUrl ? (
+                            <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full min-w-[16px]"></span> <span>Limpando...</span></>
+                        ) : hasCleanImage ? (
                             <>
-                                <Check className="w-5 h-5" /> <span>Imagem Limpa</span>
+                                <Check className="w-5 h-5 min-w-[20px]" /> <span>Imagem Limpa</span>
                             </>
                         ) : (
                             <>
-                                <Eraser className="w-5 h-5" /> <span>Limpar Imagem</span>
+                                <Eraser className="w-5 h-5 min-w-[20px]" /> <span>Limpar Imagem</span>
                             </>
                         )}
                     </button>
 
-                    {/* 2. The Specific Eye Button (User Requested Style) */}
-                    {/* Only show if we actually have a clean image in store */}
-                    {cleanImageUrl && (
+                    {/* EYE BUTTON (Only appears when clean) */}
+                    {hasCleanImage && (
                         <button
                             onClick={toggleVisibility}
-                            className="w-12 flex items-center justify-center rounded border transition-colors bg-zinc-800 text-zinc-500 border-zinc-700 hover:text-white hover:border-zinc-500"
+                            className={BTN_EYE(!isOriginalVisible)} // Active (Blue/Gray) logic
                             title={isOriginalVisible ? "Ver Imagem Limpa" : "Ver Original"}
                         >
-                            {/* Toggle Icon based on state */}
-                            {/* isOriginalVisible = TRUE -> User sees original -> Button should show "Eye Off" symbol or "Eye Open"? 
-                                Usually:
-                                Seeing Original -> Click to see Clean -> Icon: Eye (to show clean?) or EyeOff (to hide original?)
-                                Let's follow user snippet logic:
-                                isOriginalVisible ? EyeOff : Eye
-                            */}
+                            {/* Logic: If seeing Original (isOriginalVisible=true), Eye is OFF (crossed). If seeing Clean, Eye is ON. */}
                             {isOriginalVisible ? (
                                 <EyeOff className="w-4 h-4" />
                             ) : (
@@ -297,10 +273,9 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                 <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">5. Estrutura</label>
 
                 {!hasPanels ? (
-                    // STATE 1: IDLE
                     <button
-                        className={getButtonStyle(!canDetectPanels || isProcessingPanels)}
-                        disabled={!canDetectPanels || isProcessingPanels} // Use granular
+                        className={!canDetectPanels || isProcessingPanels ? BTN_DISABLED : BTN_PRIMARY}
+                        disabled={!canDetectPanels || isProcessingPanels}
                         onClick={onDetectPanels}
                     >
                         {isProcessingPanels ? (
@@ -310,52 +285,44 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                         )}
                     </button>
                 ) : !isPanelsConfirmed ? (
-                    // STATE 2: REVIEW (Confirm + Redo) - VERTICAL STACK
+                    // CONFIRMATION STATE
                     <div className="flex flex-col gap-2">
-                        <button
-                            onClick={onConfirmPanels}
-                            className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded flex items-center justify-center gap-2 text-sm font-medium transition-colors"
-                        >
+                        <button onClick={onConfirmPanels} className={`${BTN_BASE} bg-emerald-600 hover:bg-emerald-500 text-white border-transparent`}>
                             <Check className="w-4 h-4" /> <span>Confirmar</span>
                         </button>
-                        <button
-                            onClick={onDetectPanels} // Reload/Refazer
-                            className="w-full py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded flex items-center justify-center gap-2 text-sm transition-colors"
-                            title="Refazer Detecção"
-                        >
+                        <button onClick={onDetectPanels} className={BTN_SECONDARY} title="Refazer Detecção">
                             <RotateCcw className="w-4 h-4" /> <span>Refazer</span>
                         </button>
                     </div>
                 ) : (
-                    // STATE 3: DONE (Separate + Eye)
+                    // STATE 3: DONE (Green Redo + Eye)
                     <div className="flex flex-col gap-2">
-                        <div className="flex gap-2 h-[38px]">
+                        <div className="flex gap-2">
+                            {/* "Refazer Quadros" Green Button - Replaces "Separar Quadros" Blue */}
                             <button
-                                onClick={onSeparatePanels}
-                                className="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded flex items-center justify-center gap-2 text-sm font-medium shadow-sm transition-colors"
+                                onClick={onDetectPanels} // Calls Detection again (Redo)
+                                className={BTN_SUCCESS_CLICKABLE} // Green Ghost Style
+                                title="Refazer Quadros"
                             >
-                                <Scissors className="w-4 h-4" /> <span>Separar Quadros</span>
+                                <RotateCcw className="w-4 h-4" /> <span>Refazer Quadros</span>
                             </button>
-                            <button
-                                onClick={() => setShowPanelsLayer && setShowPanelsLayer(!showPanelsLayer)}
-                                className={`w-12 flex items-center justify-center rounded border transition-colors ${showPanelsLayer ? 'bg-zinc-700 text-zinc-300 border-zinc-600' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}
-                                title={showPanelsLayer ? 'Esconder' : 'Mostrar'}
-                            >
+
+                            <button onClick={() => setShowPanelsLayer && setShowPanelsLayer(!showPanelsLayer)} className={BTN_EYE(showPanelsLayer)} title={showPanelsLayer ? 'Esconder' : 'Mostrar'}>
                                 {showPanelsLayer ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                             </button>
                         </div>
 
-                        {/* PERSISTENT GALLERY BUTTON */}
-                        {previewImages && previewImages.length > 0 && (
-                            <button
-                                onClick={onOpenPanelGallery}
-                                className="w-full py-2 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-300 rounded flex items-center justify-center gap-2 text-sm transition-colors"
-                            >
-                                <Images className="w-4 h-4" /> Ver Galeria
-                            </button>
-                        )}
                     </div>
                 )}
+
+                {/* PERSISTENT GALLERY BUTTON (Always Visible, Disabled if Empty) - MOVED OUTSIDE CONDITIONAL */}
+                <button
+                    onClick={onOpenPanelGallery}
+                    disabled={!hasPanels} // Enabled if panels exist (even if previews need regen)
+                    className={`mt-2 ${!hasPanels ? BTN_DISABLED : BTN_SECONDARY}`}
+                >
+                    <Images className="w-4 h-4" /> Ver Galeria
+                </button>
             </div>
 
         </div>

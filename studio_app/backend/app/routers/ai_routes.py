@@ -25,6 +25,11 @@ async def analyze_page(request: AnalyzeRequest):
 @router.post("/clean_page")
 async def clean_page(request: CleanRequest, db: Session = Depends(get_db)):
     try:
+        logger.info(f"🧼 [AI Router] Clean Request for {request.image_url}")
+        logger.info(f"   -> Balloons Count: {len(request.bubbles)}")
+        if request.bubbles:
+            logger.info(f"   -> Sample Balloon: {request.bubbles[0]}")
+            
         clean_url, mask_url = clean_page_content(request.image_url, request.bubbles)
         if not clean_url: return {"clean_image_url": request.image_url}
         

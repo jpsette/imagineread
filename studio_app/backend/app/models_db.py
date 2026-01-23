@@ -29,6 +29,7 @@ class FileSystemEntry(Base):
     
     # Balloons Data (Stored as JSON)
     balloons = Column(JSON, nullable=True)
+    panels = Column(JSON, nullable=True) # Added panels support
     
     # Metadata
     created_at = Column(String)

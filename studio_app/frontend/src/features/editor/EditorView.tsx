@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import Konva from 'konva';
 import { Toaster } from 'sonner';
 import { useEditorLogic } from '../../hooks/useEditorLogic';
-import { Balloon } from '../../types';
+import { Balloon, Panel } from '../../types';
 import { useEditorStore } from './store';
 import { useEditorUIStore } from './uiStore';
 
@@ -23,6 +23,7 @@ interface EditorViewProps {
     imageUrl: string;
     fileId: string;
     initialBalloons?: Balloon[] | null;
+    initialPanels?: Panel[] | null; // Added initialPanels
     cleanUrl?: string | null;
     onBack?: () => void;
 }
@@ -31,6 +32,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
     imageUrl,
     fileId,
     initialBalloons,
+    initialPanels, // Added initialPanels
     cleanUrl,
     onBack = () => window.history.back()
 }) => {
@@ -48,7 +50,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
     const stageRef = useRef<Konva.Stage>(null);
 
     // --- LOGIC HOOKS ---
-    const editor = useEditorLogic(fileId, initialBalloons, imageUrl, cleanUrl);
+    const editor = useEditorLogic(fileId, initialBalloons, imageUrl, cleanUrl, initialPanels); // Passed initialPanels
 
     // 1. Shortcuts (Handles Delete/Undo/Redo)
     useShortcutManager(editor);
@@ -65,7 +67,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
     });
 
     // 3. Panel Workflow (Separated logic)
-    const { handleSeparatePanels } = usePanelWorkflow({
+    const { handleSeparatePanels, handleOpenGallery } = usePanelWorkflow({
         stageRef,
         panels
     });
@@ -107,7 +109,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
                     }}
                     handleSeparatePanels={handleSeparatePanels}
                     previewImages={previewImages}
-                    onOpenPanelGallery={() => setShowPreview(true)}
+                    onOpenPanelGallery={handleOpenGallery}
                 />
 
                 {/* CENTER CANVAS AREA - Animating ONLY this part */}
@@ -125,7 +127,6 @@ export const EditorView: React.FC<EditorViewProps> = ({
                                 ref={stageRef}
                                 editor={editor}
                                 imageUrl={imageUrl}
-                                cleanUrl={cleanUrl}
                             />
                         </div>
                         <Filmstrip fileId={fileId} />
