@@ -20,6 +20,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
     if (!isOpen) return null;
 
+    // Use JobStore access via hook in component body (needs to be moved up)
+    // To do this properly, we need to import useJobStore outside.
+    // However, since handleExport is inside the component, we can use the hook.
+
+    // We can't easily import the hook inside the function, so we rely on the component using it.
+    // See the full component update below.
+
     const handleExport = async (format: 'pdf' | 'clean_images' | 'json_data') => {
         setLoading(format);
         try {
@@ -29,29 +36,26 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 body: JSON.stringify({ format })
             });
 
-            if (!response.ok) throw new Error('Export failed');
+            if (!response.ok) throw new Error('Export failed to start');
 
-            // Handle file download
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
+            const data = await response.json();
 
-            // Determine filename based on content-disposition or default
-            const timestamp = new Date().toISOString().slice(0, 10);
-            let ext = 'zip';
-            if (format === 'pdf') ext = 'pdf';
-            if (format === 'json_data') ext = 'json';
+            // Expected Response: { status: "queued", jobId: "..." }
+            if (data.jobId) {
+                // Job Started!
+                // We can close the modal immediately or show a success message.
+                // Let's close it and let the JobMonitor handle it.
+                // Trigger a poll update if possible
+                // useJobStore.getState().fetchJobs(); 
 
-            a.download = `${projectName}_${format}_${timestamp}.${ext}`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
+                onClose();
+                // Optional: Show a toast? 
+                // For now, the JobMonitor appearing is the feedback.
+            }
 
         } catch (error) {
             console.error(error);
-            alert('Falha ao exportar. Verifique o console.');
+            alert('Falha ao iniciar exportação.');
         } finally {
             setLoading(null);
         }

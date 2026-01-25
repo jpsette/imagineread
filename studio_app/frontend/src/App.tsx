@@ -3,6 +3,9 @@ import React, { useEffect } from 'react';
 // Routes
 import { AppRoutes } from './app/routes';
 
+// Components
+import { JobMonitor } from './features/jobs/components/JobMonitor';
+
 const App: React.FC = () => {
     // === GLOBAL STORES ===
     // Legacy support only - Ideally we remove these too once we confirm no deep dependencies
@@ -14,7 +17,10 @@ const App: React.FC = () => {
     }, []);
 
     return (
-        <AppRoutes />
+        <>
+            <AppRoutes />
+            <JobMonitor />
+        </>
     );
 };
 

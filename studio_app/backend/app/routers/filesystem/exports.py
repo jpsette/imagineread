@@ -1,27 +1,29 @@
-import os
 import re
-import zipfile
-import json
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
-from PIL import Image
 from loguru import logger
 
 from app.database import get_db
 from app import crud
-from app.config import TEMP_DIR
-from app.utils import resolve_local_path
 from app.models import ExportRequest
+from app.services.job_manager import job_manager
+from app.services.export_service import export_service
 
 router = APIRouter(tags=["Filesystem Exports"])
 
 @router.post("/projects/{entity_id}/export")
-def export_project(entity_id: str, request: ExportRequest, db: Session = Depends(get_db)):
+def export_project(
+    entity_id: str, 
+    request: ExportRequest, 
+    background_tasks: BackgroundTasks, 
+    db: Session = Depends(get_db)
+):
     try:
-        # Fetch all needed data
+        # Phase 1: FAST Data Gathering (Synchronous)
+        # We still gather metadata synchronously to ensure validity before creating the job.
+        # Ideally, we could move even this to background, but for now let's keep it safe.
+        
         projects = crud.get_projects(db)
-        # Convert to dict access for compatibility with below logic or adjust logic
         projects_dict = [{ "id": p.id, "name": p.name, "rootFolderId": p.root_folder_id } for p in projects]
         
         all_entries = crud.get_all_filesystem_entries(db)
@@ -43,7 +45,7 @@ def export_project(entity_id: str, request: ExportRequest, db: Session = Depends
             else:
                 raise HTTPException(status_code=404, detail="Project/Folder not found")
 
-        # Collect Files (Recursive in Python)
+        # Collect Files Recursive
         def get_files(fid):
             files = [f for f in fs_list if f.get("parentId") == fid and f.get("type") == "file"]
             for sub in [f for f in fs_list if f.get("parentId") == fid and f.get("type") == "folder"]:
@@ -51,53 +53,32 @@ def export_project(entity_id: str, request: ExportRequest, db: Session = Depends
             return files
 
         files = get_files(target_id)
+        # Sort by number in filename
         files.sort(key=lambda f: int(re.findall(r'\d+', f["name"])[0]) if re.findall(r'\d+', f["name"]) else 0)
         
         if not files: raise HTTPException(status_code=400, detail="Empty folder")
 
-        safe_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
+        # Phase 2: Create Job
+        job_type = f"EXPORT_{request.format.upper()}"
+        job_id = job_manager.create_job(job_type)
         
-        # Export Logic
-        if request.format in ["clean_images", "raw_images"]:
-            suffix = "clean" if request.format == "clean_images" else "raw"
-            zip_name = f"{safe_name}_{suffix}.zip"
-            zip_path = os.path.join(TEMP_DIR, zip_name)
-            
-            with zipfile.ZipFile(zip_path, 'w') as zipf:
-                for p in files:
-                    path = resolve_local_path(p["url"])
-                    if os.path.exists(path):
-                        fname = p["name"]
-                        if not fname.lower().endswith(('.jpg', '.png')): fname += ".jpg"
-                        zipf.write(path, arcname=fname)
-            return FileResponse(zip_path, media_type="application/zip", filename=zip_name)
-            
-        elif request.format == "json_data":
-            json_name = f"{safe_name}_data.json"
-            json_path = os.path.join(TEMP_DIR, json_name)
-            with open(json_path, 'w', encoding='utf-8') as f:
-                json.dump({"source_id": entity_id, "name": name, "files": files}, f, indent=2, ensure_ascii=False)
-            return FileResponse(json_path, media_type="application/json", filename=json_name)
-            
-        elif request.format == "pdf":
-            pdf_name = f"{safe_name}.pdf"
-            pdf_path = os.path.join(TEMP_DIR, pdf_name)
-            imgs = []
-            for p in files:
-                path = resolve_local_path(p["url"])
-                if os.path.exists(path):
-                    try: imgs.append(Image.open(path).convert("RGB"))
-                    except: pass
-            
-            if imgs:
-                imgs[0].save(pdf_path, "PDF", save_all=True, append_images=imgs[1:])
-                return FileResponse(pdf_path, media_type="application/pdf", filename=pdf_name)
-            else:
-                 raise HTTPException(status_code=400, detail="No valid images for PDF")
-                 
-        else:
-            raise HTTPException(status_code=400, detail="Invalid format")
+        # Payload for the worker
+        payload = {
+            "source_id": entity_id,
+            "name": name,
+            "format": request.format,
+            "files": files
+        }
+        
+        # Dispatch to Background
+        background_tasks.add_task(export_service.process_export_job, job_id, payload)
+        
+        return {
+            "status": "queued",
+            "jobId": job_id,
+            "message": f"Export {job_type} started in background."
+        }
 
     except Exception as e:
-        logger.error(f"Export Error: {e}")
+        logger.error(f"Export Dispatch Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
