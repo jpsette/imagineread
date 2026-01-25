@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid } from 'react-window';
 import type { GridImperativeAPI, CellComponentProps } from 'react-window';
@@ -121,7 +121,7 @@ export const Filmstrip: React.FC<FilmstripProps> = ({ fileId }) => {
                         cellComponent={FilmstripCell}
                         // SAFE FIX: Pass data via cellProps instead of itemData
                         // This bypasses the problematic itemData handling in this react-window version
-                        cellProps={itemData}
+                        cellProps={itemData as any}
                     />
                 </div>
             </div>
