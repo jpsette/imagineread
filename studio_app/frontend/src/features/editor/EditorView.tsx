@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import Konva from 'konva';
 import { Toaster } from 'sonner';
+import { Loader2 } from 'lucide-react'; // Added import
 import { useEditorLogic } from '../../hooks/useEditorLogic';
 import { Balloon, Panel } from '../../types';
 import { useEditorStore } from './store';
@@ -42,6 +43,32 @@ export const EditorView: React.FC<EditorViewProps> = ({
     // --- GLOBAL STORE ---
     const { balloons, removeBalloon, removePanel, panels } = useEditorStore();
 
+    // --- LOCAL STATE for UX ---
+    const [isCanvasReady, setCanvasReady] = React.useState(false);
+    const [isLoaderMounted, setLoaderMounted] = React.useState(true);
+
+    // Reset loading state when fileId changes to force overlay
+    React.useEffect(() => {
+        setCanvasReady(false);
+        setLoaderMounted(true);
+    }, [fileId]);
+
+    // Safety Timeout: Force ready after 5 seconds if something hangs
+    React.useEffect(() => {
+        if (!isCanvasReady) {
+            const timer = setTimeout(() => setCanvasReady(true), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [isCanvasReady]);
+
+    // Remove Loader from DOM after animation completes
+    React.useEffect(() => {
+        if (isCanvasReady) {
+            const timer = setTimeout(() => setLoaderMounted(false), 500); // 500ms = duration-500
+            return () => clearTimeout(timer);
+        }
+    }, [isCanvasReady]);
+
     // --- UI STORE ---
     const {
         showPreview, setShowPreview,
@@ -69,22 +96,16 @@ export const EditorView: React.FC<EditorViewProps> = ({
     });
 
     // 3. Panel Workflow (Separated logic)
-    const { handleSeparatePanels, handleOpenGallery } = usePanelWorkflow({
+    const { handleOpenGallery } = usePanelWorkflow({
         stageRef,
         panels
     });
 
     return (
         <div
-            className="flex flex-col h-screen bg-[#121214] text-white overflow-hidden"
-            style={{ animation: 'editorFadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)' }}
+            className="flex flex-col h-screen bg-[#121214] text-white overflow-hidden animate-editor-fade-in"
         >
-            <style>{`
-                @keyframes editorFadeIn {
-                    from { opacity: 0; transform: scale(0.99); }
-                    to { opacity: 1; transform: scale(1); }
-                }
-            `}</style>
+
 
             {/* HEADER */}
             <EditorHeader
@@ -100,18 +121,10 @@ export const EditorView: React.FC<EditorViewProps> = ({
                 {/* LEFT SIDEBAR */}
                 <EditorLeftPanel
                     vectorization={vectorization}
-                    editProps={{
-                        selectedId: editor.selectedBubbleId,
-                        balloons: balloons,
-                        onDelete: (id: string) => {
-                            if (id?.startsWith('panel')) removePanel(id);
-                            else removeBalloon(id);
-                        },
-                        balloon: balloons.find(b => b.id === editor.selectedBubbleId)
-                    }}
                     onOpenPanelGallery={handleOpenGallery}
                     cleanUrl={cleanUrl}
                     isCleaned={isCleaned}
+                    isLoading={!isCanvasReady} // Prevent Sidebar FOUC
                 />
 
                 {/* CENTER CANVAS AREA - Animating ONLY this part */}
@@ -124,12 +137,29 @@ export const EditorView: React.FC<EditorViewProps> = ({
                         className="flex-1 relative overflow-hidden flex flex-col"
                     // style={{ animation: 'editorFadeIn 0.35s ease-out' }} <-- REMOVING ANIMATION
                     >
-                        <div className="flex-1 relative overflow-hidden">
+                        {/* canvas container */}
+                        <div className="flex-1 relative overflow-hidden flex flex-col">
                             <EditorCanvasContainer
                                 ref={stageRef}
-                                editor={editor}
                                 imageUrl={imageUrl}
+                                onCanvasReady={(ready) => {
+                                    // Slight delay for smoother transition
+                                    setTimeout(() => setCanvasReady(ready), 200);
+                                }}
+                                onImageDimensionsLoaded={(w, h) => {
+                                    editor.setImgNaturalSize({ w, h });
+                                }}
                             />
+
+                            {/* BLOCKING LOADER OVERLAY - Unmounts after animation */}
+                            {isLoaderMounted && (
+                                <div className={`absolute inset-0 z-50 bg-[#1e1e1e] flex items-center justify-center transition-opacity duration-500 ${isCanvasReady ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                                    <div className="flex flex-col items-center gap-4">
+                                        <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+                                        <span className="text-zinc-400 font-medium animate-pulse">Carregando Studio...</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <Filmstrip fileId={fileId} />
                     </div>

@@ -50,11 +50,14 @@ interface VectorizeMenuProps {
     onOpenPanelGallery?: () => void;
     initialCleanUrl?: string | null;
     isCleaned?: boolean; // Backend flag indicating if file was previously cleaned
+    // Loading State from Parent
+    isLoading?: boolean;
 }
 
 export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     workflowStep,
     isProcessing,
+    isLoading = false,
     // Destructure Granular Flags
     isProcessingBalloons,
     isProcessingCleaning,
@@ -85,13 +88,13 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
         showMasks, setShowMasks,
         showBalloons, setShowBalloons,
         showText, setShowText,
-        showPanelsLayer, setShowPanelsLayer
+        showPanelsLayer, setShowPanelsLayer,
+        // Migrated Props
+        cleanImageUrl,
+        isOriginalVisible,
+        toggleVisibility,
+        setCleanImage
     } = useEditorUIStore();
-
-    const cleanImageUrl = useEditorStore(state => state.cleanImageUrl);
-    const isOriginalVisible = useEditorStore(state => state.isOriginalVisible);
-    const toggleVisibility = useEditorStore(state => state.toggleVisibility);
-    const setCleanImage = useEditorStore(state => state.setCleanImage);
 
     // --- HANDLERS ---
     const handleCleanClick = () => {
@@ -104,9 +107,9 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     };
 
     // --- DERIVED STATE ---
-    // SIMPLE FIX: Check if we have the URL OR if backend says it was cleaned
-    // This prevents blue flicker when URL is temporarily unavailable on load
-    const hasCleanImage = !!(cleanImageUrl || initialCleanUrl || isCleaned);
+    // STRICT FIX: Trust the props from the parent (which has the source of truth)
+    // We prioritize keeping the UI stable over checking the store asynchronously
+    const hasCleanImage = !!(isCleaned || cleanImageUrl || initialCleanUrl);
 
     // --- STYLES CONSTANTS ---
     const H_HEIGHT = "h-[38px]"; // Standard Height
@@ -127,7 +130,7 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     const BTN_EYE = (active: boolean) => `w-12 ${H_HEIGHT} flex items-center justify-center rounded border transition-colors ${active ? 'bg-zinc-700 text-zinc-300 border-zinc-600' : 'bg-zinc-800 text-zinc-500 border-zinc-700'} hover:text-white`;
 
     return (
-        <div className="flex flex-col gap-1">
+        <div className={`flex flex-col gap-1 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
 
             {/* 1. MASCARA */}
             <div className="mb-4">
@@ -137,8 +140,8 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     // STATE 1: IDLE / PROCESSING
                     <button
                         onClick={onCreateMask}
-                        disabled={isProcessingBalloons || isProcessing}
-                        className={isProcessingBalloons || isProcessing ? BTN_DISABLED : BTN_PRIMARY}
+                        disabled={isProcessingBalloons || isProcessing || isLoading}
+                        className={isProcessingBalloons || isProcessing || isLoading ? BTN_DISABLED : BTN_PRIMARY}
                     >
                         {isProcessingBalloons ? (
                             <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> <span>Processando...</span></>
@@ -185,8 +188,8 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     </div>
                 ) : (
                     <button
-                        className={!canDetectBalloons || isProcessingBalloons ? BTN_DISABLED : BTN_PRIMARY}
-                        disabled={!canDetectBalloons || isProcessingBalloons}
+                        className={!canDetectBalloons || isProcessingBalloons || isLoading ? BTN_DISABLED : BTN_PRIMARY}
+                        disabled={!canDetectBalloons || isProcessingBalloons || isLoading}
                         onClick={onDetectBalloon}
                     >
                         {isProcessingBalloons ? (
@@ -212,8 +215,8 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     </div>
                 ) : (
                     <button
-                        className={!canDetectText || isProcessingOcr ? BTN_DISABLED : BTN_PRIMARY}
-                        disabled={!canDetectText || isProcessingOcr}
+                        className={!canDetectText || isProcessingOcr || isLoading ? BTN_DISABLED : BTN_PRIMARY}
+                        disabled={!canDetectText || isProcessingOcr || isLoading}
                         onClick={onDetectText}
                     >
                         {isProcessingOcr ? (
@@ -235,8 +238,8 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     {/* 1. Main Clean Button (Grow to fill space) */}
                     <button
                         onClick={handleCleanClick}
-                        disabled={isProcessingCleaning || isProcessing}
-                        className={`${(isProcessingCleaning || isProcessing) ? BTN_DISABLED : (hasCleanImage ? BTN_SUCCESS_CLICKABLE : BTN_PRIMARY)} whitespace-nowrap`}
+                        disabled={isProcessingCleaning || isProcessing || isLoading}
+                        className={`${(isProcessingCleaning || isProcessing || isLoading) ? BTN_DISABLED : (hasCleanImage ? BTN_SUCCESS_CLICKABLE : BTN_PRIMARY)} whitespace-nowrap`}
                     >
                         {isProcessingCleaning ? (
                             <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full min-w-[16px]"></span> <span>Limpando...</span></>

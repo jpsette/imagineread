@@ -8,20 +8,21 @@ import { TranslateMenu } from '../menus/TranslateMenu';
 import { AnimateMenu } from '../menus/AnimateMenu';
 
 // Types passed down from Logic Hooks to avoid re-initializing them here
+// Types passed down from Logic Hooks to avoid re-initializing them here
 interface EditorLeftPanelProps {
     vectorization: any; // The return type of useVectorization hook
-    editProps: any; // Props for EditorSidebar (Delete logic etc)
     onOpenPanelGallery: () => void;
     cleanUrl?: string | null;
     isCleaned?: boolean;
+    isLoading?: boolean;
 }
 
 export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
     vectorization,
-    editProps,
     onOpenPanelGallery,
     cleanUrl,
-    isCleaned
+    isCleaned,
+    isLoading
 }) => {
     const { activeMode } = useEditorUIStore();
 
@@ -53,6 +54,7 @@ export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
                             workflowStep={vectorization.workflowStep}
                             isProcessing={vectorization.isProcessing}
                             // Granular Loading
+                            isLoading={isLoading}
                             isProcessingBalloons={vectorization.isProcessingBalloons}
                             isProcessingCleaning={vectorization.isProcessingCleaning}
                             isProcessingPanels={vectorization.isProcessingPanels}
@@ -78,9 +80,7 @@ export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
                     )}
 
                     {activeMode === 'edit' && (
-                        <EditorSidebar
-                            editProps={editProps}
-                        />
+                        <EditorSidebar />
                     )}
 
                     {activeMode === 'translate' && <TranslateMenu />}

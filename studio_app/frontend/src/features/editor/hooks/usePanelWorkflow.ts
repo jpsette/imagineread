@@ -1,5 +1,7 @@
 
 import Konva from 'konva';
+import Konva from 'konva';
+import { toast } from 'sonner';
 import { useEditorUIStore } from '../uiStore';
 import { generatePanelPreviews } from '../utils/panelUtils';
 import { Panel } from '../../../types';
@@ -38,31 +40,31 @@ export const usePanelWorkflow = ({ stageRef, panels }: UsePanelWorkflowProps) =>
      * If previews are empty (e.g. after reload), it attempts to regenerate them on the fly.
      */
     const handleOpenGallery = () => {
-        const { previewImages, setPreviewImages, setShowPreview } = useEditorUIStore.getState();
+        const { setPreviewImages, setShowPreview } = useEditorUIStore.getState();
 
-        // 1. If we already have images, just open
-        if (previewImages && previewImages.length > 0) {
-            setShowPreview(true);
-            return;
-        }
-
-        // 2. If no images but we have panels, Regenerate
         if (panels && panels.length > 0) {
             console.log("♻️ Regenerating Gallery Previews...");
             if (stageRef.current) {
-                const regenerated = generatePanelPreviews(stageRef.current, panels);
-                if (regenerated.length > 0) {
-                    setPreviewImages(regenerated);
-                    useEditorUIStore.getState().setShowPreview(true); // Using store directly to ensure update
-                } else {
-                    alert("Não foi possível gerar as pré-visualizações. Verifique se a imagem está carregada.");
+                try {
+                    // FORCE REGENERATION - Ignore cache
+                    const regenerated = generatePanelPreviews(stageRef.current, panels);
+
+                    if (regenerated.length > 0) {
+                        setPreviewImages(regenerated);
+                        useEditorUIStore.getState().setShowPreview(true);
+                    } else {
+                        toast.error("Não foi possível gerar as pré-visualizações. Tente novamente.");
+                    }
+                } catch (error) {
+                    console.error("Gallery Generation Error:", error);
+                    toast.error(`Erro ao gerar galeria: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
                 }
             } else {
-                console.warn("Stage not ready yet.");
+                toast.error("O Canvas ainda não está pronto. Aguarde...");
             }
         } else {
-            // No panels to show
-            setShowPreview(true); // Open empty modal (consistent with UI)
+            // No panels defined, show empty gallery or whatever default behavior
+            setShowPreview(true);
         }
     };
 

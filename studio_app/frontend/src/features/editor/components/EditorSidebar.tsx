@@ -5,14 +5,21 @@ import { useEditorUIStore } from '../uiStore';
 import { ToolRegistry } from '../tools/ToolRegistry';
 import { SidebarToolButton } from './parts/SidebarToolButton';
 
+import { useEditorStore } from '../store';
+
 interface EditorSidebarProps {
-    editProps: any;
+    // No more props needed!
 }
 
-export const EditorSidebar: React.FC<EditorSidebarProps> = ({
-    editProps
-}) => {
-    const { activeTool, setActiveTool } = useEditorUIStore();
+export const EditorSidebar: React.FC<EditorSidebarProps> = () => {
+    const { activeTool, setActiveTool, selectedId } = useEditorUIStore();
+    const { removeBalloon, removePanel } = useEditorStore();
+
+    const handleDelete = () => {
+        if (!selectedId) return;
+        if (selectedId.startsWith('panel')) removePanel(selectedId);
+        else removeBalloon(selectedId);
+    };
 
     const coreTools = ToolRegistry.getByCategory('core');
     const shapeTools = ToolRegistry.getByCategory('shape');
@@ -43,8 +50,8 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
 
                 {/* EXTRA ACTIONS (Delete) - Styled as a danger zone item */}
                 <button
-                    onClick={() => editProps.onDelete(editProps.selectedId)}
-                    disabled={!editProps.selectedId}
+                    onClick={handleDelete}
+                    disabled={!selectedId}
                     className="w-full h-10 rounded-xl flex items-center justify-center gap-2 transition-all border text-xs font-bold uppercase tracking-wider
                         bg-red-500/5 hover:bg-red-500/20 text-red-500 border-red-500/10 hover:border-red-500/30 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)]
                         disabled:border-transparent disabled:bg-white/5 disabled:text-zinc-600 disabled:cursor-not-allowed disabled:shadow-none"
@@ -75,7 +82,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
             <div className="h-px bg-white/5 mx-2" />
 
             {/* 3. PROPERTIES MENU */}
-            <EditMenu {...editProps} />
+            <EditMenu />
         </div>
     );
 };

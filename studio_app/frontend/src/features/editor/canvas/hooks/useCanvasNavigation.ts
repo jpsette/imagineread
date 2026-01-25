@@ -1,5 +1,6 @@
-import { useState, useEffect, RefObject } from 'react';
+import { useState, useEffect, RefObject, useRef } from 'react';
 import Konva from 'konva';
+import { useEditorUIStore } from '../../uiStore';
 
 interface UseCanvasNavigationProps {
     stageRef: RefObject<Konva.Stage>;
@@ -7,6 +8,8 @@ interface UseCanvasNavigationProps {
     imgOriginal: HTMLImageElement | undefined;
     statusOriginal: string;
     onImageLoad?: (width: number, height: number) => void;
+    // New: Pass active dimensions to prevent microscopic fit on frame 0
+    dimensions?: { width: number; height: number };
 }
 
 export const useCanvasNavigation = ({
@@ -14,18 +17,27 @@ export const useCanvasNavigation = ({
     containerRef,
     imgOriginal,
     statusOriginal,
-    onImageLoad
+    onImageLoad,
+    dimensions
 }: UseCanvasNavigationProps) => {
-    const [scale, setScale] = useState(1);
+    const { zoom: scale, setZoom: setScale } = useEditorUIStore(); // Sync with Global Store
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [hasFitted, setHasFitted] = useState(false);
 
+    // Reset fit state when image changes
+    useEffect(() => {
+        setHasFitted(false);
+    }, [imgOriginal]);
+
     // Auto-Fit Logic
     useEffect(() => {
-        if (statusOriginal === 'loaded' && imgOriginal && containerRef.current && !hasFitted) {
+        // Guard: Wait for container to have real size (>50px)
+        const isValidSize = dimensions ? (dimensions.width > 50 && dimensions.height > 50) : (containerRef.current && containerRef.current.offsetWidth > 50);
+
+        if (statusOriginal === 'loaded' && imgOriginal && containerRef.current && !hasFitted && isValidSize) {
             const container = containerRef.current;
-            const containerWidth = container.offsetWidth;
-            const containerHeight = container.offsetHeight;
+            const containerWidth = dimensions?.width || container.offsetWidth;
+            const containerHeight = dimensions?.height || container.offsetHeight;
 
             const imgRatio = imgOriginal.width / imgOriginal.height;
             const containerRatio = containerWidth / containerHeight;
@@ -40,7 +52,9 @@ export const useCanvasNavigation = ({
             const finalX = (containerWidth - imgOriginal.width * finalScale) / 2;
             const finalY = (containerHeight - imgOriginal.height * finalScale) / 2;
 
-            setScale(finalScale);
+            if (Math.abs(finalScale - scale) > 0.001) {
+                setScale(finalScale);
+            }
             setPosition({ x: finalX, y: finalY });
             setHasFitted(true);
 
@@ -48,27 +62,53 @@ export const useCanvasNavigation = ({
                 onImageLoad(imgOriginal.width, imgOriginal.height);
             }
         }
-    }, [imgOriginal, statusOriginal, hasFitted, onImageLoad, containerRef]);
+    }, [imgOriginal, statusOriginal, hasFitted, onImageLoad, containerRef, dimensions]);
 
-    // Zoom Logic
+    // --- STATE REFS (For Direct Manipulation) ---
+    // We use refs to track the "Visual Truth" instantly, bypassing React's render cycle latency.
+    const zoomRef = useRef(scale);
+    const posRef = useRef(position);
+    const syncTimeout = useRef<NodeJS.Timeout>();
+
+    // Sync Refs when React state updates (e.g. Auto-Fit or External Controls)
+    useEffect(() => {
+        zoomRef.current = scale;
+    }, [scale]);
+
+    useEffect(() => {
+        posRef.current = position;
+    }, [position]);
+
+    // Cleanup timeout
+    useEffect(() => {
+        return () => clearTimeout(syncTimeout.current);
+    }, []);
+
+    // Zoom Logic - Tuned for Trackpad & Mouse Wheel
     const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
         e.evt.preventDefault();
         const stage = stageRef.current;
         if (!stage) return;
 
-        const scaleBy = 1.1;
-        const oldScale = stage.scaleX();
+        // 1. Calculate using LATEST VISUAL STATE (Refs), not stale React state
+        const oldScale = zoomRef.current;
+        const oldPos = posRef.current;
+
         const pointer = stage.getPointerPosition();
         if (!pointer) return;
 
         const mousePointTo = {
-            x: (pointer.x - stage.x()) / oldScale,
-            y: (pointer.y - stage.y()) / oldScale,
+            x: (pointer.x - oldPos.x) / oldScale,
+            y: (pointer.y - oldPos.y) / oldScale,
         };
 
-        const direction = e.evt.deltaY > 0 ? -1 : 1;
-        const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+        // ANALOG ZOOM: Use magnitude of deltaY for smooth scaling
+        const ZOOM_SENSITIVITY = 0.002;
+        // Constraint: Prevent explosive zoom if delta is huge (e.g. mousewheel glitch)
+        const safeDelta = Math.max(-100, Math.min(100, e.evt.deltaY));
+        const newScale = oldScale * Math.exp(-safeDelta * ZOOM_SENSITIVITY);
 
+        // Clamp Zoom
         if (newScale < 0.1 || newScale > 10) return;
 
         const newPos = {
@@ -76,9 +116,35 @@ export const useCanvasNavigation = ({
             y: pointer.y - mousePointTo.y * newScale,
         };
 
-        setScale(newScale);
-        setPosition(newPos);
+        // 2. DIRECT MANIPULATION (Visual Update -> 0ms Latency)
+        // Bypass React and talk to Konva directly
+        stage.scale({ x: newScale, y: newScale });
+        stage.position(newPos);
+        stage.batchDraw();
+
+        // Update Refs immediately so next event sees them
+        zoomRef.current = newScale;
+        posRef.current = newPos;
+
+        // 3. DEBOUNCED SYNC (State Update -> 100ms Latency)
+        // Only trigger React Re-render when user STOPS zooming
+        clearTimeout(syncTimeout.current);
+        syncTimeout.current = setTimeout(() => {
+            setScale(newScale);
+            setPosition(newPos);
+        }, 100);
     };
 
-    return { scale, position, handleWheel };
+    // SYNC LOGIC: Capture final position after drag to prevent "Snap Back"
+    const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+        if (e.target === stageRef.current) {
+            const finalPos = { x: e.target.x(), y: e.target.y() };
+            // Update ref
+            posRef.current = finalPos;
+            // Sync state immediately (drag is discrete, safe to sync)
+            setPosition(finalPos);
+        }
+    };
+
+    return { scale, position, handleWheel, handleDragEnd };
 };

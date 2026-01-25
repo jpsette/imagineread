@@ -12,11 +12,6 @@ interface EditorState {
     setPanels: (panels: Panel[] | ((prev: Panel[]) => Panel[])) => void;
     removePanel: (id: string) => void;
 
-    // --- NEW: CLEAN IMAGE STATE ---
-    cleanImageUrl: string | null;
-    isOriginalVisible: boolean;
-    setCleanImage: (url: string | null) => void;
-    toggleVisibility: () => void;
 
     // State Tracking
     isDirty: boolean; // Needs Save?
@@ -74,20 +69,6 @@ export const useEditorStore = create<EditorState>()(
                 isSaved: false
             })),
 
-            // --- NEW IMPLEMENTATION ---
-            cleanImageUrl: null,
-            isOriginalVisible: false, // Default to showing the processed (clean) image if available
-
-            setCleanImage: (url) => set({
-                cleanImageUrl: url,
-                isOriginalVisible: false, // Auto-switch to clean view when new image arrives
-                isDirty: true, // Cleaning = Change
-                isSaved: false
-            }),
-
-            toggleVisibility: () => set((state) => ({
-                isOriginalVisible: !state.isOriginalVisible
-            })),
         }),
         {
             limit: 50, // Limit history

@@ -1,114 +1,103 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Balloon, DetectedBalloon, Panel } from '../types';
 import { api } from '../services/api';
 import { yoloToBalloons } from '../utils/balloonConverter';
-import { useAppStore } from '../store/useAppStore';
 import { useEditorStore } from '../features/editor/store';
 import { toast } from 'sonner';
 import { useEditorUIStore } from '../features/editor/uiStore';
+import { useHistorySync } from '../features/editor/hooks/controllers/useHistorySync';
 
 export const useEditorLogic = (
     fileId: string,
     initialBalloons: Balloon[] | null | undefined,
     imageUrl: string,
     cleanUrl?: string | null, // Added optional cleanUrl
-    initialPanels?: Panel[] | null // Removed default [] to fix infinite loop
+    initialPanels?: Panel[] | null
 ) => {
-    // --- GLOBAL STORE INTEGRATION (Fixing State Schizophrenia) ---
+    // --- GLOBAL STORE INTEGRATION ---
     const {
         balloons,
         setBalloons,
         panels,
-        setPanels,
-        cleanImageUrl: storeCleanUrl,
-        setCleanImage
+        setPanels
     } = useEditorStore();
+
+    // --- UI STORE INTEGRATION ---
+    const {
+        cleanImageUrl: storeCleanUrl,
+        setCleanImage,
+        // New Unified State
+        selectedId: selectedBubbleId,
+        setSelectedId: setSelectedBubbleId,
+        zoom,
+        setZoom
+    } = useEditorUIStore();
 
     const queryClient = useQueryClient();
 
-    // Use AppStore for History
-    const { clearHistory, pushToHistory } = useAppStore();
+    // --- CONTROLLERS ---
+    const { clearAllHistory, pushToHistory } = useHistorySync();
 
-    // STRICT RESET: When fileId changes, we MUST clean the house.
-    // Since we are now using a stable shell, the context persists.
+    // --- INTERNAL STATE (Reverted from Controllers for Stability) ---
+    // const [selectedBubbleId, setSelectedBubbleId] = useState<string | null>(null); // MOVED TO STORE
+    // const [zoom, setZoom] = useState(1); // MOVED TO STORE
+    const [imgNaturalSize, setImgNaturalSize] = useState({ w: 0, h: 0 });
+
+    // STRICT RESET: When fileId changes, cleanup.
     useEffect(() => {
-        // 1. Clear History (Don't want to Undo back into the previous page)
-        clearHistory();
-        // CRITICAL: Prevent Ghost History from previous file (Zundo)
-        useEditorStore.temporal.getState().clear();
+        // 1. Clear History
+        clearAllHistory();
 
         // 2. Clear Selection
         setSelectedBubbleId(null);
 
-        // 3. Reset Zoom (Optional - keeps UX consistent)
+        // 3. Reset Zoom
         setZoom(1);
 
         // 4. Hydrate Logic (Balloons)
         console.log("🎣 [Logic] Switch File -> Hydrating:", fileId);
         if (initialBalloons && Array.isArray(initialBalloons) && initialBalloons.length > 0) {
-            console.log("📥 [Logic] Hydrating Store with balloons:", initialBalloons.length);
             useEditorStore.getState().setBalloons(initialBalloons);
         } else {
-            console.log("🧹 [Logic] No initialBalloons found. Resetting Store to empty.");
             useEditorStore.getState().setBalloons([]);
         }
 
         // 5. Hydrate Logic (Panels)
         if (initialPanels && Array.isArray(initialPanels) && initialPanels.length > 0) {
-            console.log("📥 [Logic] Hydrating Store with panels:", initialPanels.length);
             useEditorStore.getState().setPanels(initialPanels);
         } else {
-            console.log("🧹 [Logic] No initialPanels found. Resetting Store to empty.");
             useEditorStore.getState().setPanels([]);
         }
 
         // 5.1 CLEAR PREVIEWS (UI Store)
-        // Fixes issue where gallery shows previous page's panels
         useEditorUIStore.getState().setPreviewImages([]);
 
         // 6. Hydrate Clean Image (or clear it)
         if (cleanUrl) {
-            console.log("💧 [Logic] Hydrating Clean Image from props:", cleanUrl);
             setCleanImage(cleanUrl);
         } else {
-            setCleanImage(null); // IMPORTANT: Clear if page has no clean url
+            setCleanImage(null);
         }
 
         // 7. RESET DIRTY/SAVED FLAG (Based on Content)
         setTimeout(() => {
             const store = useEditorStore.getState();
             store.setIsDirty(false);
-
-            // HEURISTIC: If we have content, assume it's a "Saved" status.
-            // If empty, it's a "New" status (Blue Button).
             const hasContent =
                 (initialBalloons && initialBalloons.length > 0) ||
                 (initialPanels && initialPanels.length > 0) ||
                 !!cleanUrl;
-
             store.setIsSaved(!!hasContent);
-
-            console.log(`✨ [Logic] Hydration Complete. Has Content: ${hasContent} -> Saved: ${!!hasContent}`);
         }, 0);
 
-    }, [fileId, initialBalloons, initialPanels, cleanUrl, setCleanImage, clearHistory]);
+    }, [fileId, initialBalloons, initialPanels, cleanUrl, setCleanImage, clearAllHistory]);
 
     // Refs for accessing latest state in async/callbacks without re-bind
-
-    // Refs for accessing latest state in async/callbacks without re-bind
-    // Note: With Store, we can also use useEditorStore.getState().balloons
     const balloonsRef = useRef<Balloon[]>(balloons);
     useEffect(() => {
         balloonsRef.current = balloons;
     }, [balloons]);
-
-    const [selectedBubbleId, setSelectedBubbleId] = useState<string | null>(null);
-    const [zoom, setZoom] = useState(1);
-    const [imgNaturalSize, setImgNaturalSize] = useState({ w: 0, h: 0 });
-
-    // Store Actions (Legacy History)
-    // Removed duplicate pushToHistory declaration
 
     // Async States
     const [analyzingYOLO, setAnalyzingYOLO] = useState(false);
@@ -119,21 +108,14 @@ export const useEditorLogic = (
     // Clean Image State mapped to Store
     const cleanImageUrl = storeCleanUrl;
     const [showClean, setShowClean] = useState(false);
-
     const [yoloDetections, setYoloDetections] = useState<DetectedBalloon[]>([]);
 
     // --- MANUAL SAVE ---
     const saveChanges = async () => {
-        console.log("🧠 [Logic] Iniciando saveChanges...");
         const toastId = toast.loading('Salvando alterações...');
         try {
-            // Unified Save: Balloons (from Store) + Clean Status
-            const currentBalloons = useEditorStore.getState().balloons; // Ensure fresh state
+            const currentBalloons = useEditorStore.getState().balloons;
             const currentPanels = useEditorStore.getState().panels;
-            console.log("📊 [Logic] Estado Atual do Store (Balões):", currentBalloons);
-            console.log("📊 [Logic] Estado Atual do Store (Paineis):", currentPanels);
-            console.log("📊 [Logic] Estado Atual do Store (CleanUrl):", cleanImageUrl);
-            console.log("📊 [Logic] Estado Atual do Variable (ShowClean):", showClean);
 
             await api.updateFileData(fileId, {
                 balloons: currentBalloons,
@@ -141,15 +123,13 @@ export const useEditorLogic = (
                 cleanUrl: cleanImageUrl || undefined,
                 isCleaned: showClean
             });
-            console.log("✅ [Logic] api.updateFileData concluído com sucesso.");
 
-            // --- CACHE INVALIDATION ---
-            // Force React Query to refetch this file next time (e.g. after navigation)
+            // Invalidate Cache
             queryClient.invalidateQueries({ queryKey: ['file', fileId] });
 
             const store = useEditorStore.getState();
-            store.setIsDirty(false); // MARK AS CLEAN
-            store.setIsSaved(true);  // MARK AS SAVED (Green)
+            store.setIsDirty(false);
+            store.setIsSaved(true);
 
             toast.success('Salvo com sucesso!', { id: toastId });
         } catch (e: any) {
@@ -159,22 +139,17 @@ export const useEditorLogic = (
     };
 
     // --- HELPER: WRAPPED SETTER ---
-    // Safely pushes to history before update
-    // Now updates the Store instead of local state
     const setBalloonsWithHistory = (label: string, newState: Balloon[] | ((prev: Balloon[]) => Balloon[])) => {
         const current = balloonsRef.current;
         pushToHistory(label, current);
-
-        // Update Store
         setBalloons(newState);
     };
 
     // --- ACTIONS ---
 
-    const updateBubble = React.useCallback((id: string, updates: Partial<Balloon>, skipHistory = false) => {
+    const updateBubble = useCallback((id: string, updates: Partial<Balloon>, skipHistory = false) => {
         const keys = Object.keys(updates).join(', ');
         const isSlider = 'borderWidth' in updates || 'customFontSize' in updates || 'roughness' in updates || 'borderRadius' in updates;
-
         const current = balloonsRef.current;
 
         if (!skipHistory) {
@@ -188,15 +163,12 @@ export const useEditorLogic = (
         setBalloons(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
     }, [pushToHistory]);
 
-    const commitHistory = React.useCallback((label: string) => {
+    const commitHistory = useCallback((label: string) => {
         pushToHistory(label, balloonsRef.current);
     }, [pushToHistory]);
 
-    const getSelectedBubble = React.useCallback(() => balloons.find(b => b.id === selectedBubbleId), [balloons, selectedBubbleId]);
-
-
     // Explicit History wrapper for explicit actions
-    const handleAddBalloon = React.useCallback(() => {
+    const handleAddBalloon = useCallback(() => {
         setBalloonsWithHistory("Add Balloon", prev => {
             const newId = `manual-${Date.now()}`;
             const newBubble: Balloon = {
@@ -210,7 +182,6 @@ export const useEditorLogic = (
                 borderWidth: 1,
                 tailWidth: 20,
                 roughness: 1,
-                // Default tail bottom-right
                 tailTip: { x: 550, y: 650 },
                 tailControl: { x: 525, y: 625 }
             };
@@ -219,20 +190,18 @@ export const useEditorLogic = (
         });
     }, []);
 
-    const handleDeleteBalloon = React.useCallback(() => {
+    const handleDeleteBalloon = useCallback(() => {
         if (!selectedBubbleId) return;
-        // Direct delete without confirmation
         setBalloonsWithHistory("Delete Balloon", prev => prev.filter(b => b.id !== selectedBubbleId));
         setSelectedBubbleId(null);
     }, [selectedBubbleId]);
 
-    const addTailToSelected = React.useCallback(() => {
+    const addTailToSelected = useCallback(() => {
         if (!selectedBubbleId) return;
         setBalloonsWithHistory("Toggle Tail", prev => {
             const bubble = prev.find(b => b.id === selectedBubbleId);
             if (!bubble) return prev;
 
-            // Toggle logic
             if (bubble.tailTip) {
                 return prev.map(b => b.id === selectedBubbleId ? { ...b, tailTip: null } : b);
             }
@@ -248,6 +217,13 @@ export const useEditorLogic = (
             } : b);
         });
     }, [selectedBubbleId]);
+
+    // Zoom Action (Re-implemented inline)
+    const handleZoom = useCallback((delta: number) => {
+        setZoom(prev => Math.max(0.1, Math.min(5, prev + delta)));
+    }, []);
+
+    const getSelectedBubble = useCallback(() => balloons.find(b => b.id === selectedBubbleId), [balloons, selectedBubbleId]);
 
     // --- API HANDLERS ---
 
@@ -272,8 +248,7 @@ export const useEditorLogic = (
             return;
         }
         setBalloonsWithHistory("Import YOLO", () => {
-            const convertedBalloons = yoloToBalloons(yoloDetections, imgNaturalSize);
-            return convertedBalloons;
+            return yoloToBalloons(yoloDetections, imgNaturalSize);
         });
         alert(`Balões importados!`);
     };
@@ -325,32 +300,26 @@ export const useEditorLogic = (
         }
     };
 
-    // Keyboard listener REMOVED (Handled in EditorView)
-
     return {
         // State
         balloons,
-        setBalloons, // Exposed for direct history restore
-        panels, // Added panels
-        setPanels, // Added setPanels
+        setBalloons,
+        panels,
+        setPanels,
         selectedBubbleId,
+        setSelectedBubbleId,
         zoom,
+        setZoom,
+        imgNaturalSize,
+        setImgNaturalSize,
         analyzingYOLO,
         readingOCR,
         isCleaning,
         cleanImageUrl,
         maskPreviewUrl,
         showClean,
-        yoloDetections,
-        imgNaturalSize,
-
-        // Setters
-        setZoom,
-        setSelectedBubbleId,
-        setMaskPreviewUrl,
-        setCleanImageUrl: setCleanImage,
         setShowClean,
-        setImgNaturalSize,
+        yoloDetections,
 
         // Actions
         updateBubble,
@@ -359,12 +328,13 @@ export const useEditorLogic = (
         handleAddBalloon,
         handleDeleteBalloon,
         addTailToSelected,
+        handleZoom,
 
         // API Actions
         handleYOLOAnalyze,
         handleImportBalloons,
         handleOCR,
         handleCleanPage,
-        saveChanges // <--- EXPOSED MANUAL SAVE
+        saveChanges
     };
 };

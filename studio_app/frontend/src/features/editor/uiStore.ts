@@ -25,12 +25,23 @@ interface EditorUIState {
     setShowText: (show: boolean) => void;
     setShowPanelsLayer: (show: boolean) => void;
     setShowPreview: (show: boolean) => void;
-    setShowPreview: (show: boolean) => void;
     setPreviewImages: (images: string[]) => void;
 
     // Focus Mode
     isFocusMode: boolean;
     setIsFocusMode: (v: boolean) => void;
+
+    // --- NEW: CLEAN IMAGE STATE (Migrated from Data Store) ---
+    cleanImageUrl: string | null;
+    isOriginalVisible: boolean;
+    setCleanImage: (url: string | null) => void;
+    toggleVisibility: () => void;
+
+    // Unified State
+    selectedId: string | null;
+    zoom: number;
+    setSelectedId: (id: string | null) => void;
+    setZoom: (zoom: number) => void;
 }
 
 export const useEditorUIStore = create<EditorUIState>((set) => ({
@@ -44,6 +55,10 @@ export const useEditorUIStore = create<EditorUIState>((set) => ({
     showPreview: false,
     previewImages: [],
 
+    // Clean Image State
+    cleanImageUrl: null,
+    isOriginalVisible: false,
+
     // Setters
     setActiveTool: (tool) => set({ activeTool: tool }),
     setActiveMode: (mode) => set({ activeMode: mode }),
@@ -52,10 +67,24 @@ export const useEditorUIStore = create<EditorUIState>((set) => ({
     setShowText: (show) => set({ showText: show }),
     setShowPanelsLayer: (show) => set({ showPanelsLayer: show }),
     setShowPreview: (show) => set({ showPreview: show }),
-    setShowPreview: (show) => set({ showPreview: show }),
     setPreviewImages: (images) => set({ previewImages: images }),
 
     // Focus Mode
     isFocusMode: false,
     setIsFocusMode: (v) => set({ isFocusMode: v }),
+
+    // Clean Image Actions
+    setCleanImage: (url) => set({
+        cleanImageUrl: url,
+        isOriginalVisible: false // Auto-switch to clean view
+    }),
+    toggleVisibility: () => set((state) => ({
+        isOriginalVisible: !state.isOriginalVisible
+    })),
+
+    // --- NEW: UNIFIED STATE (Migrated from Logic Hook) ---
+    selectedId: null,
+    zoom: 1,
+    setSelectedId: (id) => set({ selectedId: id }),
+    setZoom: (zoom) => set({ zoom: zoom }),
 }));

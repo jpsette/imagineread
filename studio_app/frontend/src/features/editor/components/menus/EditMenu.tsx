@@ -2,17 +2,21 @@ import React from 'react';
 import { Type, Bold, Italic, Underline, Baseline } from 'lucide-react';
 import { Balloon } from '../../../../types';
 
-interface EditMenuProps {
-    selectedId: string | null;
-    balloons: Balloon[];
-    onUpdate: (id: string, attrs: Partial<Balloon>) => void;
-    isEditing?: boolean;
-}
+import { useEditorStore } from '../../store';
+import { useEditorUIStore } from '../../uiStore';
 
-export const EditMenu: React.FC<EditMenuProps> = ({ selectedId, balloons, onUpdate, isEditing }) => {
+export const EditMenu: React.FC = () => {
+    // Stores
+    const { balloons, updateBalloon } = useEditorStore();
+    const { selectedId } = useEditorUIStore();
+
     // Find balloon safely
     const selectedBalloon = balloons.find(b => b.id === selectedId);
     const isDisabled = !selectedBalloon;
+    const isEditing = false; // TODO: If we need this state, we should add it to UI Store or Local logic
+
+    // Wrapper to match signature
+    const onUpdate = (id: string, attrs: Partial<Balloon>) => updateBalloon(id, attrs);
 
     // State for custom loaded fonts
     const [customFonts, setCustomFonts] = React.useState<string[]>([]);

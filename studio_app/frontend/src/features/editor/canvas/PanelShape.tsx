@@ -66,6 +66,8 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
                 onClick={onSelect} // Trigger selection
                 onTap={onSelect}
                 draggable={false}
+                perfectDrawEnabled={false}
+                shadowForStrokeEnabled={false}
                 hitStrokeWidth={20} // Easier to click
                 onMouseEnter={e => {
                     const container = e.target.getStage()?.container();
@@ -90,6 +92,8 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
                 strokeWidth={2}
                 shadowColor="rgba(0,0,0,0.5)"
                 shadowBlur={10}
+                perfectDrawEnabled={false}
+                shadowForStrokeEnabled={false}
                 align="center"
                 verticalAlign="middle"
                 offsetX={20} // Approximate center offset for a generic number
