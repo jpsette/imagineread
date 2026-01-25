@@ -7,14 +7,24 @@ import { useFileItem } from '../../dashboard/hooks/useFileItem';
 import { useFolderContents } from '../../dashboard/hooks/useFolderContents';
 import { FileEntry } from '../../../types';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTabPersistence } from '../../tabs/hooks/useTabPersistence';
 
 export const WorkstationScreen: React.FC = () => {
     const { comicId } = useParams<{ comicId: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
+    // === TAB PERSISTENCE ===
+    // Registers this comic as a tab and handles hibernation/restoration
+    // We use a fallback title until data loads
+    useTabPersistence(comicId || 'unknown', 'Comic Workstation', 'comic');
+
     // === DATA FETCHING (Independent) ===
     const { data: comic, isLoading: isLoadingComic } = useFileItem(comicId || null);
+
+    // Sync Title dynamically
+    useTabPersistence(comicId || 'unknown', comic?.name || 'Comic Workstation', 'comic');
+
     const { data: contents, isLoading: isLoadingPages } = useFolderContents(comicId || null);
 
     const { uploadPages, deletePages } = useFileActions();

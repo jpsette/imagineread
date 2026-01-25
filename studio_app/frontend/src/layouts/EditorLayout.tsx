@@ -1,4 +1,5 @@
 import React from 'react';
+import { TabPanel } from '../features/tabs/components/TabPanel';
 
 interface EditorLayoutProps {
     children: React.ReactNode;
@@ -11,6 +12,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
 }) => {
     return (
         <div className={`absolute inset-0 z-50 bg-[#0c0c0e] flex flex-col ${className}`}>
+            <TabPanel />
             {children}
         </div>
     );

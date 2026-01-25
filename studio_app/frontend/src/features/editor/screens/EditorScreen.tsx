@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { EditorLayout } from '../../../layouts/EditorLayout';
 import EditorView from '../EditorView';
 import { useFileItem } from '../../dashboard/hooks/useFileItem';
+import { useTabPersistence } from '../../tabs/hooks/useTabPersistence';
 
 export const EditorScreen: React.FC = () => {
     const { fileId } = useParams<{ fileId: string }>();
@@ -10,6 +11,12 @@ export const EditorScreen: React.FC = () => {
 
     // GAPLESS NAVIGATION: Keep showing previous file while loading the new one
     const { data: file, isLoading, isFetching } = useFileItem(fileId || null, { keepPreviousData: true });
+
+    // === TAB PERSISTENCE ===
+    // Registers this page as a tab.
+    // Title usually comes from file.name, but hooks run before early returns.
+    // We update the title reactively inside the hook when 'file' becomes available.
+    useTabPersistence(fileId || 'unknown', file?.name || 'Loading...', 'page');
 
     // Navigation Handler
     const handleBack = () => {
