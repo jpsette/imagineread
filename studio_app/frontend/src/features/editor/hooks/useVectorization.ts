@@ -91,8 +91,16 @@ export const useVectorization = ({
     const isBusy = isProcessingPanels || isProcessingBalloons || isProcessingOcr || isProcessingCleaning;
 
     // --- DERIVED STATE ---
-    const hasBalloons = currentBalloons.some(b => b.type.startsWith('balloon'));
+    // --- DERIVED STATE ---
+    // Fix: Robust check for balloon types (speech, thought, etc.) vs strict 'balloon' prefix
+    const hasBalloons = currentBalloons.some(b =>
+        ['speech', 'thought', 'whisper', 'shout', 'balloon-square', 'balloon-circle', 'balloon-thought', 'balloon-shout'].includes(b.type) ||
+        b.type.startsWith('balloon')
+    );
+
     const hasMasks = currentBalloons.some(b => b.type === 'mask');
+
+    // Fix: Ensure we catch both explicit 'text' type AND legacy text usage if applicable
     const hasText = currentBalloons.some(b =>
         b.type === 'text' ||
         (b.text && b.text.trim().length > 0 && b.text !== 'Texto' && b.text !== 'Novo Texto')

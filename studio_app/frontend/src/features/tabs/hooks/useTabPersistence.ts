@@ -46,13 +46,20 @@ export const useTabPersistence = (fileId: string, title: string, type: 'comic' |
         return () => {
             // 3. DEHYDRATION (Save State on Unmount)
             const currentState = useEditorStore.getState();
-            console.log(`[Tabs] Hibernating ${fileId} to memory...`);
-            hibernateTab(fileId, {
-                balloons: currentState.balloons,
-                panels: currentState.panels,
-                isDirty: currentState.isDirty,
-                isSaved: currentState.isSaved
-            });
+
+            if (currentState.isDirty) {
+                console.log(`[Tabs] Hibernating ${fileId} to memory (Dirty)...`);
+                hibernateTab(fileId, {
+                    balloons: currentState.balloons,
+                    panels: currentState.panels,
+                    isDirty: currentState.isDirty,
+                    isSaved: currentState.isSaved
+                });
+            } else {
+                console.log(`[Tabs] Clearing hibernation for ${fileId} (Clean)...`);
+                // Clear state so next load is fresh from API
+                hibernateTab(fileId, undefined);
+            }
         };
     }, [fileId]); // Re-run if ID changes (different file)
 

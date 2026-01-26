@@ -35,8 +35,9 @@ export const useShortcutManager = (editor?: any) => {
 
             // UNDO / REDO
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+                console.log("[DEBUG] ShortcutManager: Undo/Redo Detected", { shift: e.shiftKey, meta: e.metaKey });
                 e.preventDefault();
-                const { undo, redo } = useEditorStore.temporal.getState();
+                const { undo, redo } = useEditorStore.getState();
                 e.shiftKey ? redo() : undo();
             }
 

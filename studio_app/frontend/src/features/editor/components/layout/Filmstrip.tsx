@@ -1,8 +1,10 @@
 import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid } from 'react-window';
-import type { GridImperativeAPI, CellComponentProps } from 'react-window';
+import type { CellComponentProps } from 'react-window';
 import { useComicContext } from '../../hooks/useComicContext';
+import { useEditorStore } from '../../store';
+import { useEditorUIStore } from '../../uiStore';
 
 interface FilmstripProps {
     fileId: string;
@@ -13,7 +15,7 @@ export const Filmstrip: React.FC<FilmstripProps> = ({ fileId }) => {
     const { pages, currentPageId, isLoading } = useComicContext(fileId);
 
     // Note: This build of react-window uses 'gridRef' prop and GridImperativeAPI
-    const gridRef = useRef<GridImperativeAPI>(null);
+    const gridRef = useRef<any>(null);
 
     // Dimensions
     const ITEM_SIZE = 72; // Width (2/3 aspect of h-24 + gap)
@@ -61,6 +63,20 @@ export const Filmstrip: React.FC<FilmstripProps> = ({ fileId }) => {
         if (Math.abs(walk) > 15) isDragRef.current = true;
         container.scrollLeft = scrollLeft.current - walk;
     };
+
+    // Auto-Scroll to Active Page
+    React.useEffect(() => {
+        if (!gridRef.current || !pages || pages.length === 0) return;
+
+        const index = pages.findIndex(p => p.id === currentPageId);
+        if (index !== -1 && gridRef.current && typeof gridRef.current.scrollToItem === 'function') {
+            // Scroll to item (Column index)
+            gridRef.current.scrollToItem({
+                columnIndex: index,
+                align: 'center' // Center the active item
+            });
+        }
+    }, [currentPageId, pages]);
 
     // Data passed to Cells
     const itemData = {
@@ -148,9 +164,21 @@ const FilmstripCell = (props: FilmstripCellProps) => {
     const isActive = page.id === currentPageId;
     const ITEM_GAP = 12;
 
+    // --- NAVIGATION GUARD ---
+    const isDirty = useEditorStore(s => s.isDirty);
+    const { setShowUnsavedModal, setPendingNavigationPath } = useEditorUIStore();
+
     const handlePageClick = (pageId: string) => {
         if (pageId === currentPageId) return;
-        navigate(`/editor/${pageId}`);
+
+        const targetPath = `/editor/${pageId}`;
+
+        if (isDirty) {
+            setPendingNavigationPath(targetPath);
+            setShowUnsavedModal(true);
+        } else {
+            navigate(targetPath);
+        }
     };
 
     // Correct Z-Index Stacking
@@ -172,9 +200,11 @@ const FilmstripCell = (props: FilmstripCellProps) => {
                 }
                 handlePageClick(page.id);
             }}
-            className={`relative flex-shrink-0 h-24 rounded-lg overflow-hidden transition-all duration-300 ${isActive
-                // Remove scale-105 to prevent overlap
-                ? 'ring-2 ring-neon-blue shadow-[0_0_15px_rgba(59,130,246,0.4)]'
+            // Fix: User requested explicit Blue Border. ring-offset-0 ensures visibility.
+            // Also removed overflow-hidden from button to allow Ring to shine, 
+            // applied rounded-lg to image instead.
+            className={`relative flex-shrink-0 h-24 rounded-lg transition-all duration-300 ${isActive
+                ? 'ring-2 ring-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.6)] scale-100'
                 : 'opacity-60 hover:opacity-100'
                 } select-none draggable-false`}
             onDragStart={(e) => e.preventDefault()}
@@ -182,10 +212,12 @@ const FilmstripCell = (props: FilmstripCellProps) => {
             <img
                 src={page.coverUrl || page.url}
                 alt={`Page ${columnIndex + 1}`}
-                className="w-full h-full object-cover pointer-events-none"
+                className="w-full h-full object-cover rounded-lg pointer-events-none"
                 loading="lazy"
             />
-            <div className="absolute bottom-0 right-0 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded-tl-md font-mono backdrop-blur-sm pointer-events-none">
+
+            {/* Page Number - Centered and Larger (User Request 3) */}
+            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-black/70 text-white text-xs font-bold px-2 py-0.5 rounded-full backdrop-blur-sm pointer-events-none shadow-sm min-w-[24px] text-center border border-white/10">
                 {columnIndex + 1}
             </div>
         </button>

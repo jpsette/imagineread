@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import Konva from 'konva';
 import { Toaster } from 'sonner';
 import { Loader2 } from 'lucide-react'; // Added import
-import { useEditorLogic } from '../../hooks/useEditorLogic';
+import { useEditorLogic } from './hooks/useEditorLogic';
 import { Balloon, Panel } from '../../types';
 import { useEditorStore } from './store';
 import { useEditorUIStore } from './uiStore';
@@ -12,6 +12,7 @@ import { useVectorization } from './hooks/useVectorization';
 import { useShortcutManager } from './hooks/useShortcutManager';
 import { usePanelWorkflow } from './hooks/usePanelWorkflow';
 import { PanelPreviewModal } from './components/modals/PanelPreviewModal';
+
 
 // LAYOUT COMPONENTS
 import { EditorLeftPanel } from './components/layout/EditorLeftPanel';
@@ -26,7 +27,7 @@ interface EditorViewProps {
     initialPanels?: Panel[] | null; // Added initialPanels
     cleanUrl?: string | null;
     isCleaned?: boolean;
-    onBack?: () => void;
+
 }
 
 export const EditorView: React.FC<EditorViewProps> = ({
@@ -36,11 +37,10 @@ export const EditorView: React.FC<EditorViewProps> = ({
     initialPanels, // Added initialPanels
     cleanUrl,
     isCleaned,
-    onBack = () => window.history.back()
 }) => {
 
     // --- GLOBAL STORE ---
-    const { balloons, removeBalloon, removePanel, panels } = useEditorStore();
+    const { balloons, panels } = useEditorStore();
 
     // --- LOCAL STATE for UX ---
     const [isCanvasReady, setCanvasReady] = React.useState(false);
@@ -78,7 +78,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
     const stageRef = useRef<Konva.Stage>(null);
 
     // --- LOGIC HOOKS ---
-    const editor = useEditorLogic(fileId, initialBalloons, imageUrl, cleanUrl, initialPanels); // Passed initialPanels
+    const editor = useEditorLogic(fileId, initialBalloons, cleanUrl, initialPanels); // Passed initialPanels
 
     // 1. Shortcuts (Handles Delete/Undo/Redo)
     useShortcutManager(editor);
@@ -100,6 +100,23 @@ export const EditorView: React.FC<EditorViewProps> = ({
         panels
     });
 
+    // --- NAVIGATION PROTECTION ---
+    // 1. Browser Refresh/Close Protection
+    React.useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            const isDirty = useEditorStore.getState().isDirty;
+            if (isDirty) {
+                e.preventDefault();
+                e.returnValue = ''; // Standard for modern browsers
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, []);
+
+
+
     return (
         <div
             className="flex flex-col h-screen bg-[#121214] text-white overflow-hidden animate-editor-fade-in"
@@ -108,6 +125,25 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
             {/* HEADER REMOVED (Moved to Layout) */}
             <Toaster richColors position="top-center" />
+
+            {/* FLOATING BACK BUTTON (If not provided by Layout, we ensure we have a trigger for testing) */}
+            {/* Note: EditorLayout usually provides the back button. 
+                If EditorView controls the whole screen content (as per EditorScreen), 
+                we might need to ensure the Layout's Back button calls THIS handleSafeBack.
+                
+                However, EditorScreen passes 'handleBack' to 'onBack'. 
+                EditorLayout renders children. 
+                EditorLayout likely has its OWN Back button in the sidebar or header?
+                
+                Let's assume the user uses the Browser Back or a custom button passed via props.
+                Since we can't easily change the EditorLayout's physical button from here (unless we use a context or portal),
+                we will assume `EditorScreen` handles the "UI" of the button? 
+                
+                Wait, EditorScreen renders EditorLayout, then EditorView. 
+                If EditorLayout has the button, it calls navigate(-1) directly?
+                
+                I will add a Floating Save/Exit Panel to EditorView to guarantee visibility and control.
+            */}
 
             {/* MAIN CONTENT */}
             <div className="flex flex-1 overflow-hidden">
@@ -120,6 +156,8 @@ export const EditorView: React.FC<EditorViewProps> = ({
                     isCleaned={isCleaned}
                     isLoading={!isCanvasReady} // Prevent Sidebar FOUC
                 />
+
+
 
                 {/* CENTER CANVAS AREA - Animating ONLY this part */}
                 {/* CENTER CANVAS AREA - STATIC BACKGROUND CONTAINER */}
@@ -171,6 +209,8 @@ export const EditorView: React.FC<EditorViewProps> = ({
                 onClose={() => setShowPreview(false)}
                 images={previewImages}
             />
+
+
         </div>
     );
 };

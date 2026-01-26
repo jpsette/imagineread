@@ -1,6 +1,6 @@
 
 import Konva from 'konva';
-import Konva from 'konva';
+
 import { toast } from 'sonner';
 import { useEditorUIStore } from '../uiStore';
 import { generatePanelPreviews } from '../utils/panelUtils';

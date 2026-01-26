@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { api } from '../../../services/api';
 import { Panel } from '../../../types';
-import { useEditorStore } from '../store';
+import { commandManager } from '../commands/CommandManager';
+import { SetPanelsCommand } from '../commands/panelCommands';
 
 interface UsePanelDetectionProps {
     imageUrl: string;
@@ -10,7 +11,7 @@ interface UsePanelDetectionProps {
 
 export const usePanelDetection = ({ imageUrl, imgNaturalSize }: UsePanelDetectionProps) => {
     const [isProcessingPanels, setIsProcessing] = useState(false);
-    const { setPanels } = useEditorStore();
+    // setPanels removed, using CommandManager
 
     const detectPanels = async () => {
         if (!imageUrl) return;
@@ -89,7 +90,7 @@ export const usePanelDetection = ({ imageUrl, imgNaturalSize }: UsePanelDetectio
             }).filter((item): item is Panel => item !== null);
 
             if (newPanels.length > 0) {
-                setPanels(newPanels);
+                commandManager.execute(new SetPanelsCommand(newPanels, "Auto-Detect Panels"));
             } else {
                 alert("API retornou vazia.");
             }

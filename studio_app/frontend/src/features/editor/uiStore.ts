@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { EditorMode } from './components/layout/EditorHeader';
-import { EditorTool } from '../../types';
+import { EditorTool, EditorMode } from '../../types';
 
 interface EditorUIState {
     // Modes & Tools
@@ -31,13 +30,19 @@ interface EditorUIState {
     isFocusMode: boolean;
     setIsFocusMode: (v: boolean) => void;
 
-    // --- NEW: CLEAN IMAGE STATE (Migrated from Data Store) ---
+    // --- CLEAN IMAGE STATE ---
     cleanImageUrl: string | null;
     isOriginalVisible: boolean;
     setCleanImage: (url: string | null) => void;
     toggleVisibility: () => void;
 
-    // Unified State
+    // --- UNSAVED CHANGES MODAL STATE ---
+    showUnsavedModal: boolean;
+    pendingNavigationPath: string | null; // URL to navigate to after handling changes
+    setShowUnsavedModal: (show: boolean) => void;
+    setPendingNavigationPath: (path: string | null) => void;
+
+    // --- UNIFIED STATE ---
     selectedId: string | null;
     zoom: number;
     setSelectedId: (id: string | null) => void;
@@ -58,6 +63,10 @@ export const useEditorUIStore = create<EditorUIState>((set) => ({
     // Clean Image State
     cleanImageUrl: null,
     isOriginalVisible: false,
+
+    // Unsaved Changes Modal
+    showUnsavedModal: false,
+    pendingNavigationPath: null,
 
     // Setters
     setActiveTool: (tool) => set({ activeTool: tool }),
@@ -81,6 +90,10 @@ export const useEditorUIStore = create<EditorUIState>((set) => ({
     toggleVisibility: () => set((state) => ({
         isOriginalVisible: !state.isOriginalVisible
     })),
+
+    // Modal Setters
+    setShowUnsavedModal: (show) => set({ showUnsavedModal: show }),
+    setPendingNavigationPath: (path) => set({ pendingNavigationPath: path }),
 
     // --- NEW: UNIFIED STATE (Migrated from Logic Hook) ---
     selectedId: null,

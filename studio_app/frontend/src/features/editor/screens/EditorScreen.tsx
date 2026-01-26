@@ -13,15 +13,7 @@ export const EditorScreen: React.FC = () => {
     const { data: file, isLoading, isFetching } = useFileItem(fileId || null, { keepPreviousData: true });
 
     // === TAB PERSISTENCE ===
-    // Registers this page as a tab.
-    // Title usually comes from file.name, but hooks run before early returns.
-    // We update the title reactively inside the hook when 'file' becomes available.
     useTabPersistence(fileId || 'unknown', file?.name || 'Loading...', 'page');
-
-    // Navigation Handler
-    const handleBack = () => {
-        navigate(-1);
-    };
 
     // Show initial loading only if we have NO file yet
     if (isLoading && !file) {
@@ -51,7 +43,6 @@ export const EditorScreen: React.FC = () => {
                     <EditorView
                         // key={file.id} <-- REMOVED: Stable Shell Architecture
                         imageUrl={file.url}
-                        onBack={handleBack}
                         fileId={file.id}
                         initialBalloons={file.balloons || undefined}
                         initialPanels={file.panels || undefined}

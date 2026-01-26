@@ -3,10 +3,13 @@ import Konva from 'konva';
 import { EditorCanvas } from '../../canvas/EditorCanvas';
 import { useEditorStore } from '../../store';
 import { useEditorUIStore } from '../../uiStore';
+import { commandManager } from '../../commands/CommandManager';
+import { UpdatePanelCommand } from '../../commands/panelCommands';
+import { UpdateBalloonCommand } from '../../commands/balloonCommands';
 
 interface EditorCanvasContainerProps {
     imageUrl: string;
-    fileId?: string; // Added
+    fileId?: string;
     onCanvasReady: (ready: boolean) => void;
     onImageDimensionsLoaded: (w: number, h: number) => void;
 }
@@ -18,14 +21,11 @@ const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerP
     onImageDimensionsLoaded
 }, ref) => {
     // Stores
-    const { balloons, addBalloon, updateBalloon, removeBalloon, panels, setPanels } = useEditorStore();
+    const { balloons, addBalloon, panels } = useEditorStore();
 
-    // Optimizing Selectors to avoid re-render on 'zoom' or 'selectedId' changes which this component doesn't paint directly
-    const activeTool = useEditorUIStore(s => s.activeTool);
-    const setActiveTool = useEditorUIStore(s => s.setActiveTool);
+    // Optimizing Selectors
     const showMasks = useEditorUIStore(s => s.showMasks);
     const showBalloons = useEditorUIStore(s => s.showBalloons);
-    const showText = useEditorUIStore(s => s.showText);
     const showPanelsLayer = useEditorUIStore(s => s.showPanelsLayer);
 
     const handleImageLoad = React.useCallback((w: number, h: number) => {
@@ -34,15 +34,13 @@ const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerP
         }
     }, [onImageDimensionsLoaded]);
 
-    // FIXED: Always pass the original image as base. 
-    // The EditorCanvas handles the Clean Image overlay internally via Store.
     const displaySrc = imageUrl;
 
-    // Filter Balloons based on visibility settings
+    // Filter Balloons
     const visibleBalloons = balloons.filter(b => {
         if (b.type === 'mask') return showMasks;
         if (b.type === 'balloon') return showBalloons;
-        return true; // text usually inside balloon, but if we had robust layer logic...
+        return true;
     });
 
     return (
@@ -56,11 +54,11 @@ const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerP
                 showPanels={showPanelsLayer}
                 onUpdate={(id, attrs) => {
                     if (panels.find(p => p.id === id)) {
-                        const newPanels = panels.map(p => p.id === id ? { ...p, ...attrs } : p);
-                        // @ts-ignore
-                        setPanels(newPanels);
+                        // Use Command Pattern for Panels
+                        commandManager.execute(new UpdatePanelCommand(id, attrs as any));
                     } else {
-                        updateBalloon(id, attrs);
+                        // Use Command Pattern for Balloons
+                        commandManager.execute(new UpdateBalloonCommand(id, attrs));
                     }
                 }}
                 onImageLoad={handleImageLoad}

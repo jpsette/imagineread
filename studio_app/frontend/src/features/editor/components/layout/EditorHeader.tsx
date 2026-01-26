@@ -9,13 +9,10 @@ import { useEditorUIStore } from '../../uiStore';
 import { useEditorStore } from '../../store';
 import { editorModes } from '../../tools/definitions/editorModes';
 import { EditorMode } from '../../../../types';
-
-// EditorHeaderProps removed as it was unused (empty props or optional ignored) -> We use internal hooks now.
+import { UnsavedChangesModal } from '../modals/UnsavedChangesModal';
 
 export const EditorHeader = () => {
     // --- SMART HEADER LOGIC ---
-    // 1. Get Context
-    // We are inside EditorLayout -> EditorScreen, so useParams works.
     const { fileId } = useParams<{ fileId: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -25,6 +22,12 @@ export const EditorHeader = () => {
     const tabs = editorModes;
 
     const [isSaving, setIsSaving] = useState(false);
+
+    // UNSAVED CHANGES MODAL STATE (GLOBAL)
+    const {
+        showUnsavedModal, setShowUnsavedModal,
+        pendingNavigationPath, setPendingNavigationPath
+    } = useEditorUIStore();
 
     // Compute Status
     const saveStatus = isSaving ? 'saving' : (isSaved && !isDirty ? 'saved' : 'idle');
@@ -55,24 +58,65 @@ export const EditorHeader = () => {
             setIsSaved(true);
 
             toast.success('Salvo com sucesso!', { id: toastId });
+            return true; // Success signal
         } catch (e: any) {
             console.error("Save error", e);
             toast.error(`Erro ao salvar: ${e.message}`, { id: toastId });
+            return false;
         } finally {
             setIsSaving(false);
         }
     };
 
-    // Navigation Handlers
-    const handleBack = () => navigate(-1);
-    const handleClose = () => navigate('/');
+    // Navigation Helper
+    const performNavigation = () => {
+        if (!pendingNavigationPath) return;
+
+        if (pendingNavigationPath === 'BACK') {
+            navigate(-1);
+        } else {
+            navigate(pendingNavigationPath);
+        }
+    };
+
+    // Navigation Interceptors (Local Triggers)
+    const requestNavigation = (path: string) => {
+        if (isDirty) {
+            setPendingNavigationPath(path);
+            setShowUnsavedModal(true);
+        } else {
+            if (path === 'BACK') {
+                navigate(-1);
+            } else {
+                navigate(path);
+            }
+        }
+    };
+
+    // Modal Handlers
+    const handleDiscard = () => {
+        setIsDirty(false); // Force clean state so we can leave
+        setShowUnsavedModal(false);
+        performNavigation();
+        setPendingNavigationPath(null);
+    };
+
+    const handleSaveAndExit = async () => {
+        const success = await handleSmartSave();
+        if (success) {
+            setShowUnsavedModal(false);
+            performNavigation();
+            setPendingNavigationPath(null);
+        }
+    };
+
+    const handleBack = () => requestNavigation('BACK');
+    const handleClose = () => requestNavigation('/');
 
     return (
         <header className="w-full z-50 flex items-center justify-center bg-[#0c0c0e] border-b border-white/5 py-1">
-            {/* ISLAND CONTAINER (Now Relative & Full-ish Width) */}
+            {/* ISLAND CONTAINER */}
             <div className="flex items-center gap-1 p-1">
-                {/* Removing backdrop/island styling since it's now a bar */}
-
                 {/* LEFT: Back Button */}
                 <button
                     onClick={handleBack}
@@ -110,14 +154,14 @@ export const EditorHeader = () => {
                 {/* UNDO / REDO */}
                 <div className="flex items-center gap-0.5">
                     <button
-                        onClick={() => useEditorStore.temporal.getState().undo()}
+                        onClick={() => useEditorStore.getState().undo()}
                         className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
                         title="Desfazer"
                     >
                         <Undo size={14} />
                     </button>
                     <button
-                        onClick={() => useEditorStore.temporal.getState().redo()}
+                        onClick={() => useEditorStore.getState().redo()}
                         className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
                         title="Refazer"
                     >
@@ -162,6 +206,18 @@ export const EditorHeader = () => {
                     </button>
                 </div>
             </div>
+
+            {/* UNSAVED CHANGES MODAL */}
+            <UnsavedChangesModal
+                isOpen={showUnsavedModal}
+                isSaving={isSaving}
+                onCancel={() => {
+                    setShowUnsavedModal(false);
+                    setPendingNavigationPath(null);
+                }}
+                onDiscard={handleDiscard}
+                onSaveAndExit={handleSaveAndExit}
+            />
         </header>
     );
 };
