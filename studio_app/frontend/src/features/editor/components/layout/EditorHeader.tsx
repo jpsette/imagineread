@@ -1,56 +1,83 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Save, ArrowLeft, X, Undo, Redo, Check, Loader2 } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { api } from '../../../../services/api';
+
 import { useEditorUIStore } from '../../uiStore';
 import { useEditorStore } from '../../store';
 import { editorModes } from '../../tools/definitions/editorModes';
 import { EditorMode } from '../../../../types';
 
-interface EditorHeaderProps {
-    onBack: () => void;
-    onSave: () => Promise<void>;
-    onClose: () => void;
-}
+// EditorHeaderProps removed as it was unused (empty props or optional ignored) -> We use internal hooks now.
 
-export const EditorHeader: React.FC<EditorHeaderProps> = ({
-    onBack,
-    onSave,
-    onClose
-}) => {
+export const EditorHeader = () => {
+    // --- SMART HEADER LOGIC ---
+    // 1. Get Context
+    // We are inside EditorLayout -> EditorScreen, so useParams works.
+    const { fileId } = useParams<{ fileId: string }>();
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+
     const { activeMode, setActiveMode } = useEditorUIStore();
+    const { isDirty, isSaved, setIsDirty, setIsSaved } = useEditorStore();
     const tabs = editorModes;
 
-    // --- SMART SAVE STATE ---
-    // Now powered by Central Store (Truth)
-    const { isDirty, isSaved } = useEditorStore();
     const [isSaving, setIsSaving] = useState(false);
 
-    // Compute Status based on Store & Local Async State
-    // If saving -> 'saving'
-    // If isSaved (Explicit Success) -> 'saved' (Green)
-    // Else (Dirty OR Fresh Load) -> 'idle' (Blue/Active)
+    // Compute Status
     const saveStatus = isSaving ? 'saving' : (isSaved && !isDirty ? 'saved' : 'idle');
 
+    // 2. Internal Save Handler
     const handleSmartSave = async () => {
-        if (isSaving || (isSaved && !isDirty)) return; // Don't save if already saved/saving
+        if (isSaving || (isSaved && !isDirty) || !fileId) return;
 
         setIsSaving(true);
-        // Retrieve promise from prop
-        await onSave();
-        setIsSaving(false);
-        // Store will update isSaved -> true, causing re-render to 'saved'
+        const toastId = toast.loading('Salvando alterações...');
+        try {
+            const currentBalloons = useEditorStore.getState().balloons;
+            const currentPanels = useEditorStore.getState().panels;
+            const cleanImageUrl = useEditorUIStore.getState().cleanImageUrl;
+
+            // API Call
+            await api.updateFileData(fileId, {
+                balloons: currentBalloons,
+                panels: currentPanels,
+                cleanUrl: cleanImageUrl || undefined,
+            });
+
+            // Invalidate Cache
+            queryClient.invalidateQueries({ queryKey: ['file', fileId] });
+
+            // Update Store
+            setIsDirty(false);
+            setIsSaved(true);
+
+            toast.success('Salvo com sucesso!', { id: toastId });
+        } catch (e: any) {
+            console.error("Save error", e);
+            toast.error(`Erro ao salvar: ${e.message}`, { id: toastId });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
+    // Navigation Handlers
+    const handleBack = () => navigate(-1);
+    const handleClose = () => navigate('/');
+
     return (
-        <header className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center pointer-events-none">
+        <header className="w-full z-50 flex items-center justify-center bg-[#0c0c0e] border-b border-white/5 py-1">
+            {/* ISLAND CONTAINER (Now Relative & Full-ish Width) */}
+            <div className="flex items-center gap-1 p-1">
+                {/* Removing backdrop/island styling since it's now a bar */}
 
-            {/* ISLAND CONTAINER */}
-            <div className="flex items-center gap-1 p-1.5 rounded-full border border-glass-border bg-black/60 backdrop-blur-md shadow-glow-sm pointer-events-auto transition-all duration-300">
-
-                {/* LEFT: Back Button (Mini Pill) */}
+                {/* LEFT: Back Button */}
                 <button
-                    onClick={onBack}
+                    onClick={handleBack}
                     className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-all active:scale-95 mr-1"
-                    title="Voltar para a Galeria"
+                    title="Voltar"
                 >
                     <ArrowLeft size={16} />
                 </button>
@@ -58,7 +85,7 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
                 {/* DIVIDER */}
                 <div className="w-px h-4 bg-white/10 mx-1" />
 
-                {/* CENTER: Navigation Tabs (The Core Tabs) */}
+                {/* CENTER: Navigation Tabs */}
                 <nav className="flex items-center gap-1">
                     {tabs.map((tab) => {
                         const isActive = activeMode === tab.key;
@@ -66,7 +93,7 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveMode(tab.key as EditorMode)}
-                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full transition-all active:scale-95 ${isActive
+                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all active:scale-95 ${isActive
                                     ? 'bg-zinc-800 text-neon-blue shadow-glow-sm ring-1 ring-white/5'
                                     : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
                                     }`}
@@ -80,19 +107,19 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
                 {/* DIVIDER */}
                 <div className="w-px h-4 bg-white/10 mx-1" />
 
-                {/* UNDO / REDO (Integrated into Island) */}
+                {/* UNDO / REDO */}
                 <div className="flex items-center gap-0.5">
                     <button
                         onClick={() => useEditorStore.temporal.getState().undo()}
-                        className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-500 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all active:scale-95"
-                        title="Desfazer (Ctrl+Z)"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
+                        title="Desfazer"
                     >
                         <Undo size={14} />
                     </button>
                     <button
                         onClick={() => useEditorStore.temporal.getState().redo()}
-                        className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-500 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all active:scale-95"
-                        title="Refazer (Ctrl+Shift+Z)"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
+                        title="Refazer"
                     >
                         <Redo size={14} />
                     </button>
@@ -101,12 +128,12 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
                 {/* DIVIDER */}
                 <div className="w-px h-4 bg-white/10 mx-1" />
 
-                {/* ACTIONS GROUP (Integrated) */}
+                {/* ACTIONS */}
                 <div className="flex items-center gap-2 pl-1">
                     <button
                         onClick={handleSmartSave}
                         disabled={saveStatus === 'saving' || saveStatus === 'saved'}
-                        className={`group flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 active:scale-95 ${saveStatus === 'saved'
+                        className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all duration-300 active:scale-95 ${saveStatus === 'saved'
                             ? 'bg-green-500/10 border border-green-500/50 text-green-500'
                             : saveStatus === 'saving'
                                 ? 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 cursor-wait'
@@ -127,7 +154,7 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
                     </button>
 
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-500 hover:text-white hover:bg-red-500/20 hover:border-red-500/30 transition-all active:scale-95"
                         title="Fechar Editor"
                     >
@@ -135,7 +162,6 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
                     </button>
                 </div>
             </div>
-
         </header>
     );
 };

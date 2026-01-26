@@ -6,12 +6,14 @@ import { useEditorUIStore } from '../../uiStore';
 
 interface EditorCanvasContainerProps {
     imageUrl: string;
+    fileId?: string; // Added
     onCanvasReady: (ready: boolean) => void;
     onImageDimensionsLoaded: (w: number, h: number) => void;
 }
 
 const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerProps>(({
     imageUrl,
+    fileId,
     onCanvasReady,
     onImageDimensionsLoaded
 }, ref) => {
@@ -48,6 +50,7 @@ const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerP
             <EditorCanvas
                 ref={ref}
                 imageUrl={displaySrc}
+                fileId={fileId}
                 balloons={visibleBalloons}
                 panels={panels}
                 showPanels={showPanelsLayer}

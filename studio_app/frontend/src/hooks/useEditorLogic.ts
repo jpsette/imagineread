@@ -44,8 +44,13 @@ export const useEditorLogic = (
     // const [zoom, setZoom] = useState(1); // MOVED TO STORE
     const [imgNaturalSize, setImgNaturalSize] = useState({ w: 0, h: 0 });
 
-    // STRICT RESET: When fileId changes, cleanup.
+    // STRICT RESET: When fileId changes, cleanup. 
+    // This MUST ONLY happen when navigating to a NEW file.
     useEffect(() => {
+        if (!fileId) return;
+
+        console.log("♻️ [Logic] New File Detected -> Resetting State:", fileId);
+
         // 1. Clear History
         clearAllHistory();
 
@@ -55,28 +60,41 @@ export const useEditorLogic = (
         // 3. Reset Zoom
         setZoom(1);
 
+        // 3.1 CLEAR PREVIEWS (UI Store)
+        useEditorUIStore.getState().setPreviewImages([]);
+
+    }, [fileId, clearAllHistory, setSelectedBubbleId, setZoom]); // removed data dependencies
+
+    // HYDRATION: When data arrives/updates, sync to store.
+    // This runs on Load AND after Save (Refetch).
+    // Does NOT reset View State.
+    useEffect(() => {
         // 4. Hydrate Logic (Balloons)
-        console.log("🎣 [Logic] Switch File -> Hydrating:", fileId);
-        if (initialBalloons && Array.isArray(initialBalloons) && initialBalloons.length > 0) {
+        if (initialBalloons && Array.isArray(initialBalloons)) {
+            // Only update if different? 
+            // Ideally we just set it. The Store handles diff? No.
+            // But we want to reflect DB state.
             useEditorStore.getState().setBalloons(initialBalloons);
-        } else {
+        } else if (fileId && !initialBalloons) {
+            // Only clear if initialBalloons is strictly undefined/null AND we have a file (loading error?)
+            // Or if explicit empty array passed.
+            // If it's the same file reload, we might want to keep local edits?
+            // No, "Hydrate" implies Source of Truth from Parent.
             useEditorStore.getState().setBalloons([]);
         }
 
         // 5. Hydrate Logic (Panels)
-        if (initialPanels && Array.isArray(initialPanels) && initialPanels.length > 0) {
+        if (initialPanels && Array.isArray(initialPanels)) {
             useEditorStore.getState().setPanels(initialPanels);
-        } else {
+        } else if (fileId && !initialPanels) {
             useEditorStore.getState().setPanels([]);
         }
-
-        // 5.1 CLEAR PREVIEWS (UI Store)
-        useEditorUIStore.getState().setPreviewImages([]);
 
         // 6. Hydrate Clean Image (or clear it)
         if (cleanUrl) {
             setCleanImage(cleanUrl);
         } else {
+            // Only clear clean image if we are fairly sure (optional prop)
             setCleanImage(null);
         }
 
@@ -91,7 +109,7 @@ export const useEditorLogic = (
             store.setIsSaved(!!hasContent);
         }, 0);
 
-    }, [fileId, initialBalloons, initialPanels, cleanUrl, setCleanImage, clearAllHistory]);
+    }, [initialBalloons, initialPanels, cleanUrl, setCleanImage, fileId]); // Data Dependencies Only
 
     // Refs for accessing latest state in async/callbacks without re-bind
     const balloonsRef = useRef<Balloon[]>(balloons);
@@ -219,8 +237,11 @@ export const useEditorLogic = (
     }, [selectedBubbleId]);
 
     // Zoom Action (Re-implemented inline)
+    // Zoom Action (Re-implemented inline)
     const handleZoom = useCallback((delta: number) => {
-        setZoom(prev => Math.max(0.1, Math.min(5, prev + delta)));
+        const currentZoom = useEditorUIStore.getState().zoom;
+        const newZoom = Math.max(0.1, Math.min(5, currentZoom + delta));
+        useEditorUIStore.getState().setZoom(newZoom);
     }, []);
 
     const getSelectedBubble = useCallback(() => balloons.find(b => b.id === selectedBubbleId), [balloons, selectedBubbleId]);

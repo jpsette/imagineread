@@ -16,7 +16,9 @@ from app.routers import (
     ai_routes,
     system_routes,
     job_routes,
-    ai_async_routes
+    job_routes,
+    ai_async_routes,
+    tile_routes
 )
 from app.routers.filesystem import core as fs_core
 from app.routers.filesystem import uploads as fs_uploads
@@ -96,6 +98,7 @@ app.include_router(ai_routes.router)
 app.include_router(system_routes.router)
 app.include_router(job_routes.router)
 app.include_router(ai_async_routes.router)
+app.include_router(tile_routes.router)
 
 @app.get("/health")
 def health_check():

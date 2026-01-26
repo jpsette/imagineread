@@ -10,6 +10,7 @@ interface UseCanvasNavigationProps {
     onImageLoad?: (width: number, height: number) => void;
     // New: Pass active dimensions to prevent microscopic fit on frame 0
     dimensions?: { width: number; height: number };
+    fileId?: string; // Track file identity
 }
 
 export const useCanvasNavigation = ({
@@ -18,16 +19,24 @@ export const useCanvasNavigation = ({
     imgOriginal,
     statusOriginal,
     onImageLoad,
-    dimensions
+    dimensions,
+    fileId
 }: UseCanvasNavigationProps) => {
     const { zoom: scale, setZoom: setScale } = useEditorUIStore(); // Sync with Global Store
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [hasFitted, setHasFitted] = useState(false);
 
-    // Reset fit state when image changes
+    // Track previous file ID to detect actual page changes vs refresh
+    const prevFileId = useRef<string | undefined>(fileId);
+
+    // Reset fit state ONLY when fileId changes (New Page)
     useEffect(() => {
-        setHasFitted(false);
-    }, [imgOriginal]);
+        if (fileId !== prevFileId.current) {
+            setHasFitted(false);
+            prevFileId.current = fileId;
+        }
+        // If fileId is undefined (initial load), hasFitted logic handles it via !hasFitted check below
+    }, [fileId]);
 
     // Auto-Fit Logic
     useEffect(() => {
@@ -62,7 +71,7 @@ export const useCanvasNavigation = ({
                 onImageLoad(imgOriginal.width, imgOriginal.height);
             }
         }
-    }, [imgOriginal, statusOriginal, hasFitted, onImageLoad, containerRef, dimensions]);
+    }, [imgOriginal, statusOriginal, hasFitted, onImageLoad, containerRef, dimensions, scale, setScale]);
 
     // --- STATE REFS (For Direct Manipulation) ---
     // We use refs to track the "Visual Truth" instantly, bypassing React's render cycle latency.

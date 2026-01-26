@@ -11,10 +11,13 @@ import { useEditorUIStore } from '../uiStore';
 // HOOKS
 import { useCanvasNavigation } from './hooks/useCanvasNavigation';
 import { useCanvasTools } from './hooks/useCanvasTools';
+import { TileDebugLayer } from './tiles/components/TileDebugLayer';
+import { TileGrid } from './tiles/components/TileGrid';
 
 
 interface EditorCanvasProps {
     imageUrl: string;
+    fileId?: string; // Added for DB-based Tile Lookup
     balloons?: Balloon[];
     panels?: Panel[];
     showPanels?: boolean;
@@ -55,6 +58,7 @@ const BackgroundImage = ({
 
 export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
     imageUrl,
+    fileId,
     balloons = [],
     panels = [],
     showPanels = true,
@@ -146,7 +150,8 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         imgOriginal,
         statusOriginal,
         onImageLoad,
-        dimensions // New Prop to prevent microscopic auto-fit
+        dimensions, // New Prop to prevent microscopic auto-fit
+        fileId // PASSED FOR SAVE STABILITY
     });
 
     const { handleStageClick } = useCanvasTools({
@@ -169,6 +174,13 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
     // Logic: Should it be visible to the user? (Inverse of "Show Original")
     const isCleanVisible = !isOriginalVisible;
 
+    // Logic: Active Tile ID (Original vs Clean)
+    // If showing clean image: pass filename (Backend Strategy 2)
+    // If showing original: pass fileId (Backend Strategy 1 - DB Lookup)
+    const activeTileId = isCleanVisible && cleanImageUrl
+        ? cleanImageUrl.split('/').pop() || 'unknown'
+        : (fileId || imageUrl.split('/').pop() || 'unknown');
+
     return (
         <div ref={containerRef} className="w-full h-full bg-[#1e1e1e] overflow-hidden relative">
             <Stage
@@ -185,22 +197,40 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                 draggable={activeTool === 'select' && !editingId}
                 onMouseDown={handleStageClick}
             >
-                {/* 1. BACKGROUND LAYER */}
+                {/* 1. BACKGROUND LAYER (Static) */}
+                {/* Isolated in its own canvas to prevent flickering during Tile redraws */}
                 <Layer listening={false}>
-                    {/* Base Image (Always rendered, always visible underneath) */}
-                    <BackgroundImage name="base-image" image={imgOriginal} />
+                    <BackgroundImage
+                        name="base-image"
+                        image={isCleanVisible ? (imgClean || imgOriginal) : imgOriginal} // Fallback to Original if Clean not loaded
+                        visible={true}
+                    />
+                </Layer>
 
-                    {/* Clean Image Overlay (Always rendered if exists, visibility toggled) */}
-                    {hasCleanImage && (
-                        <BackgroundImage
-                            name="clean-image"
-                            image={imgClean}
-                            visible={isCleanVisible}
+                {/* 2. TILES LAYER (Dynamic) */}
+                <Layer listening={false} perfectDrawEnabled={false}>
+                    {/* DEEP ZOOM TILES */}
+                    {imgOriginal && (
+                        <TileGrid
+                            imageId={activeTileId}
+                            imageWidth={imgOriginal.naturalWidth}
+                            imageHeight={imgOriginal.naturalHeight}
+                            stageScale={scale}
+                            stageX={position.x}
+                            stageY={position.y}
+                            stageWidth={dimensions.width}
+                            stageHeight={dimensions.height}
+                        // baseImage removed
                         />
                     )}
                 </Layer>
 
-                {/* 2. PANELS LAYER */}
+                {/* DEBUG OVERLAY (Optional - Keep commented for now) */}
+                {/* {imgOriginal && (
+                        <TileDebugLayer ... />
+                    )} */}
+
+                {/* 3. PANELS LAYER */}
                 {showPanels && (
                     <Layer perfectDrawEnabled={false}>
                         {/* Z-INDEX LOGIC: Sort panels so selected one renders last (on top) */}

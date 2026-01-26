@@ -12,7 +12,6 @@ import { useVectorization } from './hooks/useVectorization';
 import { useShortcutManager } from './hooks/useShortcutManager';
 import { usePanelWorkflow } from './hooks/usePanelWorkflow';
 import { PanelPreviewModal } from './components/modals/PanelPreviewModal';
-import { EditorHeader } from './components/layout/EditorHeader';
 
 // LAYOUT COMPONENTS
 import { EditorLeftPanel } from './components/layout/EditorLeftPanel';
@@ -107,12 +106,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
         >
 
 
-            {/* HEADER */}
-            <EditorHeader
-                onBack={onBack}
-                onSave={editor.saveChanges}
-                onClose={() => window.location.href = '/'}
-            />
+            {/* HEADER REMOVED (Moved to Layout) */}
             <Toaster richColors position="top-center" />
 
             {/* MAIN CONTENT */}
@@ -142,6 +136,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
                             <EditorCanvasContainer
                                 ref={stageRef}
                                 imageUrl={imageUrl}
+                                fileId={fileId}
                                 onCanvasReady={(ready) => {
                                     // Slight delay for smoother transition
                                     setTimeout(() => setCanvasReady(ready), 200);
