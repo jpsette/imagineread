@@ -99,9 +99,12 @@ class ApiClient {
     }
 
     async getFileSystemEntry(id: string): Promise<FileEntry> {
-        const url = `${API_ENDPOINTS.BASE_URL}/filesystem/${id}`;
-        const rawFile = await this.request<any>(url);
-        return normalizeFile(rawFile);
+        // Fallback: Backend doesn't support single entry fetch yet (404 on /filesystem/:id)
+        // We fetch all and find it.
+        const all = await this.getFileSystem();
+        const found = all.find(f => f.id === id);
+        if (!found) throw new Error("Entry not found");
+        return found;
     }
 
     async getFile(fileId: string): Promise<FileEntry> {

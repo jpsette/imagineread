@@ -11,7 +11,7 @@ import { Filmstrip } from '../components/layout/Filmstrip';
 import { EditorCanvasArea } from '../components/EditorCanvasArea';
 
 // HOOKS & STORES
-import { useFileItem } from '../../dashboard/hooks/useFileItem';
+import { useFileItem } from '../../../hooks/useFileItem';
 import { useTabPersistence } from '../../tabs/hooks/useTabPersistence';
 import { useEditorLogic } from '../hooks/useEditorLogic';
 import { useEditorStore } from '../store';
@@ -38,7 +38,7 @@ export const EditorScreen: React.FC = () => {
     const hasData = !!activeFile;
 
     // --- TAB PERSISTENCE ---
-    useTabPersistence(fileId || 'unknown', activeFile?.name || 'Loading...', 'page');
+    useTabPersistence(fileId || null, activeFile?.name || 'Loading...', 'page');
 
     // --- GLOBAL STORES ---
     const { balloons, panels } = useEditorStore();

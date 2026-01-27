@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { EditorLayout } from '../../../layouts/EditorLayout';
 import { ComicWorkstation } from '../../editor/ComicWorkstation';
 import { useFileActions } from '../../../hooks/useFileActions';
-import { useFileItem } from '../../dashboard/hooks/useFileItem';
+import { useFileItem } from '../../../hooks/useFileItem';
 import { useFolderContents } from '../../dashboard/hooks/useFolderContents';
 import { FileEntry } from '../../../types';
 import { useQueryClient } from '@tanstack/react-query';
@@ -14,16 +14,14 @@ export const WorkstationScreen: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    // === TAB PERSISTENCE ===
-    // Registers this comic as a tab and handles hibernation/restoration
-    // We use a fallback title until data loads
-    useTabPersistence(comicId || 'unknown', 'Comic Workstation', 'comic');
-
     // === DATA FETCHING (Independent) ===
     const { data: comic, isLoading: isLoadingComic } = useFileItem(comicId || null);
 
-    // Sync Title dynamically
-    useTabPersistence(comicId || 'unknown', comic?.name || 'Comic Workstation', 'comic');
+    // === TAB PERSISTENCE ===
+    // Registers this comic as a tab and handles hibernation/restoration
+    // Sync Title dynamically once data is loaded
+    const tabTitle = comic?.name || 'Comic Workstation';
+    useTabPersistence(comicId || null, tabTitle, 'comic');
 
     const { data: contents, isLoading: isLoadingPages } = useFolderContents(comicId || null);
 

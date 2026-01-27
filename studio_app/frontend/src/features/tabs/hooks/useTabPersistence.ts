@@ -3,7 +3,7 @@ import { useEditorStore } from '../../editor/store';
 import { useTabStore } from '../stores/useTabStore';
 import { useLocation } from 'react-router-dom';
 
-export const useTabPersistence = (fileId: string, title: string, type: 'comic' | 'page' = 'page') => {
+export const useTabPersistence = (fileId: string | null, title: string, type: 'comic' | 'page' = 'page') => {
     const location = useLocation();
     const { hibernateTab, openTab, getTab } = useTabStore();
 
@@ -12,6 +12,8 @@ export const useTabPersistence = (fileId: string, title: string, type: 'comic' |
 
     // 1. REGISTER TAB ON MOUNT
     useEffect(() => {
+        if (!fileId) return;
+
         // Register or Activate Tab
         openTab({
             id: fileId,
@@ -21,7 +23,7 @@ export const useTabPersistence = (fileId: string, title: string, type: 'comic' |
         });
 
         // 2. HYDRATION (Restore State)
-        const tab = getTab(fileId);
+        const tab = fileId ? getTab(fileId) : undefined;
         if (tab?.hibernatedState) {
             console.log(`[Tabs] Hydrating ${fileId} from memory...`);
             useEditorStore.setState(tab.hibernatedState);
@@ -64,6 +66,8 @@ export const useTabPersistence = (fileId: string, title: string, type: 'comic' |
 
     // Sync Title (if changed externally)
     useEffect(() => {
-        useTabStore.getState().updateTabTitle(fileId, title);
-    }, [title]);
+        if (fileId) {
+            useTabStore.getState().updateTabTitle(fileId, title);
+        }
+    }, [title, fileId]);
 };

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useFileItem } from '../../dashboard/hooks/useFileItem';
+import { useFileItem } from '../../../hooks/useFileItem';
 import { useFolderContents } from '../../dashboard/hooks/useFolderContents';
 import { FileEntry } from '../../../types';
 
