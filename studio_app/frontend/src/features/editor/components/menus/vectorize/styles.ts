@@ -7,8 +7,9 @@ export const BTN_PRIMARY = `${BTN_BASE} bg-blue-600 hover:bg-blue-500 text-white
 export const BTN_DISABLED = `${BTN_BASE} bg-[#333] text-gray-500 border-transparent cursor-not-allowed opacity-50`;
 
 // Success/Done State (Ghost Green) - Standardized for all sections
-export const BTN_SUCCESS = `flex-1 ${H_HEIGHT} bg-emerald-600/20 text-emerald-500 border-emerald-600/30 rounded flex items-center justify-center gap-2 text-sm font-medium cursor-default border`;
-export const BTN_SUCCESS_CLICKABLE = `${BTN_SUCCESS} cursor-pointer hover:bg-emerald-600/30 active:scale-[0.99] transition-all`;
+// Fix: Inherit BTN_BASE to ensure padding (px-4), rounded-md, and transitions match Primary buttons
+export const BTN_SUCCESS = `${BTN_BASE} bg-emerald-600/10 text-emerald-500 border-emerald-600/30 hover:bg-emerald-600/20 active:bg-emerald-600/25 cursor-default !w-auto flex-1`;
+export const BTN_SUCCESS_CLICKABLE = `${BTN_SUCCESS} cursor-pointer hover:bg-emerald-600/30 active:scale-[0.98]`;
 
 // Secondary Actions (Gray)
 export const BTN_SECONDARY = `${BTN_BASE} bg-zinc-700 hover:bg-zinc-600 text-zinc-300 border-zinc-600`;

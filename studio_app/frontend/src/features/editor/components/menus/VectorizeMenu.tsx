@@ -45,12 +45,14 @@ interface VectorizeMenuProps {
     isCleaned?: boolean; // Backend flag indicating if file was previously cleaned
     // Loading State from Parent
     isLoading?: boolean;
+    isFetching?: boolean; // New Prop
 }
 
 export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     workflowStep,
     isProcessing,
     isLoading = false,
+    isFetching = false,
     // Destructure Granular Flags
     isProcessingBalloons,
     isProcessingCleaning,
@@ -119,6 +121,7 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                 isProcessingCleaning={isProcessingCleaning}
                 isProcessing={isProcessing}
                 isLoading={isLoading}
+                isFetching={isFetching} // Pass down new prop
                 onCleanImage={onCleanImage}
             />
 

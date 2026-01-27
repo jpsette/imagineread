@@ -15,9 +15,10 @@ interface EditorLeftPanelProps {
     cleanUrl?: string | null;
     isCleaned?: boolean;
     isLoading?: boolean;
+    isFetching?: boolean;
 }
 
-export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
+export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
     vectorization,
     onOpenPanelGallery,
     cleanUrl,
@@ -89,4 +90,4 @@ export const EditorLeftPanel: React.FC<EditorLeftPanelProps> = ({
             </div>
         </aside>
     );
-};
+});

@@ -11,12 +11,20 @@ export interface ComicContext {
     parentId: string | null;
 }
 
-export const useComicContext = (currentFileId: string): ComicContext => {
-    // 1. Get Current File Metadata to find Parent ID
-    const { data: file, isLoading: isFileLoading } = useFileItem(currentFileId);
+export const useComicContext = (
+    currentFileId: string,
+    knownParentId?: string | null
+): ComicContext => {
+    // 1. Get Current File Metadata (Only if we don't know the parent)
+    const { data: file, isLoading: isFileLoading } = useFileItem(
+        knownParentId ? null : currentFileId
+    );
 
     // 2. Get Parent Folder Contents
-    const parentId = file?.parentId || null;
+    // Use knownParentId if available, otherwise derive from fetched file
+    const parentId = knownParentId ?? (file?.parentId || null);
+
+    // We only load folder if we have a parent ID
     const { data: folderContents, isLoading: isFolderLoading } = useFolderContents(parentId);
 
     // 3. Filter and Sort Pages

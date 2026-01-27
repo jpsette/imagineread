@@ -33,13 +33,12 @@ export const useTabPersistence = (fileId: string, title: string, type: 'comic' |
             // Since `useEditorStore` is a singleton, we MUST clear it if we don't have hydration data,
             // otherwise Tab B will show Tab A's content until API finishes fetching.
             if (!isHydratedRef.current) {
-                console.log(`[Tabs] Fresh load for ${fileId}. Resetting Store.`);
-                useEditorStore.setState({
-                    balloons: [],
-                    panels: [],
-                    isDirty: false,
-                    isSaved: false
-                });
+                // DO NOT RESET STORE HERE.
+                // Resetting here causes a flash of empty content (Balloons=[]) while transitioning.
+                // Handover: 'useEditorStateSync' in EditorScreen will handle setting the new data
+                // when it is actually loaded. Until then, we keep the previous store state
+                // (or 'keepPreviousData' logic in UI) to allow gapless transitions.
+                console.log(`[Tabs] Fresh load for ${fileId}. Waiting for data sync...`);
             }
         }
 

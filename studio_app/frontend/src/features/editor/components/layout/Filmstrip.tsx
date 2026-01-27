@@ -8,11 +8,13 @@ import { useEditorUIStore } from '../../uiStore';
 
 interface FilmstripProps {
     fileId: string;
+    parentId?: string | null;
 }
 
-export const Filmstrip: React.FC<FilmstripProps> = ({ fileId }) => {
+export const Filmstrip = React.memo<FilmstripProps>(({ fileId, parentId }) => {
     const navigate = useNavigate();
-    const { pages, currentPageId, isLoading } = useComicContext(fileId);
+    // We lift the context logic slightly or modify useComicContext to accept known parentId
+    const { pages, currentPageId, isLoading } = useComicContext(fileId, parentId); // Modified Hook Usage
 
     // Note: This build of react-window uses 'gridRef' prop and GridImperativeAPI
     const gridRef = useRef<any>(null);
@@ -86,64 +88,75 @@ export const Filmstrip: React.FC<FilmstripProps> = ({ fileId }) => {
         navigate
     };
 
-    if (isLoading) return (
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-            <div className="px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10 text-xs text-zinc-400 shadow-lg flex items-center gap-2">
-                <div className="w-3 h-3 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
-                <span>Carregando...</span>
-            </div>
-        </div>
-    );
 
-    if (pages.length <= 1) return null;
+    // --- RENDER LOGIC MOVED TO AVOID UNMOUNTING ---
+    // If loading and no pages, show a discreet loader inside the container structure logic
+    // rather than early return if possible, OR if we must return early, ensure we don't break the layout flow?
+    // Actually, user wants it to NOT disappear.
+    // So we should ideally render the CONTAINER even if empty.
 
-    // Dimensions
     const containerWidth = Math.min(window.innerWidth * 0.9, 900);
-    const containerHeight = 100; // Fixed height for filmstrip container
+    const containerHeight = 100; // Fixed height
+
+    const showLoader = isLoading && pages.length === 0;
+    const isEmpty = !isLoading && pages.length <= 1;
+
+    // If completely empty (1 page or less) and not loading, we might want to hide it.
+    // But to prevent "reload flash", we should be careful. 
+    // If we hide it, it disappears. If user goes to next page and it has pages, it reappears.
+    // That IS a layout shift.
+    // If most comics have pages, it's better to keep it mounted.
+
+    if (isEmpty && !showLoader) return null; // Only hide if genuinely empty and done loading.
 
     return (
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center pointer-events-none group">
-            <div className="bg-black/60 backdrop-blur-xl border border-glass-border rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] p-4 pb-6 flex items-center gap-4 transition-all duration-500 translate-y-[85%] hover:translate-y-0 opacity-50 hover:opacity-100 pointer-events-auto">
+            <div className="bg-black/60 backdrop-blur-xl border border-glass-border rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] p-4 pb-6 flex items-center gap-4 transition-all duration-500 translate-y-[85%] hover:translate-y-0 opacity-50 hover:opacity-100 pointer-events-auto min-w-[300px] min-h-[120px] justify-center">
 
                 <div className="absolute -top-12 left-0 right-0 h-12 flex items-end justify-center cursor-pointer group-hover:opacity-0 transition-opacity"></div>
 
-                <div className="px-2">
+                <div className="px-2 self-start pt-2">
                     <span className="text-[10px] uppercase font-bold text-white/30 tracking-widest rotate-180" style={{ writingMode: 'vertical-rl' }}>
                         Páginas
                     </span>
                 </div>
 
-                {/* VIRTUALIZED GRID */}
-                <div
-                    onMouseDown={startDragging}
-                    onMouseLeave={stopDragging}
-                    onMouseUp={stopDragging}
-                    onMouseMove={onDrag}
-                    className={isDragging ? 'cursor-grabbing' : 'cursor-grab'}
-                >
-                    <Grid
-                        gridRef={gridRef}
-                        columnCount={pages.length}
-                        columnWidth={TOTAL_ITEM_SIZE}
-                        rowCount={1}
-                        rowHeight={containerHeight}
-                        className="custom-scrollbar"
-                        style={{
-                            height: containerHeight,
-                            width: containerWidth,
-                            overflowY: 'hidden',
-                            overflowX: 'auto'
-                        }}
-                        cellComponent={FilmstripCell}
-                        // SAFE FIX: Pass data via cellProps instead of itemData
-                        // This bypasses the problematic itemData handling in this react-window version
-                        cellProps={itemData as any}
-                    />
-                </div>
+                {showLoader ? (
+                    <div className="flex items-center gap-2 text-zinc-400">
+                        <div className="w-4 h-4 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
+                        <span className="text-xs">Carregando páginas...</span>
+                    </div>
+                ) : (
+                    /* VIRTUALIZED GRID */
+                    <div
+                        onMouseDown={startDragging}
+                        onMouseLeave={stopDragging}
+                        onMouseUp={stopDragging}
+                        onMouseMove={onDrag}
+                        className={isDragging ? 'cursor-grabbing' : 'cursor-grab'}
+                    >
+                        <Grid
+                            gridRef={gridRef}
+                            columnCount={pages.length}
+                            columnWidth={TOTAL_ITEM_SIZE}
+                            rowCount={1}
+                            rowHeight={containerHeight}
+                            className="custom-scrollbar"
+                            style={{
+                                height: containerHeight,
+                                width: containerWidth,
+                                overflowY: 'hidden',
+                                overflowX: 'auto'
+                            }}
+                            cellComponent={FilmstripCell}
+                            cellProps={itemData as any}
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );
-};
+});
 
 // --- EXTERNALIZED CELL COMPONENT ---
 // Receives data merged into root props via cellProps
@@ -217,7 +230,8 @@ const FilmstripCell = (props: FilmstripCellProps) => {
             />
 
             {/* Page Number - Centered and Larger (User Request 3) */}
-            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-black/70 text-white text-xs font-bold px-2 py-0.5 rounded-full backdrop-blur-sm pointer-events-none shadow-sm min-w-[24px] text-center border border-white/10">
+            <div className={`absolute bottom-1 left-1/2 -translate-x-1/2 text-white text-xs font-bold px-2 py-0.5 rounded-full backdrop-blur-sm pointer-events-none shadow-sm min-w-[24px] text-center border border-white/10 ${isActive ? 'bg-blue-600' : 'bg-black/70'
+                }`}>
                 {columnIndex + 1}
             </div>
         </button>

@@ -3,12 +3,13 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { DashboardScreen } from '../features/dashboard/screens/DashboardScreen';
 
 // Lazy Imports (Named Exports trick)
+// Lazy Imports (Named Exports trick)
 const WorkstationScreen = React.lazy(() =>
     import('../features/editor/screens/WorkstationScreen').then(module => ({ default: module.WorkstationScreen }))
 );
-const EditorScreen = React.lazy(() =>
-    import('../features/editor/screens/EditorScreen').then(module => ({ default: module.EditorScreen }))
-);
+
+// Static Import for Stability (Prevents unmount on ID change)
+import { EditorScreen } from '../features/editor/screens/EditorScreen';
 
 const EditorLoader = () => (
     <div className="fixed inset-0 bg-black flex items-center justify-center text-white">
@@ -30,11 +31,7 @@ export const AppRoutes: React.FC = () => {
                 </Suspense>
             } />
 
-            <Route path="/editor/:fileId" element={
-                <Suspense fallback={<EditorLoader />}>
-                    <EditorScreen />
-                </Suspense>
-            } />
+            <Route path="/editor/:fileId" element={<EditorScreen />} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -8,6 +8,7 @@ interface Step4CleaningProps {
     isProcessingCleaning: boolean;
     isProcessing: boolean;
     isLoading: boolean;
+    isFetching?: boolean;
     onCleanImage: (onSuccess?: (url: string) => void) => void;
 }
 
@@ -16,6 +17,7 @@ export const Step4Cleaning: React.FC<Step4CleaningProps> = ({
     isProcessingCleaning,
     isProcessing,
     isLoading,
+    isFetching,
     onCleanImage
 }) => {
     const { isOriginalVisible, toggleVisibility, setCleanImage } = useEditorUIStore();
@@ -29,46 +31,56 @@ export const Step4Cleaning: React.FC<Step4CleaningProps> = ({
         });
     };
 
+    // Logic: Only show the "Success Row" if we are truly clean and NOT loading/fetching/processing
+    // This prevents the UI from trying to show "Clean" while data is legally stale or refreshing
+    const showSuccessState = hasCleanImage && !isLoading && !isFetching && !isProcessingCleaning && !isProcessing;
+
     return (
         <div className="mb-4">
             <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">4. Limpeza</label>
 
-            <div className="flex gap-2">
-                {/* 1. Main Clean Button (Grow to fill space) */}
-                <button
-                    onClick={handleCleanClick}
-                    disabled={isProcessingCleaning || isProcessing || isLoading}
-                    className={`${(isProcessingCleaning || isProcessing || isLoading) ? BTN_DISABLED : (hasCleanImage ? BTN_SUCCESS_CLICKABLE : BTN_PRIMARY)} whitespace-nowrap`}
-                >
-                    {isProcessingCleaning ? (
-                        <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full min-w-[16px]"></span> <span>Limpando...</span></>
-                    ) : hasCleanImage ? (
-                        <>
-                            <Check className="w-5 h-5 min-w-[20px]" /> <span>Imagem Limpa</span>
-                        </>
-                    ) : (
-                        <>
-                            <Eraser className="w-5 h-5 min-w-[20px]" /> <span>Limpar Imagem</span>
-                        </>
-                    )}
-                </button>
+            {showSuccessState ? (
+                /* SUCCESS STATE (Row with Eye) - Matches Step2 Structure */
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleCleanClick}
+                        className={BTN_SUCCESS_CLICKABLE}
+                        title="Imagem Limpa (Clique para refazer)"
+                    >
+                        <Check className="w-5 h-5 min-w-[20px]" /> <span>Imagem Limpa</span>
+                    </button>
 
-                {/* EYE BUTTON (Only appears when clean) */}
-                {hasCleanImage && (
                     <button
                         onClick={toggleVisibility}
-                        className={BTN_EYE(!isOriginalVisible)} // Active (Blue/Gray) logic
+                        className={BTN_EYE(!isOriginalVisible)}
                         title={isOriginalVisible ? "Ver Imagem Limpa" : "Ver Original"}
                     >
-                        {/* Logic: If seeing Original (isOriginalVisible=true), Eye is OFF (crossed). If seeing Clean, Eye is ON. */}
                         {isOriginalVisible ? (
                             <EyeOff className="w-4 h-4" />
                         ) : (
                             <Eye className="w-4 h-4" />
                         )}
                     </button>
-                )}
-            </div>
+                </div>
+            ) : (
+                /* ACTION / LOADING STATE (Single Button) */
+                <button
+                    onClick={handleCleanClick}
+                    disabled={isProcessingCleaning || isProcessing || isLoading || isFetching}
+                    className={(isProcessingCleaning || isProcessing || isLoading || isFetching) ? BTN_DISABLED : BTN_PRIMARY}
+                >
+                    {isLoading || isFetching ? (
+                        /* LOADING */
+                        <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full min-w-[16px]"></span> <span>Carregando...</span></>
+                    ) : isProcessingCleaning ? (
+                        /* PROCESSING */
+                        <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full min-w-[16px]"></span> <span>Limpando...</span></>
+                    ) : (
+                        /* DEFAULT ACTION */
+                        <><Eraser className="w-5 h-5 min-w-[20px]" /> <span>Limpar Imagem</span></>
+                    )}
+                </button>
+            )}
         </div>
     );
 };

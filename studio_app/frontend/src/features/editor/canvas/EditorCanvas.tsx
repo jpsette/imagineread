@@ -11,7 +11,7 @@ import { useEditorUIStore } from '../uiStore';
 // HOOKS
 import { useCanvasNavigation } from './hooks/useCanvasNavigation';
 import { useCanvasTools } from './hooks/useCanvasTools';
-import { TileDebugLayer } from './tiles/components/TileDebugLayer';
+
 import { TileGrid } from './tiles/components/TileGrid';
 
 
@@ -169,8 +169,7 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         onEditRequest(balloon);
     };
 
-    // Logic: Does the clean image data exist?
-    const hasCleanImage = !!(cleanImageUrl && imgClean);
+
     // Logic: Should it be visible to the user? (Inverse of "Show Original")
     const isCleanVisible = !isOriginalVisible;
 
@@ -183,6 +182,20 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
 
     return (
         <div ref={containerRef} className="w-full h-full bg-[#1e1e1e] overflow-hidden relative">
+            {/* LOCAL LOADER: Prevents "Black Screen" Flick during navigation */}
+            {/* Fix: Z-Index reduced to 10 to sit BEHIND floating panels (z-40) but ABOVE canvas */}
+            {statusOriginal === 'loading' && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#1e1e1e]">
+                    <div className="flex flex-col items-center gap-2 animate-pulse">
+                        {/* Using a simple CSS spinner or Lucide icon if available. 
+                             Since we can't easily add new imports without checking, 
+                             we'll use a Tailwind Spinner for maximum reliability. */}
+                        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-zinc-500 text-xs font-medium">Carregando imagem...</span>
+                    </div>
+                </div>
+            )}
+
             <Stage
                 ref={localRef}
                 // Crash Fix: Ensure dimensions are never 0 to avoid "drawImage(0,0)" error
@@ -203,14 +216,14 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                     <BackgroundImage
                         name="base-image"
                         image={isCleanVisible ? (imgClean || imgOriginal) : imgOriginal} // Fallback to Original if Clean not loaded
-                        visible={true}
+                        visible={statusOriginal === 'loaded'} // Only show if fully loaded to prevent partial render
                     />
                 </Layer>
 
                 {/* 2. TILES LAYER (Dynamic) */}
                 <Layer listening={false} perfectDrawEnabled={false}>
                     {/* DEEP ZOOM TILES */}
-                    {imgOriginal && (
+                    {imgOriginal && statusOriginal === 'loaded' && (
                         <TileGrid
                             imageId={activeTileId}
                             imageWidth={imgOriginal.naturalWidth}
@@ -224,11 +237,6 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                         />
                     )}
                 </Layer>
-
-                {/* DEBUG OVERLAY (Optional - Keep commented for now) */}
-                {/* {imgOriginal && (
-                        <TileDebugLayer ... />
-                    )} */}
 
                 {/* 3. PANELS LAYER */}
                 {showPanels && (

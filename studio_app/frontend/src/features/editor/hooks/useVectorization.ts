@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useEditorStore } from '../store';
 
 // Imported Specialized Hooks
@@ -18,6 +18,7 @@ interface UseVectorizationProps {
     cleanUrl?: string | null;
     currentBalloons?: any[];
     currentPanels?: any[];
+    isFetching?: boolean; // New Prop
 }
 
 export const useVectorization = ({
@@ -27,19 +28,20 @@ export const useVectorization = ({
     editor,
     cleanUrl,
     currentBalloons = [],
-    currentPanels = []
+    currentPanels = [],
+    isFetching = false
 }: UseVectorizationProps) => {
 
     // --- GLOBAL STORE ---
     const { balloons, setBalloons } = useEditorStore();
 
-    // NOTE: Hydration Logic has been moved to useEditorLogic.ts
-    // This hook is now strictly for Tool/AI workflows.
-
     // --- LOCAL STATE ---
     const [workflowStep, setWorkflowStep] = useState<WorkflowStep>('idle');
 
-    // RESET STATE ON FILE CHANGE (Stable Shell Fix)
+    // RESET STATE ON FILE CHANGE (Hard Reset)
+    // Fix: Unconditionally reset to 'idle' when ID changes.
+    // The previous 'smart reset' failed because 'hasBalloons' was stale (from previous page).
+    // The correct state will be restored by the Auto-Advance effect once new data arrives.
     useEffect(() => {
         setWorkflowStep('idle');
     }, [fileId]);
@@ -109,7 +111,8 @@ export const useVectorization = ({
 
     // --- EFFECT: WORKFLOW SYNC ---
     useEffect(() => {
-        if (balloons.length > 0 && workflowStep === 'idle') {
+        // Fix: Block auto-advance if we are fetching new data (balloons might be stale!)
+        if (!isFetching && balloons.length > 0 && workflowStep === 'idle') {
             const hasMasks = balloons.some(b => b.type === 'mask');
             const hasBalloons = balloons.some(b => b.type === 'balloon');
 
@@ -119,9 +122,9 @@ export const useVectorization = ({
                 setWorkflowStep('mask');
             }
         }
-    }, [balloons, workflowStep]);
+    }, [balloons, workflowStep, isFetching]);
 
-    return {
+    return useMemo(() => ({
         // State
         workflowStep,
         setWorkflowStep,
@@ -162,5 +165,24 @@ export const useVectorization = ({
         isProcessingBalloons,
         isProcessingOcr,
         isProcessingCleaning
-    };
+    }), [
+        // Dependencies
+        workflowStep,
+        isBusy,
+        localCleanUrl,
+        handleCreateMask,
+        handleConfirmMask, // Assuming stable
+        handleDetectBalloon, // Assuming stable
+        detectPanels, // Assuming stable
+        handleCleanImage,
+        detectText,
+        hasMasks,
+        hasBalloons,
+        hasText,
+        hasPanels,
+        isProcessingPanels,
+        isProcessingBalloons,
+        isProcessingOcr,
+        isProcessingCleaning
+    ]);
 };
