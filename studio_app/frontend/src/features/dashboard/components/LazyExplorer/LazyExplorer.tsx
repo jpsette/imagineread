@@ -36,11 +36,12 @@ export const LazyExplorer: React.FC<LazyExplorerProps> = ({
     onDeleteFolder,
     expandedProjects,
     PROJECT_THEMES,
+    // Rename props removed as they are handled by parent modal now
 }) => {
     const safeProjects = projects || [];
 
     return (
-        <div className="w-full h-full p-4 flex flex-col gap-4 min-w-[250px]">
+        <div className="w-full h-full p-4 flex flex-col gap-4 min-w-[250px] relative">
             <nav className="flex flex-col gap-1">
                 <div className="mt-4 flex flex-col gap-1">
                     <p className="px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Seus Projetos</p>

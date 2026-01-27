@@ -98,6 +98,12 @@ class ApiClient {
         return rawFiles.map(normalizeFile); // ADAPTER APPLIED
     }
 
+    async getFileSystemEntry(id: string): Promise<FileEntry> {
+        const url = `${API_ENDPOINTS.BASE_URL}/filesystem/${id}`;
+        const rawFile = await this.request<any>(url);
+        return normalizeFile(rawFile);
+    }
+
     async getFile(fileId: string): Promise<FileEntry> {
         const rawFile = await this.request<any>(`${API_ENDPOINTS.BASE_URL}/files/${fileId}`);
         return normalizeFile(rawFile); // ADAPTER APPLIED
@@ -200,11 +206,15 @@ class ApiClient {
         });
     }
 
-    async renameFileSystemEntry(itemId: string, name: string, color?: string): Promise<{ id: string, name: string, color?: string }> {
-        return this.request<{ id: string, name: string, color?: string }>(`${API_ENDPOINTS.BASE_URL}/files/${itemId}`, {
+    async updateFileSystemEntry(itemId: string, updates: { name?: string, color?: string, isPinned?: boolean }): Promise<{ id: string, name: string, color?: string, isPinned?: boolean }> {
+        return this.request<{ id: string, name: string, color?: string, isPinned?: boolean }>(`${API_ENDPOINTS.BASE_URL}/files/${itemId}`, {
             method: 'PUT',
-            body: JSON.stringify({ name, color })
+            body: JSON.stringify(updates)
         });
+    }
+
+    async renameFileSystemEntry(itemId: string, name: string, color?: string): Promise<{ id: string, name: string, color?: string }> {
+        return this.updateFileSystemEntry(itemId, { name, color });
     }
 
 

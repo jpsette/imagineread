@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Folder, Trash2, Pin, Pencil, ChevronRight } from 'lucide-react';
+import { Plus, Folder, Trash2, Pin, Pencil } from 'lucide-react';
 import { Button } from '../../../ui/Button';
 import { Card } from '../../../ui/Card';
 import { Input } from '../../../ui/Input';
@@ -19,19 +19,11 @@ interface ProjectListProps {
     setNewColor: (v: string) => void;
     onCreate: () => void;
 
-    // Edit Props
-    editingProject: Project | null;
-    setEditingProject: (p: Project | null) => void;
-    editName: string;
-    setEditName: (v: string) => void;
-    editColor: string;
-    setEditColor: (v: string) => void;
-    onUpdate: () => void;
-
     // Actions
     onSelect: (id: string) => void;
     onPin: (id: string) => void;
     onDelete: (id: string) => void;
+    onEdit: (project: Project) => void;
 
     themes: { bg: string; text: string; lightText: string }[];
 }
@@ -40,8 +32,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
     projects, viewMode,
     isCreating, setIsCreating,
     newName, setNewName, newColor, setNewColor, onCreate,
-    editingProject, setEditingProject, editName, setEditName, editColor, setEditColor, onUpdate,
-    onSelect, onPin, onDelete,
+    onSelect, onPin, onDelete, onEdit,
     themes
 }) => {
 
@@ -103,58 +94,32 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                 {/* For brevity of this refactor step, I will inline logic similar to grid, but adapted for list */}
                 {projects.map(project => (
                     <div key={project.id}>
-                        {editingProject?.id === project.id ? (
-                            <div className="col-span-full bg-surface border border-accent-blue p-4 rounded-xl flex items-center gap-4 animate-in fade-in">
-                                <Input
-                                    value={editName}
-                                    onChange={(e) => setEditName(e.target.value)}
-                                    autoFocus
-                                    className="flex-1"
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') onUpdate();
-                                        if (e.key === 'Escape') setEditingProject(null);
-                                    }}
-                                />
-                                <div className="flex gap-1">
-                                    {themes.map(theme => (
-                                        <button
-                                            key={theme.bg}
-                                            onClick={() => setEditColor(theme.bg)}
-                                            className={`w-5 h-5 rounded-full transition-all duration-200 border border-transparent ${theme.bg} ${editColor === theme.bg ? 'ring-2 ring-offset-2 ring-offset-surface ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100 hover:border-white/20'}`}
-                                        />
-                                    ))}
-                                </div>
-                                <Button onClick={onUpdate}>Salvar</Button>
-                                <Button variant="ghost" onClick={() => setEditingProject(null)}>X</Button>
+                        <div
+                            onClick={() => onSelect(project.id)}
+                            className="grid grid-cols-12 gap-4 items-center p-4 rounded-xl bg-surface hover:bg-surface-hover border border-transparent hover:border-white/5 transition-all cursor-pointer group"
+                        >
+                            <div className="col-span-1 flex justify-center">
+                                <Folder className={`${themes.find(t => t.bg === project.color)?.text || 'text-gray-500'} fill-current`} size={20} />
                             </div>
-                        ) : (
-                            <div
-                                onClick={() => onSelect(project.id)}
-                                className="grid grid-cols-12 gap-4 items-center p-4 rounded-xl bg-surface hover:bg-surface-hover border border-transparent hover:border-white/5 transition-all cursor-pointer group"
-                            >
-                                <div className="col-span-1 flex justify-center">
-                                    <Folder className={`${themes.find(t => t.bg === project.color)?.text || 'text-gray-500'} fill-current`} size={20} />
-                                </div>
-                                <div className="col-span-5 font-medium text-white group-hover:text-accent-blue transition-colors flex items-center gap-2">
-                                    {project.name}
-                                    {project.isPinned && <Pin size={12} className="text-accent-blue fill-current rotate-45" />}
-                                </div>
-                                <div className="col-span-3 text-sm text-zinc-500">
-                                    {project.lastModified ? new Date(project.lastModified).toLocaleDateString() : '-'}
-                                </div>
-                                <div className="col-span-3 flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onPin(project.id); }}>
-                                        <Pin size={14} className={project.isPinned ? "fill-current text-accent-blue" : ""} />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingProject(project); setEditName(project.name); setEditColor(project.color); }}>
-                                        <Pencil size={14} />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="hover:text-red-400" onClick={(e) => { e.stopPropagation(); if (confirm('Excluir?')) onDelete(project.id); }}>
-                                        <Trash2 size={14} />
-                                    </Button>
-                                </div>
+                            <div className="col-span-5 font-medium text-white group-hover:text-accent-blue transition-colors flex items-center gap-2">
+                                {project.name}
+                                {project.isPinned && <Pin size={12} className="text-accent-blue fill-current rotate-45" />}
                             </div>
-                        )}
+                            <div className="col-span-3 text-sm text-zinc-500">
+                                {project.lastModified ? new Date(project.lastModified).toLocaleDateString() : '-'}
+                            </div>
+                            <div className="col-span-3 flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onPin(project.id); }}>
+                                    <Pin size={14} className={project.isPinned ? "fill-current text-accent-blue" : ""} />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onEdit(project); }}>
+                                    <Pencil size={14} />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="hover:text-red-400" onClick={(e) => { e.stopPropagation(); if (confirm('Excluir?')) onDelete(project.id); }}>
+                                    <Trash2 size={14} />
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -194,59 +159,26 @@ export const ProjectList: React.FC<ProjectListProps> = ({
             {/* Project Cards */}
             {projects.map(project => (
                 <div key={project.id} className="h-52 relative">
-                    {editingProject?.id === project.id ? (
-                        <div className="absolute inset-0 z-50 bg-surface border-2 border-accent-blue shadow-2xl rounded-xl p-6 flex flex-col justify-between animate-in zoom-in-95 duration-200">
-                            <div>
-                                <h3 className="text-sm font-bold mb-3 text-accent-blue uppercase tracking-wider">Editar Projeto</h3>
-                                <Input
-                                    autoFocus
-                                    placeholder="Nome do projeto..."
-                                    value={editName}
-                                    onChange={(e) => setEditName(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') onUpdate();
-                                        if (e.key === 'Escape') setEditingProject(null);
-                                    }}
-                                    className="mb-4"
-                                />
-                                <div className="grid grid-cols-8 gap-0.5">
-                                    {themes.map(theme => (
-                                        <button
-                                            key={theme.bg}
-                                            onClick={() => setEditColor(theme.bg)}
-                                            className={`w-5 h-5 rounded-full transition-all duration-200 border border-transparent ${theme.bg} ${editColor === theme.bg ? 'ring-2 ring-offset-2 ring-offset-surface ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100 hover:border-white/20'}`}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button onClick={onUpdate} className="flex-1">Salvar</Button>
-                                <Button variant="secondary" onClick={() => setEditingProject(null)}>Cancel</Button>
-                            </div>
+                    <Card onClick={() => onSelect(project.id)} hoverEffect className="h-52 p-6 flex flex-col justify-between relative group bg-surface hover:bg-surface-hover">
+                        <div className={`absolute top-0 right-0 p-3 transition-opacity duration-200 flex gap-1 z-20 ${project.isPinned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onPin(project.id); }} className={`${project.isPinned ? 'text-accent-blue hover:text-accent-hover' : 'text-text-muted hover:text-white'}`}>
+                                <Pin size={16} className={project.isPinned ? "fill-current" : ""} />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-text-muted hover:text-white" onClick={(e) => { e.stopPropagation(); onEdit(project); }}>
+                                <Pencil size={16} />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-text-muted hover:text-red-400 hover:bg-red-500/10" onClick={(e) => { e.stopPropagation(); if (confirm('Tem certeza que deseja excluir este projeto?')) onDelete(project.id); }}>
+                                <Trash2 size={16} />
+                            </Button>
                         </div>
-                    ) : (
-                        <Card onClick={() => onSelect(project.id)} hoverEffect className="h-52 p-6 flex flex-col justify-between relative group bg-surface hover:bg-surface-hover">
-                            <div className={`absolute top-0 right-0 p-3 transition-all duration-300 flex gap-1 ${project.isPinned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0'}`}>
-                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onPin(project.id); }} className={`${project.isPinned ? 'text-accent-blue hover:text-accent-hover' : 'text-text-muted'}`}>
-                                    <Pin size={16} className={project.isPinned ? "fill-current" : ""} />
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingProject(project); setEditName(project.name); setEditColor(project.color); }}>
-                                    <Pencil size={16} />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="hover:bg-red-500/10 hover:text-red-400" onClick={(e) => { e.stopPropagation(); if (confirm('Tem certeza que deseja excluir este projeto?')) onDelete(project.id); }}>
-                                    <Trash2 size={16} />
-                                </Button>
-                                <ChevronRight className="text-text-muted/30 ml-1" />
-                            </div>
-                            <div className="mb-3 transform group-hover:scale-105 transition-transform duration-300 origin-left">
-                                <Folder size={48} className={`${themes.find(t => t.bg === project.color)?.text || 'text-gray-500'} fill-current drop-shadow-lg`} />
-                            </div>
-                            <div>
-                                <h3 className={`font-bold text-lg mb-1 tracking-tight leading-snug ${themes.find(t => t.bg === project.color)?.lightText || 'text-white'}`}>{project.name}</h3>
-                                <p className="text-xs text-text-muted font-medium">{project.createdAt ? new Date(project.createdAt).toLocaleDateString() : '...'}</p>
-                            </div>
-                        </Card>
-                    )}
+                        <div className="mb-3 transform group-hover:scale-105 transition-transform duration-300 origin-left">
+                            <Folder size={48} className={`${themes.find(t => t.bg === project.color)?.text || 'text-gray-500'} fill-current drop-shadow-lg`} />
+                        </div>
+                        <div>
+                            <h3 className={`font-bold text-lg mb-1 tracking-tight leading-snug ${themes.find(t => t.bg === project.color)?.lightText || 'text-white'}`}>{project.name}</h3>
+                            <p className="text-xs text-text-muted font-medium">{project.createdAt ? new Date(project.createdAt).toLocaleDateString() : '...'}</p>
+                        </div>
+                    </Card>
                 </div>
             ))}
         </div>

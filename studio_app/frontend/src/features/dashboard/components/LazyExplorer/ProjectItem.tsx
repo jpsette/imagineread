@@ -61,7 +61,7 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
                 <Folder size={16} className={`${theme?.text || 'text-text-secondary'} fill-current`} />
                 <span className={`truncate flex-1 ${theme?.lightText || ''}`}>{project.name}</span>
 
-                <div className="hidden group-hover:flex gap-1">
+                <div className="hidden group-hover:flex gap-1 z-10 relative bg-surface-hover/80 backdrop-blur-sm rounded-md pl-1">
                     <button
                         onClick={(e) => { e.stopPropagation(); onPinProject(project.id); }}
                         className={`p-1 hover:text-white ${project.isPinned ? 'text-accent-blue' : 'text-text-muted'}`}
@@ -80,7 +80,7 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
                             e.stopPropagation();
                             onDeleteProject(project.id);
                         }}
-                        className="p-1 hover:text-red-400 text-text-muted"
+                        className="p-1 hover:text-red-400 text-text-muted hover:bg-red-500/10 rounded"
                     >
                         <Trash2 size={12} />
                     </button>

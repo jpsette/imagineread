@@ -19,20 +19,13 @@ interface ProjectManagerProps {
     newItemColor: string;
     setNewItemColor: (color: string) => void;
 
-    // Editing State
-    editingProject: Project | null;
-    setEditingProject: (project: Project | null) => void;
-    editName: string;
-    setEditName: (name: string) => void;
-    editColor: string;
-    setEditColor: (color: string) => void;
-
     // Actions
     onCreateProject: () => void;
     onUpdateProject: (id: string, updates: Partial<Project>) => void;
     onDeleteProject: (id: string) => void;
     onSelectProject: (id: string) => void;
     onTogglePin: (id: string) => void;
+    onEditProject: (project: Project) => void; // New prop
 
     // Constants
     PROJECT_THEMES: { bg: string; text: string; lightText: string }[];
@@ -43,7 +36,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = (props) => {
         viewMode,
         setViewMode,
         filteredProjects,
-        handleUpdate,
+
         handlers,
         state
     } = useProjectManager(props);
@@ -86,14 +79,8 @@ export const ProjectManager: React.FC<ProjectManagerProps> = (props) => {
                 setNewColor={state.setNewItemColor}
                 onCreate={handlers.onCreate}
 
-                // Editing
-                editingProject={state.editingProject}
-                setEditingProject={state.setEditingProject}
-                editName={state.editName}
-                setEditName={state.setEditName}
-                editColor={state.editColor}
-                setEditColor={state.setEditColor}
-                onUpdate={handleUpdate}
+                // Editing (Delegated to Parent)
+                onEdit={props.onEditProject}
 
                 // Actions
                 onSelect={handlers.onSelect}

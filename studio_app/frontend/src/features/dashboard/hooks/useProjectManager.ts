@@ -24,12 +24,7 @@ interface UseProjectManagerProps {
     newItemColor: string;
     setNewItemColor: (color: string) => void;
 
-    editingProject: Project | null;
-    setEditingProject: (project: Project | null) => void;
-    editName: string;
-    setEditName: (name: string) => void;
-    editColor: string;
-    setEditColor: (color: string) => void;
+
 }
 
 export const useProjectManager = ({
@@ -54,10 +49,7 @@ export const useProjectManager = ({
     }, [viewMode]);
 
     // Handlers
-    const handleUpdate = () => {
-        if (!rest.editingProject || !rest.editName.trim()) return;
-        onUpdateProject(rest.editingProject.id, { name: rest.editName, color: rest.editColor });
-    };
+
 
     // Derived State (Filtered Projects)
     const filteredProjects = projects
@@ -75,7 +67,7 @@ export const useProjectManager = ({
         setViewMode,
         filteredProjects,
         // Pass-through execution handlers that might need extra logic later
-        handleUpdate,
+
         handlers: {
             onCreate: onCreateProject,
             onDelete: onDeleteProject,

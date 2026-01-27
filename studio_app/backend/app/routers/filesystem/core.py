@@ -180,15 +180,20 @@ def delete_item(item_id: str, db: Session = Depends(get_db)):
 
 @router.put("/files/{item_id}")
 def rename_item(item_id: str, request: FileRenameRequest, db: Session = Depends(get_db)):
-    updated = crud.update_filesystem_entry(db, item_id, {
-        "name": request.name,
-        "color": request.color
-    })
+    updates = {}
+    if request.name is not None:
+        updates["name"] = request.name
+    if request.color is not None:
+        updates["color"] = request.color
+    if request.isPinned is not None:
+        updates["is_pinned"] = request.isPinned
+
+    updated = crud.update_filesystem_entry(db, item_id, updates)
     
     if not updated:
         raise HTTPException(status_code=404, detail="Item not found")
         
-    return {"status": "success", "id": item_id, "name": request.name, "color": request.color}
+    return {"status": "success", "id": item_id, "name": request.name, "color": request.color, "isPinned": request.isPinned}
 
 @router.post("/files/{item_id}/move")
 def move_item(item_id: str, request: MoveItemRequest, db: Session = Depends(get_db)):

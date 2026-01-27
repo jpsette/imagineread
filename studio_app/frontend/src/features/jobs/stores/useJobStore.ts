@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Job, JobState } from '../types';
+import { Job } from '../types';
 
 const API_BASE = 'http://localhost:8000'; // Hardcoded for now, should move to env
 
@@ -9,7 +9,7 @@ interface JobStore {
     isPolling: boolean;
 
     // Actions
-    fetchJobs: () => Promise<void>;
+    fetchJobs: (silent?: boolean) => Promise<void>;
     startPolling: (interval?: number) => void;
     stopPolling: () => void;
 
@@ -25,9 +25,9 @@ export const useJobStore = create<JobStore>((set, get) => ({
     isLoading: false,
     isPolling: false,
 
-    fetchJobs: async () => {
+    fetchJobs: async (silent = false) => {
         try {
-            set({ isLoading: true });
+            if (!silent) set({ isLoading: true });
             const response = await fetch(`${API_BASE}/jobs`);
             if (!response.ok) throw new Error('Failed to fetch jobs');
 
@@ -47,10 +47,12 @@ export const useJobStore = create<JobStore>((set, get) => ({
         if (get().isPolling) return;
 
         set({ isPolling: true });
-        get().fetchJobs(); // Initial fetch
+        get().fetchJobs(true); // Initial fetch (Silent to avoid flicker on mount if we prefer, or false)
+        // Let's make initial fetch silent too if we want, OR make it loading.
+        // Actually, for "Flicker" prevention on empty, silent is best.
 
         pollTimer = setInterval(() => {
-            get().fetchJobs();
+            get().fetchJobs(true); // Silent polling
         }, interval);
     },
 

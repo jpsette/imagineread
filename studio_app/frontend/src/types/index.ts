@@ -76,7 +76,7 @@ export interface FileEntry {
     parentId: string | null;
     projectId?: string;
     name: string;
-    type: 'file' | 'folder' | 'comic';
+    type: 'file' | 'folder' | 'comic' | 'project';
     url: string;
 
     // Canonical Properties (ADAPTED)

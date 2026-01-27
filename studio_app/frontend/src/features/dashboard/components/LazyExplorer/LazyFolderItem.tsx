@@ -78,7 +78,7 @@ export const LazyFolderItem: React.FC<LazyFolderItemProps> = ({
                     ({contents ? contents.length : '...'})
                 </span>
 
-                <div className="hidden group-hover:flex gap-1 ml-auto">
+                <div className="hidden group-hover:flex gap-1 ml-auto z-10 relative bg-surface-hover pl-1 rounded">
                     <button
                         onClick={(e) => { e.stopPropagation(); onEditFolder(folder); }}
                         className="p-1 hover:text-white text-text-muted transition-colors"
@@ -90,7 +90,7 @@ export const LazyFolderItem: React.FC<LazyFolderItemProps> = ({
                             e.stopPropagation();
                             if (confirm('Tem certeza que deseja excluir esta pasta?')) onDeleteFolder(folder.id);
                         }}
-                        className="p-1 hover:text-red-400 text-text-muted transition-colors"
+                        className="p-1 hover:text-red-400 text-text-muted transition-colors hover:bg-red-500/10 rounded"
                     >
                         <Trash2 size={11} />
                     </button>

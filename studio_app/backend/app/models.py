@@ -72,5 +72,6 @@ class ReorderItemsRequest(BaseModel):
     orderedIds: List[str]
 
 class FileRenameRequest(BaseModel):
-    name: str
+    name: Optional[str] = None
     color: Optional[str] = None
+    isPinned: Optional[bool] = None

@@ -24,30 +24,33 @@ interface ProjectDetailProps {
 
     // Actions
     // Actions
-    // Actions
     onCreateFolder: () => void;
     onDeleteFolder: (id: string) => void;
-    onRenameFolder: (id: string, newName: string, newColor?: string) => void;
     onImportFiles: (files: File[]) => void;
 
+    isImporting?: boolean; // New Prop for Import Loading State
+    onTogglePin: (item: FileEntry) => void;
+    onEditItem: (item: FileEntry) => void; // New Prop
+
     PROJECT_THEMES?: any;
-    sortOrder?: any; // Ignored for now
+
 }
 
 import { useFolderContents } from './hooks/useFolderContents'; // NEW HOOK
 import { useProjectSelection } from './components/ProjectDetail/hooks/useProjectSelection';
-import { useProjectRenaming } from './components/ProjectDetail/hooks/useProjectRenaming';
+
 import { useProjectNavigation } from './components/ProjectDetail/hooks/useProjectNavigation';
 import { ProjectItemCard } from './components/ProjectDetail/ProjectItemCard';
 import { ProjectHeader } from './components/ProjectDetail/ProjectHeader';
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({
-    project, currentFolderId, fileSystem: _legacyFiles, searchTerm, PROJECT_THEMES,
+    project, currentFolderId, fileSystem: fullFileSystem, searchTerm, PROJECT_THEMES,
     onOpenItem, onOpenComic, onBack,
     isCreatingFolder, setIsCreatingFolder,
     newFolderName, setNewFolderName,
     newFolderColor, setNewFolderColor,
-    onCreateFolder, onDeleteFolder, onRenameFolder, onImportFiles
+    onCreateFolder, onDeleteFolder, onImportFiles, onTogglePin,
+    onEditItem, isImporting = false
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -61,15 +64,10 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     // --- SELECTION STATE ---
     const { selectedIds, toggleSelection } = useProjectSelection();
 
-    // --- RENAMING STATE ---
-    const {
-        renamingId, renameValue, setRenameValue,
-        renamingColor, setRenamingColor,
-        initiateRename, cancelRename, submitRename
-    } = useProjectRenaming({ onRenameFolder });
+
 
     // --- SAFETY CHECK ---
-    const safeFileSystem = fetchedItems || []; // Use Fetched Data
+    const safeFileSystem = fetchedItems || []; // Use Fetched Data for DISPLAY
 
     // --- NAVIGATION LOGIC ---
     const { handleNavigate } = useProjectNavigation({
@@ -87,14 +85,14 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
     // --- BREADCRUMB LOGIC ---
     const breadcrumbs = useMemo(() => {
-        if (!project || !safeFileSystem) return [];
+        if (!project || !fullFileSystem) return [];
         const path: { id: string, name: string }[] = [];
 
         const buildPath = (currentId: string | null) => {
             if (!currentId) return;
             if (currentId === project.rootFolderId) return;
 
-            const folder = safeFileSystem.find(f => f.id === currentId);
+            const folder = fullFileSystem.find(f => f.id === currentId);
             if (folder) {
                 path.unshift({ id: folder.id, name: folder.name });
                 if (folder.parentId) buildPath(folder.parentId);
@@ -109,7 +107,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
             { id: project.rootFolderId || 'root', name: project.name },
             ...path
         ];
-    }, [currentFolderId, project, safeFileSystem]);
+    }, [currentFolderId, project, fullFileSystem]);
 
     // --- SMART COVER LOGIC ---
     const getFolderCover = (folderId: string) => {
@@ -214,11 +212,8 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         // FIX: Use backend-provided coverUrl if available (Lazy Loading support)
                         const coverImage = item.coverUrl || (item.type === 'folder' ? getFolderCover(item.id) : item.url);
                         const isSelected = selectedIds.has(item.id);
-                        const isRenaming = renamingId === item.id;
 
                         const handleClick = (e: React.MouseEvent) => {
-                            if (isRenaming) return; // Prevent nav if renaming
-
                             // 1. Handle Selection (Ctrl/Meta click)
                             if (e.ctrlKey || e.metaKey) {
                                 e.stopPropagation();
@@ -236,29 +231,37 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                                 item={item}
                                 coverImage={coverImage}
                                 isSelected={isSelected}
-                                isRenaming={isRenaming}
+                                isRenaming={false} // Always false now
 
-                                // Rename flow
-                                renameValue={renameValue}
-                                onRenameChange={setRenameValue}
-                                renamingColor={renamingColor}
-                                onRenamingColorChange={setRenamingColor}
-                                onRenameSubmit={submitRename}
-                                onRenameCancel={cancelRename}
-                                onInitiateRename={initiateRename}
+                                // Rename flow (Delegated)
+                                onEditItem={onEditItem}
 
                                 // Actions
                                 onClick={handleClick}
                                 onDelete={onDeleteFolder}
+                                onTogglePin={() => onTogglePin(item)}
 
                                 // Data
                                 childrenCount={safeFileSystem.filter(f => f.parentId === item.id).length}
-                                projectThemes={PROJECT_THEMES}
+
                             />
                         );
                     })}
                 </div>
             </div>
+
+            {/* IMPORT LOADING OVERLAY */}
+            {isImporting && (
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-in fade-in duration-200">
+                    <div className="bg-surface border border-accent-blue/30 p-6 rounded-2xl shadow-2xl flex flex-col items-center gap-4">
+                        <div className="w-10 h-10 border-4 border-accent-blue border-t-transparent rounded-full animate-spin" />
+                        <div className="text-center">
+                            <p className="text-white font-bold text-lg">Importando...</p>
+                            <p className="text-text-muted text-sm">Processando seus arquivos</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <input
                 type="file"

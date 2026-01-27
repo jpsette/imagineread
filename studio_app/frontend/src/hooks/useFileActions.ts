@@ -158,6 +158,47 @@ export const useFileActions = () => {
         }
     };
 
+    const togglePin = async (item: FileEntry) => {
+        try {
+            const newPinnedState = !item.isPinned;
+
+            // 1. Optimistic Update (BROADCAST to ALL filesystem views)
+            // This ensures we hit the right cache whether we are in root, subfolder, or search view.
+            queryClient.setQueriesData<FileEntry[]>({ queryKey: ['filesystem'] }, (oldData) => {
+                if (!oldData) return oldData;
+                return oldData.map(f =>
+                    f.id === item.id ? { ...f, isPinned: newPinnedState } : f
+                );
+            });
+
+            // 2. Optimistic Update (Legacy Store)
+            const newFs = fileSystem.map(f =>
+                f.id === item.id ? { ...f, isPinned: newPinnedState } : f
+            );
+            setFileSystem(newFs);
+
+            // 3. API Call
+            await api.updateFileSystemEntry(item.id, { isPinned: newPinnedState });
+
+            // 4. Invalidate to ensure consistency
+            invalidate();
+
+        } catch (e) {
+            console.error("Failed to toggle pin", e);
+            // Revert on failure (Broadcast revert)
+            queryClient.setQueriesData<FileEntry[]>({ queryKey: ['filesystem'] }, (oldData) => {
+                if (!oldData) return oldData;
+                return oldData.map(f =>
+                    f.id === item.id ? { ...f, isPinned: item.isPinned } : f
+                );
+            });
+            const newFs = fileSystem.map(f =>
+                f.id === item.id ? { ...f, isPinned: item.isPinned } : f
+            );
+            setFileSystem(newFs);
+        }
+    };
+
     return {
         createFolder,
         deleteFolder,
@@ -165,6 +206,7 @@ export const useFileActions = () => {
         uploadPages,
         uploadPDF,
         reorderItems,
-        renameItem
+        renameItem,
+        togglePin
     };
 };

@@ -79,9 +79,19 @@ export const useProjectActions = () => {
     };
 
     const togglePin = (id: string) => {
-        const p = projects.find(x => x.id === id);
+        // 1. Try Legacy Store
+        let p = projects.find(x => x.id === id);
+
+        // 2. If not found, try React Query Cache (Source of Truth for Dashboard)
+        if (!p) {
+            const cachedProjects = queryClient.getQueryData<Project[]>(['projects']);
+            p = cachedProjects?.find(x => x.id === id);
+        }
+
         if (p) {
             updateProject(id, { isPinned: !p.isPinned });
+        } else {
+            console.warn(`[togglePin] Project ${id} not found in Store or Cache`);
         }
     };
 

@@ -38,7 +38,7 @@ export const FileItem: React.FC<FileItemProps> = ({
             <span className="truncate flex-1 font-medium text-text-primary">{file.name}</span>
             {/* Optional count if we had it, but for file it's just name */}
 
-            <div className="hidden group-hover:flex gap-1 ml-auto">
+            <div className="hidden group-hover:flex gap-1 ml-auto z-10 relative bg-surface-hover pl-1 rounded">
                 <button
                     onClick={(e) => onEdit(file, e)}
                     className="p-1 hover:text-white text-text-muted transition-colors"
@@ -47,7 +47,7 @@ export const FileItem: React.FC<FileItemProps> = ({
                 </button>
                 <button
                     onClick={(e) => onDelete(file.id, e)}
-                    className="p-1 hover:text-red-400 text-text-muted transition-colors"
+                    className="p-1 hover:text-red-400 text-text-muted transition-colors hover:bg-red-500/10 rounded"
                 >
                     <Trash2 size={11} />
                 </button>
