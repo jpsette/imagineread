@@ -16,6 +16,36 @@ def create_mask_from_bubbles(width: int, height: int, bubbles: List[dict]) -> Op
     logger.info(f"🧼 [MaskService] Generating Mask for {len(bubbles)} bubbles...")
     
     for i, b in enumerate(bubbles):
+        # 1. TRY POLYGON FIRST (Precision Mode)
+        # We expect 'points' or 'polygon' as list of {x,y} or [x,y] normalized to 0-1000
+        poly_data = b.get('points') or b.get('polygon')
+        
+        if poly_data and len(poly_data) > 2:
+            # Convert to PIL Polygon format: [(x1,y1), (x2,y2)...]
+            abs_poly = []
+            valid_poly = True
+            for p in poly_data:
+                # Handle {x, y} dict or [x, y] list
+                if isinstance(p, dict):
+                    px, py = p.get('x', 0), p.get('y', 0)
+                elif isinstance(p, (list, tuple)):
+                    px, py = p[0], p[1]
+                else:
+                    valid_poly = False
+                    break
+                
+                # Normalize 0-1000 -> Absolute
+                abs_x = int((px / 1000) * width)
+                abs_y = int((py / 1000) * height)
+                abs_poly.append((abs_x, abs_y))
+            
+            if valid_poly and len(abs_poly) > 2:
+                logger.info(f"   🔹 Bubble {i}: Using Custom Polygon ({len(abs_poly)} pts)")
+                draw.polygon(abs_poly, fill=255)
+                has_bubbles = True
+                continue # Skip rectangle fallback
+
+        # 2. FALLBACK TO BOX (Classic Mode)
         # Input: [ymin, xmin, ymax, xmax] (0-1000)
         if 'box_2d' not in b: continue
         

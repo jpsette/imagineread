@@ -7,7 +7,7 @@ import { useFileItem } from '../../../hooks/useFileItem';
 import { useFolderContents } from '../../dashboard/hooks/useFolderContents';
 import { FileEntry } from '../../../types';
 import { useQueryClient } from '@tanstack/react-query';
-import { useTabPersistence } from '../../tabs/hooks/useTabPersistence';
+
 
 export const WorkstationScreen: React.FC = () => {
     const { comicId } = useParams<{ comicId: string }>();
@@ -18,10 +18,9 @@ export const WorkstationScreen: React.FC = () => {
     const { data: comic, isLoading: isLoadingComic } = useFileItem(comicId || null);
 
     // === TAB PERSISTENCE ===
-    // Registers this comic as a tab and handles hibernation/restoration
-    // Sync Title dynamically once data is loaded
-    const tabTitle = comic?.name || 'Comic Workstation';
-    useTabPersistence(comicId || null, tabTitle, 'comic');
+    // REMOVED: User requested to NOT show the main comic folder as a tab. Only pages.
+    // const tabTitle = comic?.name || 'Comic Workstation';
+    // useTabPersistence(comicId || null, tabTitle, 'comic');
 
     const { data: contents, isLoading: isLoadingPages } = useFolderContents(comicId || null);
 

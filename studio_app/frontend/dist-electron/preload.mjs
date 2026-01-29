@@ -9,6 +9,13 @@ electron.contextBridge.exposeInMainWorld("electron", {
   // File System / Comics
   getFileSystem: () => electron.ipcRenderer.invoke("get-file-system"),
   uploadPdf: (projectId, filePath) => electron.ipcRenderer.invoke("upload-pdf", { projectId, filePath }),
+  // === PHASE 1: LOCAL SAVE BRIDGE ===
+  local: {
+    selectDirectory: () => electron.ipcRenderer.invoke("select-directory"),
+    writeFile: (path, content) => electron.ipcRenderer.invoke("write-file", { path, content }),
+    readFile: (path) => electron.ipcRenderer.invoke("read-file", path),
+    createDirectory: (path) => electron.ipcRenderer.invoke("create-directory", path)
+  },
   // Legacy / Utils
   platform: process.platform,
   versions: process.versions

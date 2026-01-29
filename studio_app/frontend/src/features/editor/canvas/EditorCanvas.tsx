@@ -273,6 +273,7 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                                 // VISIBILITY PROPS
                                 showBalloon={shouldShowShape}
                                 showText={showText}
+                                showMaskOverlay={showMasks} // LINK TO UI STORE
 
                                 onSelect={() => handleSelect(balloon.id)}
                                 onChange={(newAttrs) => onUpdate(balloon.id, newAttrs)}

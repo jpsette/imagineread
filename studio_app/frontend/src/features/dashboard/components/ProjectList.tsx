@@ -115,7 +115,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onEdit(project); }}>
                                     <Pencil size={14} />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="hover:text-red-400" onClick={(e) => { e.stopPropagation(); if (confirm('Excluir?')) onDelete(project.id); }}>
+                                <Button variant="ghost" size="icon" className="hover:text-red-400" onClick={(e) => { e.stopPropagation(); if (confirm('Tem certeza? Você perderá todas as modificações salvas permanentemente.')) onDelete(project.id); }}>
                                     <Trash2 size={14} />
                                 </Button>
                             </div>
@@ -167,7 +167,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                             <Button variant="ghost" size="icon" className="text-text-muted hover:text-white" onClick={(e) => { e.stopPropagation(); onEdit(project); }}>
                                 <Pencil size={16} />
                             </Button>
-                            <Button variant="ghost" size="icon" className="text-text-muted hover:text-red-400 hover:bg-red-500/10" onClick={(e) => { e.stopPropagation(); if (confirm('Tem certeza que deseja excluir este projeto?')) onDelete(project.id); }}>
+                            <Button variant="ghost" size="icon" className="text-text-muted hover:text-red-400 hover:bg-red-500/10" onClick={(e) => { e.stopPropagation(); if (confirm('Tem certeza? Você perderá todas as modificações salvas permanentemente.')) onDelete(project.id); }}>
                                 <Trash2 size={16} />
                             </Button>
                         </div>

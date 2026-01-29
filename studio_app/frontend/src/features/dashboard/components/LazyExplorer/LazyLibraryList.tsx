@@ -54,7 +54,10 @@ export const LazyLibraryList: React.FC<LazyLibraryListProps> = ({
                     isSelected={currentFolderId === file.id}
                     onSelect={onSelectFolder}
                     onEdit={(f, e) => { e.stopPropagation(); onEditFolder(f); }}
-                    onDelete={(id, e) => { e.stopPropagation(); onDeleteFolder(id); }}
+                    onDelete={(id, e) => {
+                        e.stopPropagation();
+                        if (confirm('Tem certeza? Você perderá todas as modificações salvas permanentemente.')) onDeleteFolder(id);
+                    }}
                     depth={1}
                 />
             ))}

@@ -29,7 +29,7 @@ export const Step5Structure: React.FC<Step5StructureProps> = ({
 
     return (
         <div className="mb-4">
-            <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">5. Estrutura</label>
+
 
             {!hasPanels ? (
                 <button

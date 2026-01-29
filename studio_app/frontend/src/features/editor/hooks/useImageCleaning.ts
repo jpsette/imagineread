@@ -34,41 +34,44 @@ export const useImageCleaning = ({
             }
 
             // Prepare Payload (Convert to 1000x1000 relative coordinates)
+            // Prepare Payload (Convert to 1000x1000 relative coordinates)
             const cleanPayload = balloons.map(b => {
-                // Konva properties are now part of Balloon type (optional)
-                let bx = b.x;
-                let by = b.y;
-                let bw = b.width;
-                let bh = b.height;
+                // 1. PRIORITIZE BOX_2D (Source of Truth from DB/Store)
+                let ymin_n: number, xmin_n: number, ymax_n: number, xmax_n: number;
 
-                // Handle box_2d fallback
-                if (bx === undefined || by === undefined || bw === undefined || bh === undefined) {
-                    if (b.box_2d && b.box_2d.length === 4) {
-                        const [y1, x1, y2, x2] = b.box_2d;
-                        bx = x1;
-                        by = y1;
-                        bw = x2 - x1;
-                        bh = y2 - y1;
-                    } else {
-                        return null;
-                    }
+                if (b.box_2d && b.box_2d.length === 4) {
+                    const [y1, x1, y2, x2] = b.box_2d;
+                    // Direct Normalization from box_2d (Absolute Coords)
+                    ymin_n = Math.round((y1 / imgH) * 1000);
+                    xmin_n = Math.round((x1 / imgW) * 1000);
+                    ymax_n = Math.round((y2 / imgH) * 1000);
+                    xmax_n = Math.round((x2 / imgW) * 1000);
+                } else if (b.x !== undefined && b.y !== undefined && b.width !== undefined && b.height !== undefined) {
+                    // Fallback to Konva Props (Legacy/Visual)
+                    const finalW = b.width * (b.scaleX || 1);
+                    const finalH = b.height * (b.scaleY || 1);
+                    ymin_n = Math.round((b.y / imgH) * 1000);
+                    xmin_n = Math.round((b.x / imgW) * 1000);
+                    ymax_n = Math.round(((b.y + finalH) / imgH) * 1000);
+                    xmax_n = Math.round(((b.x + finalW) / imgW) * 1000);
+                } else {
+                    return null; // Invalid Item
                 }
 
-                // Apply Scale
-                const scaleX = b.scaleX || 1;
-                const scaleY = b.scaleY || 1;
-                const finalW = bw * scaleX;
-                const finalH = bh * scaleY;
-
-                // Normalize to 1000
-                const ymin_n = Math.round((by / imgH) * 1000);
-                const xmin_n = Math.round((bx / imgW) * 1000);
-                const ymax_n = Math.round(((by + finalH) / imgH) * 1000);
-                const xmax_n = Math.round(((bx + finalW) / imgW) * 1000);
+                // 2. NORMALIZE POLYGON POINTS (Critical Fix)
+                // Convert Absolute Pixels -> 1000x1000 Relative Space
+                let normalizedPoints = undefined;
+                if (b.points && b.points.length > 2) {
+                    normalizedPoints = b.points.map(p => ({
+                        x: Math.round((p.x / imgW) * 1000),
+                        y: Math.round((p.y / imgH) * 1000)
+                    }));
+                }
 
                 return {
                     ...b,
-                    box_2d: [ymin_n, xmin_n, ymax_n, xmax_n]
+                    box_2d: [ymin_n, xmin_n, ymax_n, xmax_n],
+                    points: normalizedPoints // Backend now receives correctly scaled polygon
                 };
             }).filter(Boolean);
 

@@ -12,6 +12,14 @@ contextBridge.exposeInMainWorld('electron', {
     getFileSystem: () => ipcRenderer.invoke('get-file-system'),
     uploadPdf: (projectId: string, filePath: string) => ipcRenderer.invoke('upload-pdf', { projectId, filePath }),
 
+    // === PHASE 1: LOCAL SAVE BRIDGE ===
+    local: {
+        selectDirectory: () => ipcRenderer.invoke('select-directory'),
+        writeFile: (path: string, content: string) => ipcRenderer.invoke('write-file', { path, content }),
+        readFile: (path: string) => ipcRenderer.invoke('read-file', path),
+        createDirectory: (path: string) => ipcRenderer.invoke('create-directory', path),
+    },
+
     // Legacy / Utils
     platform: process.platform,
     versions: process.versions,

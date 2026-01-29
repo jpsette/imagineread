@@ -17,6 +17,9 @@ export interface Balloon {
     text: string;
     box_2d: number[]; // [ymin, xmin, ymax, xmax]
     shape: 'rectangle' | 'ellipse' | 'cloud' | 'scream';
+    // Payload for Polygon Logic
+    detectedPolygon?: number[][]; // [ [x,y], [x,y] ] for reconstruction
+
     type: 'speech' | 'thought' | 'whisper' | 'text' | 'shape' | 'mask' | 'balloon' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout';
     customFontSize?: number;
     fontSize?: number;
@@ -26,7 +29,7 @@ export interface Balloon {
     roughness?: number;
     tailTip?: { x: number, y: number } | null;
     tailControl?: { x: number, y: number } | null;
-    tailCurve?: string | null; // Stronger typing from 'any'
+    tailCurve?: string | null;
     points?: { x: number, y: number }[]; // For freeform vertex editing
 
     // Style Props

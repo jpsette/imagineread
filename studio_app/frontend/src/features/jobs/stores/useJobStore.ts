@@ -10,7 +10,7 @@ interface JobStore {
 
     // Actions
     fetchJobs: (silent?: boolean) => Promise<void>;
-    startPolling: (interval?: number) => void;
+    startPolling: () => void;
     stopPolling: () => void;
 
     // Derived helpers
@@ -43,22 +43,46 @@ export const useJobStore = create<JobStore>((set, get) => ({
         }
     },
 
-    startPolling: (interval = 2000) => {
-        if (get().isPolling) return;
+    // Adaptive Polling Logic
+    startPolling: () => {
+        if (get().isPolling) return; // Prevent double start
 
         set({ isPolling: true });
-        get().fetchJobs(true); // Initial fetch (Silent to avoid flicker on mount if we prefer, or false)
-        // Let's make initial fetch silent too if we want, OR make it loading.
-        // Actually, for "Flicker" prevention on empty, silent is best.
 
-        pollTimer = setInterval(() => {
-            get().fetchJobs(true); // Silent polling
-        }, interval);
+        const pollLoop = async () => {
+            const { isPolling, fetchJobs } = get();
+
+            if (!isPolling) return; // Stop if flag turned off
+
+            await fetchJobs(true); // Silent fetch
+
+            // CHECK AGAIN: If stopped during fetch (e.g. unmount/HMR), do not schedule next.
+            if (!get().isPolling) return;
+
+            // Decide next interval
+            // Only count "Active" jobs if they are fresh (updated in last 5 mins)
+            // This prevents "Zombie Jobs" from keeping the poller in fast mode forever.
+            const now = Date.now() / 1000; // API uses seconds
+            const STALE_THRESHOLD = 5 * 60; // 5 minutes
+
+            const activeJobs = get().jobs.filter(j =>
+                (j.status === 'PENDING' || j.status === 'PROCESSING') &&
+                (now - j.updated_at < STALE_THRESHOLD)
+            );
+
+            const hasActive = activeJobs.length > 0;
+            const nextInterval = hasActive ? 2000 : 60000; // 2s (Fast) vs 60s (Idle Heartbeat)
+
+            // Recursively schedule next poll
+            pollTimer = setTimeout(pollLoop, nextInterval);
+        };
+
+        pollLoop();
     },
 
     stopPolling: () => {
         if (pollTimer) {
-            clearInterval(pollTimer);
+            clearTimeout(pollTimer);
             pollTimer = null;
         }
         set({ isPolling: false });

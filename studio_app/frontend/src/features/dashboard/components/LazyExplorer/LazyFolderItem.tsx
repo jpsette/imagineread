@@ -124,7 +124,10 @@ export const LazyFolderItem: React.FC<LazyFolderItemProps> = ({
                             // So we propagate onSelectFolder for files too if they act as containers (Comics).
                             onSelect={onSelectFolder}
                             onEdit={(f, e) => { e.stopPropagation(); onEditFolder(f); }}
-                            onDelete={(id, e) => { e.stopPropagation(); onDeleteFolder(id); }}
+                            onDelete={(id, e) => {
+                                e.stopPropagation();
+                                if (confirm('Tem certeza? Você perderá todas as modificações salvas permanentemente.')) onDeleteFolder(id);
+                            }}
                             depth={depth + 1}
                         />
                     ))}

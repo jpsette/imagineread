@@ -47,7 +47,7 @@ export const JobMonitor: React.FC = () => {
 
     // Auto-start polling on mount
     useEffect(() => {
-        startPolling(2000);
+        startPolling();
         return () => stopPolling();
     }, []);
 

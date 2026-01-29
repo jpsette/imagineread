@@ -49,6 +49,7 @@ def execute_yolo(image_path_or_url: str):
             source=local_path,
             save=True,
             conf=0.15,
+            imgsz=1920, # HIGH RESOLUTION (Balanced for Simplification)
             project=os.path.join(TEMP_DIR, "inference"),
             name="run",
             exist_ok=True,
@@ -73,12 +74,43 @@ def execute_yolo(image_path_or_url: str):
                 # Default Polygon (Box)
                 polygon = [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
                 
-                # Try Mask for Polygon
+                # Try Mask for Polygon with SMART SIMPLIFICATION
                 if result.masks is not None:
                      if hasattr(result.masks, 'xy') and len(result.masks.xy) > i:
                         raw_poly = result.masks.xy[i]
+                        
                         if len(raw_poly) > 0:
-                            polygon = raw_poly.tolist()
+                            # 1. Convert to integer numpy array for OpenCV
+                            try:
+                                import cv2
+                                # Reshape for cv2: (N, 1, 2)
+                                contour = raw_poly.astype(np.int32).reshape(-1, 1, 2)
+                                
+                                # 2. Calculate Perimeter (arcLength)
+                                peri = cv2.arcLength(contour, True)
+                                
+                                # 3. Apply Douglas-Peucker Simplification
+                                # Epsilon = 0.2% of perimeter.
+                                # - 0.001 (0.1%): Very faithful, keeps some noise.
+                                # - 0.003 (0.3%): "Comic Style" (Smoothed but organic).
+                                # - 0.010 (1.0%): Geometric/Low Poly.
+                                epsilon = 0.003 * peri
+                                approx = cv2.approxPolyDP(contour, epsilon, True)
+                                
+                                # 4. Convert back to list of [x, y]
+                                # Reshape back to (N, 2)
+                                if len(approx) > 2:
+                                    polygon = approx.reshape(-1, 2).tolist()
+                                else:
+                                    # Fallback if simplification destroyed the shape
+                                    polygon = raw_poly.tolist()
+                                    
+                            except ImportError:
+                                logger.warning("⚠️ OpenCV (cv2) not found. Using raw polygon.")
+                                polygon = raw_poly.tolist()
+                            except Exception as e:
+                                logger.error(f"⚠️ Polygon Simplification Failed: {e}")
+                                polygon = raw_poly.tolist()
 
                 balloons.append({
                     "id": i,

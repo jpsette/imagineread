@@ -37,7 +37,7 @@ export const Step4Cleaning: React.FC<Step4CleaningProps> = ({
 
     return (
         <div className="mb-4">
-            <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">4. Limpeza</label>
+
 
             {showSuccessState ? (
                 /* SUCCESS STATE (Row with Eye) - Matches Step2 Structure */

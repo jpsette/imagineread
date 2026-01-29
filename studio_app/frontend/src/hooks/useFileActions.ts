@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useFileSystemStore } from '../store/useFileSystemStore';
 import { api } from '../services/api';
 import { FileEntry } from '../types';
+import { useTabStore } from '../features/tabs/stores/useTabStore';
 
 export const useFileActions = () => {
     const queryClient = useQueryClient();
@@ -53,7 +54,14 @@ export const useFileActions = () => {
     };
 
     const deletePages = async (pageIds: string[]) => {
+        // Confirmation is usually handled by UI, but we ensure cleanliness here
         try {
+            // Close Tabs FIRST to prevent "Zombie State" where editor tries to save deleted file
+            const { closeTab } = useTabStore.getState();
+            pageIds.forEach(id => {
+                closeTab(id);
+            });
+
             await Promise.all(pageIds.map(id => api.deleteFileSystemEntry(id)));
             invalidate();
 

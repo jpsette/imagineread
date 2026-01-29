@@ -122,7 +122,7 @@ export const ProjectItemCard: React.FC<ProjectItemCardProps> = ({
                     className="p-1.5 hover:bg-red-500/20 rounded text-text-muted hover:text-red-400 transition-colors"
                     onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm('Excluir este item?')) onDelete(item.id);
+                        if (confirm('Tem certeza? Você perderá todas as modificações salvas permanentemente.')) onDelete(item.id);
                     }}
                 >
                     <Trash2 size={14} />

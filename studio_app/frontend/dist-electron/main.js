@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
@@ -118,5 +118,40 @@ function setupIpcHandlers() {
   ipcMain.handle("get-file-system", async () => {
     const result = await requestPython("GET", "/filesystem");
     return result || [];
+  });
+  ipcMain.handle("select-directory", async () => {
+    if (!win) return null;
+    const result = await dialog.showOpenDialog(win, {
+      properties: ["openDirectory", "createDirectory"]
+    });
+    if (result.canceled) return null;
+    return result.filePaths[0];
+  });
+  ipcMain.handle("write-file", async (_, { path: filePath, content }) => {
+    try {
+      await fs.promises.writeFile(filePath, content, "utf-8");
+      return { success: true };
+    } catch (error) {
+      console.error("Failed to write file:", filePath, error);
+      return { success: false, error: error.message };
+    }
+  });
+  ipcMain.handle("read-file", async (_, filePath) => {
+    try {
+      const content = await fs.promises.readFile(filePath, "utf-8");
+      return { success: true, content };
+    } catch (error) {
+      console.error("Failed to read file:", filePath, error);
+      return { success: false, error: error.message };
+    }
+  });
+  ipcMain.handle("create-directory", async (_, dirPath) => {
+    try {
+      await fs.promises.mkdir(dirPath, { recursive: true });
+      return { success: true };
+    } catch (error) {
+      console.error("Failed to create directory:", dirPath, error);
+      return { success: false, error: error.message };
+    }
   });
 }

@@ -60,8 +60,9 @@ export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
                             isProcessingCleaning={vectorization.isProcessingCleaning}
                             isProcessingPanels={vectorization.isProcessingPanels}
                             isProcessingOcr={vectorization.isProcessingOcr}
+                            handleDetectAll={vectorization.handleDetectAll} // NEW HERO ACTION
                             onCreateMask={vectorization.handleCreateMask}
-                            onConfirmMask={vectorization.handleConfirmMask}
+                            // onConfirmMask removed (Legacy)
                             onDetectBalloon={vectorization.detectBalloon}
                             onDetectText={vectorization.detectText}
                             onCleanImage={vectorization.handleCleanImage}

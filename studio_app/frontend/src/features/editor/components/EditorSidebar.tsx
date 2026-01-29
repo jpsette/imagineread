@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Square, Type, ScanFace } from 'lucide-react';
 import { EditMenu } from './menus/EditMenu';
 import { useEditorUIStore } from '../uiStore';
 import { ToolRegistry } from '../tools/ToolRegistry';
@@ -81,7 +81,42 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = () => {
 
             <div className="h-px bg-white/5 mx-2" />
 
-            {/* 3. PROPERTIES MENU */}
+            {/* 3. VISUALIZATION MENU (NEW) */}
+            <div className="space-y-3">
+                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Visualização</label>
+                <div className="bg-white/5 border border-white/5 rounded-xl p-2 space-y-2">
+                    {/* Toggle: Balloons */}
+                    <button
+                        onClick={useEditorUIStore.getState().toggleBalloons}
+                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${useEditorUIStore(s => s.showBalloons) ? 'bg-blue-500/20 text-blue-400' : 'text-zinc-500 hover:bg-white/5'}`}
+                    >
+                        <span className="flex items-center gap-2"><Square size={14} /> Balões</span>
+                        <div className={`w-2 h-2 rounded-full ${useEditorUIStore(s => s.showBalloons) ? 'bg-blue-500' : 'bg-zinc-700'}`} />
+                    </button>
+
+                    {/* Toggle: Text */}
+                    <button
+                        onClick={useEditorUIStore.getState().toggleText}
+                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${useEditorUIStore(s => s.showText) ? 'bg-green-500/20 text-green-400' : 'text-zinc-500 hover:bg-white/5'}`}
+                    >
+                        <span className="flex items-center gap-2"><Type size={14} /> Texto</span>
+                        <div className={`w-2 h-2 rounded-full ${useEditorUIStore(s => s.showText) ? 'bg-green-500' : 'bg-zinc-700'}`} />
+                    </button>
+
+                    {/* Toggle: Masks (THE OLHINHO FOR EDITING) */}
+                    <button
+                        onClick={useEditorUIStore.getState().toggleMasks}
+                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${useEditorUIStore(s => s.showMasks) ? 'bg-red-500/20 text-red-500' : 'text-zinc-500 hover:bg-white/5'}`}
+                    >
+                        <span className="flex items-center gap-2"><ScanFace size={14} /> Máscaras (Editar)</span>
+                        <div className={`w-2 h-2 rounded-full ${useEditorUIStore(s => s.showMasks) ? 'bg-red-500' : 'bg-zinc-700'}`} />
+                    </button>
+                </div>
+            </div>
+
+            <div className="h-px bg-white/5 mx-2" />
+
+            {/* 4. PROPERTIES MENU */}
             <EditMenu />
         </div>
     );

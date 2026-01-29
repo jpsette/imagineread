@@ -55,7 +55,6 @@ export const useVectorization = ({
     // --- 2. HOOK: BALLOONS (YOLO) ---
     const {
         handleCreateMask,
-        handleConfirmMask,
         handleDetectBalloon,
         isProcessingBalloons
     } = useBalloonDetection({
@@ -64,7 +63,6 @@ export const useVectorization = ({
         editor,
         balloons,
         setBalloons,
-        workflowStep,
         setWorkflowStep
     });
 
@@ -134,22 +132,45 @@ export const useVectorization = ({
 
         // Actions
         handleCreateMask,
-        handleConfirmMask,
         handleDetectBalloon,
         detectPanels,
         handleCleanImage,
         detectText,
+        // handleDetectAll is defined below
 
         // Wrappers
         detectBalloon: async () => {
+            // Legacy Wrapper if single step needed
             if (hasMasks && !hasBalloons) {
-                console.log("🎭 Masks found, converting to balloons...");
                 handleDetectBalloon();
             } else if (!hasMasks && !hasBalloons) {
-                console.log("🔍 No masks, running YOLO...");
                 await handleCreateMask();
             }
         },
+
+        // --- NEW: ONE-CLICK DETECTION ---
+        handleDetectAll: async () => {
+            console.log("🚀 Starting One-Click Detection Sequence...");
+
+            // 1. Detect Masks (YOLO)
+            const masksWithBalloons = await handleCreateMask();
+            if (!masksWithBalloons) {
+                console.warn("❌ Sequence Aborted: No masks found.");
+                return;
+            }
+
+            // 2. Convert to Balloons (Shapes)
+            // Pass fresh data to avoid stale state closure
+            const finalBalloons = handleDetectBalloon(masksWithBalloons);
+
+            // 3. Detect Text (OCR)
+            if (finalBalloons) {
+                await detectText(finalBalloons);
+            }
+
+            console.log("✅ One-Click Detection Complete.");
+        },
+
         handleDetectText: detectText,
 
         // Flags
@@ -171,11 +192,11 @@ export const useVectorization = ({
         isBusy,
         localCleanUrl,
         handleCreateMask,
-        handleConfirmMask, // Assuming stable
         handleDetectBalloon, // Assuming stable
         detectPanels, // Assuming stable
         handleCleanImage,
         detectText,
+        // handleDetectAll is defined inside useMemo, so it cannot be a dependency of useMemo
         hasMasks,
         hasBalloons,
         hasText,

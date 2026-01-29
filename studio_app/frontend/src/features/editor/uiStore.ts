@@ -22,6 +22,9 @@ interface EditorUIState {
     setShowMasks: (show: boolean) => void;
     setShowBalloons: (show: boolean) => void;
     setShowText: (show: boolean) => void;
+    toggleBalloons: () => void;
+    toggleText: () => void;
+    toggleMasks: () => void;
     setShowPanelsLayer: (show: boolean) => void;
     setShowPreview: (show: boolean) => void;
     setPreviewImages: (images: string[]) => void;
@@ -53,7 +56,7 @@ export const useEditorUIStore = create<EditorUIState>((set) => ({
     // Initial State
     activeTool: 'select',
     activeMode: 'vectorize',
-    showMasks: true,
+    showMasks: false,
     showBalloons: true,
     showText: true,
     showPanelsLayer: true,
@@ -74,6 +77,9 @@ export const useEditorUIStore = create<EditorUIState>((set) => ({
     setShowMasks: (show) => set({ showMasks: show }),
     setShowBalloons: (show) => set({ showBalloons: show }),
     setShowText: (show) => set({ showText: show }),
+    toggleBalloons: () => set((state) => ({ showBalloons: !state.showBalloons })),
+    toggleText: () => set((state) => ({ showText: !state.showText })),
+    toggleMasks: () => set((state) => ({ showMasks: !state.showMasks })),
     setShowPanelsLayer: (show) => set({ showPanelsLayer: show }),
     setShowPreview: (show) => set({ showPreview: show }),
     setPreviewImages: (images) => set({ previewImages: images }),
