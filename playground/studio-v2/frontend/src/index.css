@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --font-comic: "Comic Neue", cursive;
+}
+
+@theme {
+  /* Semantic Color Tokens */
+  --color-app-bg: #09090b;
+  /* Canvas Background */
+  --color-panel-bg: #141416;
+  /* Secondary / Panel Background */
+  --color-surface: #18181b;
+  /* Cards / Floating Elements */
+  --color-surface-hover: #27272a;
+  /* Hover states */
+
+  --color-border-color: #27272a;
+  /* Default borders */
+  --color-border-highlight: #3f3f46;
+  /* Lighter borders */
+
+  --color-accent-blue: #3b82f6;
+  /* Primary Action */
+  --color-accent-hover: #2563eb;
+
+  --color-text-primary: #e4e4e7;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+}
+
+/* Custom Fonts Configuration */
+/* User must place .ttf files in /public/fonts/ folder */
+
+@font-face {
+  font-family: 'Acme Secret Agent';
+  src: url('/fonts/AcmeSecretAgent.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Anime Ace 2';
+  src: url('/fonts/AnimeAce2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Digital Strip';
+  src: url('/fonts/DigitalStrip.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Laffayette Comic Pro';
+  src: url('/fonts/LaffayetteComicPro.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Komika Title';
+  src: url('/fonts/KomikaTitle.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Crimefighter';
+  src: url('/fonts/Crimefighter.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Badaboom';
+  src: url('/fonts/Badaboom.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'SF Action Man';
+  src: url('/fonts/SFActionMan.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Universal Fruitcake';
+  src: url('/fonts/UniversalFruitcake.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Qarmic Sans';
+  src: url('/fonts/QarmicSans.ttf') format('truetype');
+}
+
+body {
+  background-color: var(--color-app-bg);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Custom Scrollbar - Glass Style */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Animations */
+@keyframes editorFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-editor-fade-in {
+  animation: editorFadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}

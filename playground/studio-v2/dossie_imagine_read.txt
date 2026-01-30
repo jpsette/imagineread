@@ -1,0 +1,337 @@
+📋 Dossiê Técnico - Imagine Read
+
+Data de Análise: 08 de Janeiro de 2026  
+Status: Aplicação Desktop em Desenvolvimento  
+Ambiente: Electron + FastAPI
+
+
+
+  🎯 Visão Geral
+
+Imagine Read é uma aplicação desktop para edição e processamento de mangás/quadrinhos com foco em IA para detecção de balões, OCR, inpainting e tradução. A aplicação possui uma arquitetura cliente-servidor rodando localmente, combinando um frontend Electron moderno com um backend Python otimizado para processamento de imagens.
+
+   Propósito Principal
+  • Importação e gerenciamento de PDFs de quadrinhos
+  • Detecção automática de balões de fala usando YOLO
+  • OCR (reconhecimento de texto) usando Google Vertex AI
+  • Edição visual de balões com editor SVG avançado
+  • Limpeza de páginas (inpainting) usando modelo LaMa
+  • Sistema de projetos e organização de bibliotecas
+
+
+
+  🏗️ Arquitetura da Aplicação
+
+   Diagrama de Alto Nível
+
+
+
+   Stack Tecnológico Completo
+
+#### 🎨 Frontend (Electron Desktop)
+   Categoria    Tecnologia    Versão    Propósito   
+  -----------  -----------  --------  -----------  
+   Runtime    Electron    30.0.1    Container desktop multiplataforma   
+   Framework    React    18.2.0    UI reativa e componentização   
+   Linguagem    TypeScript    5.2.2    Type safety e developer experience   
+   Build Tool    Vite    5.2.0    Dev server rápido e bundling   
+   Estilização    Tailwind CSS    4.1.18    Utility-first CSS framework   
+   Animações    Framer Motion    12.24.7    Animações fluidas   
+   Ícones    Lucide React    0.562.0    Sistema de ícones moderno   
+   Utilities    clsx + tailwind-merge    -    Manipulação de classes CSS   
+
+#### ⚙️ Backend (FastAPI Python)
+   Categoria    Tecnologia    Versão    Propósito   
+  -----------  -----------  --------  -----------  
+   Framework    FastAPI    latest    API REST assíncrona   
+   Server    Uvicorn    latest    ASGI server de alta performance   
+   Upload    python-multipart    latest    Processamento de multipart/form-data   
+   PDF    pdf2image    latest    Conversão PDF → PNG   
+   IA Cloud    google-cloud-aiplatform    ≥1.38.0    Vertex AI (Gemini 2.0)   
+   Detecção    Ultralytics YOLO    latest (via subprocess)    Detecção de balões   
+   Inpainting    PyTorch + LaMa    -    Remoção de balões   
+   Imagem    OpenCV + Pillow    -    Manipulação de imagens   
+
+#### 🤖 Engines de IA
+   Engine    Localização    Modelo    Função   
+  --------  -------------  ---------  ---------  
+   YOLO    /yoloengine/    comicspeechbubblesegv1.pt    Detecção e segmentação de balões   
+   LaMa    /yoloengine/models/    lama.pt (torchscript)    Inpainting de áreas mascaradas   
+   Gemini    Google Cloud    gemini-2.0-flash-exp    OCR e análise semântica   
+
+
+
+  📂 Estrutura de Diretórios
+
+
+
+
+
+  🔧 Arquitetura Detalhada
+
+   🎨 Frontend Architecture
+
+#### Fluxo de Estados
+
+
+#### Componentes Principais
+
+1. App.tsx (Root Component)
+  • Gerencia estado global da aplicação
+  • Roteamento entre views (Projects → Editor)
+  • Sistema de temas (12 cores predefinidas)
+  • Handlers CRUD para projetos e páginas
+
+2. EditorView.tsx (Core Feature - 1107 linhas)
+  • Canvas Interativo com Zoom/Pan (100% - 200%)
+  • Sistema de Balões Vetoriais (SVG)
+  • 4 Shapes: Rectangle, Ellipse, Cloud, Scream
+  • 3 Tipos: Speech, Thought, Whisper
+  • Propriedades customizáveis (border, font, tail)
+  • Fluxo de Processamento IA
+  1. Detecção YOLO → Preview verde
+  2. OCR Vertex → Texto nos balões
+  3. Importação → Balloons editáveis
+  4. Limpeza → Inpainting LaMa
+  • Sidebar de Propriedades (edição em tempo real)
+  • Drag & Drop de balões e handles de resize
+
+3. ProjectManager.tsx
+  • CRUD de projetos
+  • Sistema de cores e pins
+  • Busca e ordenação (A-Z, Z-A)
+  • Interface tipo "Notion" (dark, minimalista)
+
+4. VectorBubble Component (dentro de EditorView)
+  • Renderização SVG pura (paths matemáticas)
+  • Cálculos geométricos para tails (Bezier curves)
+  • Resize handles com transformações de coordenadas
+  • Sistema de coordenadas normalizado (0-1000)
+
+   ⚙️ Backend Architecture
+
+#### API Endpoints
+
+
+#### Fluxo de Processamento IA
+
+
+
+#### Gerenciamento de Estado
+  • Persistência: JSON files (data.json, projects.json)
+  • Storage de Imagens: /temp/ directory (servido via StaticFiles)
+  • CORS: Configurado para localhost:5173 (Vite dev server)
+  • Lifespan: Context manager para startup/shutdown (FastAPI 0.95+)
+
+
+
+  🧠 Engines de IA - Detalhamento
+
+   1. YOLO Speech Bubble Detection
+
+Arquivo: yoloengine/runyolo.py
+
+Modelo: comicspeechbubblesegv1.pt (YOLOv8 Segmentation)
+
+Características:
+  • Detecção + Segmentação (retorna polígonos precisos)
+  • Confidence threshold: 0.15
+  • Saída silenciosa (redirect stdout para evitar logs)
+  • Fallback inteligente: box → polygon se máscara falhar
+
+Output:
+
+
+   2. Google Vertex AI OCR
+
+Integração: Google GenAI SDK (nova versão)  
+Modelo: gemini-2.0-flash-exp  
+Projeto: seismic-mantis-483123-g8  
+Região: us-central1
+
+Estratégia:
+  • Crops individuais de cada balão (via box coordinates)
+  • Processamento em batch (limite de API respeitado)
+  • Fallback de erros (timeouts, quota exceeded)
+  • Prompt otimizado: "Extract only the text, no explanations"
+
+Credenciais: backend/credentials.json (Service Account)
+
+   3. LaMa Inpainting
+
+Arquivo: yoloengine/runinpainting.py
+
+Modelo: LaMa (Large Mask Inpainting) via TorchScript
+
+Pipeline:
+1. Recebe imagem + balloons JSON
+2. Cria máscara binária (fillPoly nos polígonos)
+3. Dilata máscara 20x20 (kernel) - crucial para bordas
+4. Padding para múltiplo de 8 (requisito LaMa)
+5. Inferência PyTorch (MPS se disponível, senão CPU)
+6. Crop ao tamanho original
+7. Salva imagem limpa + debugmask
+
+Performance:
+  • MPS (Apple Silicon): ~2-5s por página
+  • CPU: ~10-20s por página
+
+
+
+  💾 Gerenciamento de Dados
+
+   Estrutura de data.json
+
+
+
+   Sistema de Thumbnails
+  • Gerados on-demand via /thumbnail?url=X&width=300
+  • Cache automático usando hash MD5 do URL
+  • Compressão JPEG otimizada (quality=85)
+  • Limitação de largura máxima (300px padrão)
+
+
+
+  🎨 Design System
+
+   Paleta de Cores (Dark Theme)
+
+
+   Tipografia
+  • Font Family: System font stack (sans-serif)
+  • Tamanhos: 
+  • Headers: 10px uppercase (tracking-widest)
+  • Body: 12-14px
+  • Bubble text: Dinâmico (6-100px)
+
+   Componentes UI
+  • Buttons: Ghost style (hover reveal)
+  • Cards: Borderless com subtle shadows
+  • Inputs: Dark bg com focus ring blue
+  • Scrollbars: Custom thin style (8px)
+
+
+
+  🔑 10 Arquivos Principais para Tech Lead
+
+   1. frontend/src/components/EditorView.tsx ⭐⭐⭐
+1107 linhas | Complexidade: 9/10
+  • Por quê: Coração da aplicação. Editor SVG completo com geometria vetorial, drag & drop, zoom/pan, integração de todas as IAs.
+  • Destaques: VectorBubble component, sistema de coordenadas normalizadas, 4 shapes matemáticos (rect, ellipse, cloud, scream), tail bezier curves.
+
+   2. backend/main.py ⭐⭐⭐
+882 linhas | Complexidade: 8/10
+  • Por quê: API completa. Todos os endpoints, gerenciamento de estado, integração com 3 engines IA, CORS, static files, upload de PDFs.
+  • Destaques: Lifespan context manager, Vertex AI client setup, modular endpoint design, filesystem JSON management.
+
+   3. frontend/src/App.tsx ⭐⭐
+365 linhas | Complexidade: 6/10
+  • Por quê: Roteamento principal, gerenciamento de estado global, CRUD de projetos, sistema de temas.
+  • Destaques: 12 temas de projetos, handlers para pages/projects, toggle views (Manager → Editor).
+
+   4. yoloengine/runyolo.py ⭐⭐
+114 linhas | Complexidade: 5/10
+  • Por quê: Script independente de detecção. Mostra integração via subprocess, output JSON clean, silence de logs YOLO.
+  • Destaques: Contextlib redirectstdout, robust model path handling, polygon extraction.
+
+   5. yoloengine/runinpainting.py ⭐⭐
+189 linhas | Complexidade: 7/10
+  • Por quê: Pipeline completo de inpainting. Mask creation, dilation, PyTorch inference, crop/pad logic.
+  • Destaques: MPS detection (Apple Silicon), mask dilation (20x20 kernel fix), debug mask output.
+
+   6. frontend/src/components/ProjectManager.tsx ⭐
+236 linhas | Complexidade: 5/10
+  • Por quê: UI de gerenciamento de projetos. Search, sort, pin, color picker, CRUD interface.
+  • Destaques: Notion-style design, color theme system, inline editing.
+
+   7. frontend/src/config.ts ⭐
+20 linhas | Complexidade: 2/10
+  • Por quê: Configuração centralizada. Todos os endpoints API em um lugar só.
+  • Destaques: APIBASEURL, object freeze (const assertions).
+
+   8. backend/requirements.txt ⭐
+6 linhas | Complexidade: 1/10
+  • Por quê: Dependências essenciais do backend. Mostra minimalismo e foco.
+  • Destaques: FastAPI, pdf2image, google-cloud-aiplatform versioning.
+
+   9. frontend/package.json ⭐
+40 linhas | Complexidade: 3/10
+  • Por quê: Configuração completa do projeto Electron. Scripts, dependências, electron-builder.
+  • Destaques: Vite + Electron integration, Tailwind 4.x, TypeScript strict mode.
+
+   10. frontend/src/utils/balloonConverter.ts ⭐
+Estimado ~100 linhas | Complexidade: 6/10
+  • Por quê: Lógica de conversão YOLO → Editor Bubbles. Transformação de coordenadas, auto-cálculo de font sizes, normalização.
+  • Destaques: Polygon scaling, bounding box math, adaptive font sizing.
+
+
+
+  📊 Métricas do Projeto
+
+   Métrica    Valor   
+  ---------  -------  
+   Total de Componentes React    8 principais   
+   Linhas de Código (Frontend)    ~8000+ linhas (estimado)   
+   Linhas de Código (Backend)    ~1500+ linhas   
+   Endpoints API    12 ativos   
+   Modelos IA    3 (YOLO, LaMa, Gemini)   
+   Tamanho do Modelo YOLO    54MB   
+   Formato de Persistência    JSON (sem DB)   
+   Linguagens    TypeScript, Python   
+   Frameworks    React, FastAPI, Electron   
+
+
+
+  🚀 Comandos de Execução
+
+   Backend
+
+
+   Frontend
+
+
+   YOLO Engine (Standalone Test)
+
+
+
+
+  🔍 Pontos de Atenção para Tech Lead
+
+   ✅ Pontos Fortes
+1. Arquitetura modular - Separação clara frontend/backend/engines
+2. Type safety - TypeScript strict mode no frontend
+3. IA State-of-the-art - Gemini 2.0, YOLOv8, LaMa
+4. UX moderna - Notion-style, dark theme, animações Framer Motion
+5. Processamento local - Privacidade, sem cloud lock-in (exceto Vertex)
+
+   ⚠️ Pontos de Melhoria
+1. Persistência JSON - Considerar SQLite/PostgreSQL para escalabilidade
+2. Sem testes - Backend e frontend sem test coverage
+3. Error handling - Alguns endpoints sem try/catch robusto
+4. Backend monolítico - main.py com 882 linhas (refatorar para routers?)
+5. Falta de documentação - README.md ausente, sem OpenAPI docs
+6. Vertex AI quota - Dependente de quota externa (considerar fallback)
+7. Versionamento de modelos - LaMa e YOLO sem controle de versão explícito
+
+   🔒 Segurança
+  • ⚠️ credentials.json no repositório (usar secrets manager)
+  • ✅ CORS configurado corretamente (localhost only)
+  • ⚠️ Sem autenticação (OK para app desktop, mas considerar multi-user)
+
+   📈 Performance
+  • ✅ Vite com HMR rápido
+  • ✅ Thumbnails cacheados
+  • ⚠️ Inpainting CPU pode ser lento (~20s) - considerar GPU
+  • ⚠️ Vertex AI latência (~2-5s por crop batch)
+
+
+
+  🎓 Conclusão
+
+Imagine Read é uma aplicação desktop bem arquitetada para processamento de quadrinhos com IA, usando tecnologias modernas (React 18, FastAPI, Electron 30) e modelos state-of-the-art (YOLO, Gemini, LaMa). O projeto demonstra:
+  • Sólido conhecimento de geometria computacional (SVG, coordenadas)
+  • Integração avançada de múltiplos modelos IA
+  • Design system coerente e profissional
+  • Fluxo de dados bem definido (YOLO → OCR → Edição → Inpainting)
+
+Recomendação: Projeto com grande potencial. Priorizar refactoring de main.py, adicionar testes, e migrar persistência para DB relacional antes de produção.
