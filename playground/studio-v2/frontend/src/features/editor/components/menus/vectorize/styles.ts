@@ -1,7 +1,7 @@
 // --- STYLES CONSTANTS ---
-export const H_HEIGHT = "h-[38px]"; // Standard Height
+export const H_HEIGHT = "h-[32px]"; // Standard Height
 
-export const BTN_BASE = `w-full ${H_HEIGHT} px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 select-none border`;
+export const BTN_BASE = `w-full ${H_HEIGHT} px-3 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-2 select-none border`;
 
 export const BTN_PRIMARY = `${BTN_BASE} bg-blue-600 hover:bg-blue-500 text-white border-transparent shadow-sm active:transform active:scale-[0.98]`;
 export const BTN_DISABLED = `${BTN_BASE} bg-[#333] text-gray-500 border-transparent cursor-not-allowed opacity-50`;

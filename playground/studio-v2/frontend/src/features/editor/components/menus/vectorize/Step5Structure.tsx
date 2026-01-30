@@ -11,16 +11,18 @@ interface Step5StructureProps {
     onDetectPanels?: () => void; // Made optional in interface to match usage safety, but logic requires it
     onConfirmPanels?: () => void;
     onOpenPanelGallery?: () => void;
+    onAddPanel?: () => void;
 }
 
 export const Step5Structure: React.FC<Step5StructureProps> = ({
     hasPanels,
     canDetectPanels,
     isPanelsConfirmed,
-    isProcessingPanels,
-    onDetectPanels,
+    isProcessingPanels, // FIX: Restored this prop
+    onDetectPanels, // FIX: Restored this prop
     onConfirmPanels,
-    onOpenPanelGallery
+    onOpenPanelGallery,
+    onAddPanel
 }) => {
     const { showPanelsLayer, setShowPanelsLayer } = useEditorUIStore();
 
@@ -75,13 +77,25 @@ export const Step5Structure: React.FC<Step5StructureProps> = ({
             )}
 
             {/* PERSISTENT GALLERY BUTTON (Always Visible, Disabled if Empty) - MOVED OUTSIDE CONDITIONAL */}
-            <button
-                onClick={onOpenPanelGallery}
-                disabled={!hasPanels} // Enabled if panels exist (even if previews need regen)
-                className={`mt-2 ${!hasPanels ? BTN_DISABLED : BTN_SECONDARY}`}
-            >
-                <Images className="w-4 h-4" /> Ver Galeria
-            </button>
+            <div className="flex flex-col mt-2 gap-2">
+                {/* MANUAL ADD PANEL (For complex cases where detection fails) - Added as requested */}
+                <button
+                    onClick={onAddPanel}
+                    className={BTN_SECONDARY}
+                    title="Adicionar Quadro Manualmente"
+                >
+                    <div className="w-4 h-4 flex items-center justify-center border border-current rounded text-[10px]">+</div>
+                    <span>Adicionar Quadro</span>
+                </button>
+
+                <button
+                    onClick={onOpenPanelGallery}
+                    disabled={!hasPanels} // Enabled if panels exist (even if previews need regen)
+                    className={`${!hasPanels ? BTN_DISABLED : BTN_SECONDARY}`}
+                >
+                    <Images className="w-4 h-4" /> Ver Quadros
+                </button>
+            </div>
         </div>
     );
 };

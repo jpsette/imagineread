@@ -33,7 +33,8 @@ export const BalloonVector: React.FC<BalloonVectorProps> = ({
     };
 
     if (balloon.type === 'text') {
-        return <Rect {...commonProps} fill={undefined} stroke={isSelected ? '#007AFF' : undefined} />;
+        // Use transparent fill to ensure hit detection works across the entire box
+        return <Rect {...commonProps} fill="rgba(0,0,0,0)" stroke={isSelected ? '#007AFF' : undefined} />;
     }
 
     // 1.5 EXACT POLYGON (Freeform)
@@ -89,6 +90,23 @@ export const BalloonVector: React.FC<BalloonVectorProps> = ({
                 data={BALLOON_PATHS.shout}
                 scaleX={width / 100}
                 scaleY={height / 100}
+                width={undefined} height={undefined}
+            />
+        );
+    }
+
+    // 6. CUSTOM SVG (NEW)
+    if (balloon.type === 'balloon-custom' && balloon.customSvg) {
+        // Default viewBox if missing is 100x100
+        const vw = balloon.svgViewBox?.width || 100;
+        const vh = balloon.svgViewBox?.height || 100;
+
+        return (
+            <Path
+                {...commonProps}
+                data={balloon.customSvg}
+                scaleX={width / vw}
+                scaleY={height / vh}
                 width={undefined} height={undefined}
             />
         );

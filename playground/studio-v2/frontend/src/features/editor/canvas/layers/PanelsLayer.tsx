@@ -17,7 +17,7 @@ export const PanelsLayer: React.FC<PanelsLayerProps> = ({
     onUpdate
 }) => {
     return (
-        <Layer perfectDrawEnabled={false}>
+        <Layer name="panels-layer" perfectDrawEnabled={false}>
             {/* Z-INDEX LOGIC: Sort panels so selected one renders last (on top) */}
             {[...panels]
                 .sort((a, b) => (a.id === selectedId ? 1 : b.id === selectedId ? -1 : 0))

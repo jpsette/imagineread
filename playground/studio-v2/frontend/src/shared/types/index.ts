@@ -21,7 +21,11 @@ export interface Balloon {
     // Payload for Polygon Logic
     detectedPolygon?: number[][]; // [ [x,y], [x,y] ] for reconstruction
 
-    type: 'speech' | 'thought' | 'whisper' | 'text' | 'shape' | 'mask' | 'balloon' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout';
+    type: 'speech' | 'thought' | 'whisper' | 'text' | 'shape' | 'mask' | 'balloon' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout' | 'balloon-custom';
+    // Custom SVG Payload
+    customSvg?: string; // Path data (d attribute)
+    svgViewBox?: { width: number, height: number }; // Original dimensions for scaling
+
     customFontSize?: number;
     fontSize?: number;
     borderRadius?: number;

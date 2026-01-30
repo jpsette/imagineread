@@ -29,7 +29,7 @@ export const BalloonsLayer: React.FC<BalloonsLayerProps> = ({
     setEditingId
 }) => {
     return (
-        <Layer perfectDrawEnabled={false}>
+        <Layer name="balloons-layer" perfectDrawEnabled={false}>
             {balloons.map((balloon) => {
                 // Logic: Is this a mask or a balloon?
                 const isMask = balloon.type === 'mask';

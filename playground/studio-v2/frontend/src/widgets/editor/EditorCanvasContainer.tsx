@@ -28,6 +28,9 @@ const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerP
     const showBalloons = useEditorUIStore(s => s.showBalloons);
     const showPanelsLayer = useEditorUIStore(s => s.showPanelsLayer);
 
+    // Local Editing State
+    const [editingId, setEditingId] = React.useState<string | null>(null);
+
     const handleImageLoad = React.useCallback((w: number, h: number) => {
         if (w && h) {
             onImageDimensionsLoaded(w, h);
@@ -58,13 +61,13 @@ const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerP
                         commandManager.execute(new UpdatePanelCommand(id, attrs as any));
                     } else {
                         // Use Command Pattern for Balloons
-                        commandManager.execute(new UpdateBalloonCommand(id, attrs));
+                        commandManager.execute(new UpdateBalloonCommand(id, attrs as any));
                     }
                 }}
                 onImageLoad={handleImageLoad}
                 onBalloonAdd={addBalloon}
-                editingId={null}
-                setEditingId={() => { }}
+                editingId={editingId}
+                setEditingId={setEditingId}
                 onCanvasReady={onCanvasReady}
             />
         </main>

@@ -5,10 +5,11 @@ import { EditorCanvasContainer } from '@widgets/editor/EditorCanvasContainer';
 // Filmstrip moved to Layout
 import { PanelPreviewModal } from '@features/editor/components/modals/PanelPreviewModal';
 import { useEditorUIStore } from '@features/editor/uiStore';
+import { useEditorStore } from '@features/editor/store';
+import { generatePanelPreviews } from '@features/editor/utils/panelUtils';
 
 interface EditorCanvasAreaProps {
     fileId: string;
-    // parentId removed - not needed here anymore
     imageUrl: string;
     editor: any;
     isCanvasReady: boolean;
@@ -18,7 +19,6 @@ interface EditorCanvasAreaProps {
 
 export const EditorCanvasArea: React.FC<EditorCanvasAreaProps> = ({
     fileId,
-    // parentId,
     imageUrl,
     editor,
     isCanvasReady,
@@ -28,7 +28,7 @@ export const EditorCanvasArea: React.FC<EditorCanvasAreaProps> = ({
     // --- UI STORE ---
     const {
         showPreview, setShowPreview,
-        previewImages
+        previewImages, setPreviewImages
     } = useEditorUIStore();
 
     // --- LOCAL STATE for UX ---
@@ -37,9 +37,6 @@ export const EditorCanvasArea: React.FC<EditorCanvasAreaProps> = ({
 
     // Reset loading state when fileId changes to force overlay
     useEffect(() => {
-        // REMOVED: setLoaderMounted(true) -> Prevents full screen flash
-        // We only reset canvas ready to allow the internal image fade-in logic to work if needed,
-        // but we DON'T show the blocking loader anymore for navigation.
         setCanvasReady(false);
     }, [fileId, setCanvasReady]);
 
@@ -58,6 +55,33 @@ export const EditorCanvasArea: React.FC<EditorCanvasAreaProps> = ({
             return () => clearTimeout(timer);
         }
     }, [isCanvasReady]);
+
+    // --- GALLERY REGENERATION ---
+    const { panels } = useEditorStore();
+
+    // This allows the Gallery Modal to request a re-render of previews 
+    // with different visibility settings (e.g. Show/Hide Elements)
+    // REFACTORED: Now toggles BOTH Balloons and Text
+    const handleRegeneratePreviews = async (showElements: boolean) => {
+        // 1. Update visibility in Store (Triggers Canvas Rerender)
+        // We toggle BOTH balloons and text to match "Eye" behavior
+        useEditorUIStore.getState().setShowBalloons(showElements);
+        useEditorUIStore.getState().setShowText(showElements);
+
+        // 2. Wait for React/Konva to update the DOM
+        // We need a small delay to ensure the canvas has physically repainted
+        setTimeout(() => {
+            if (stageRef.current && panels) {
+                console.log("♻️ Regenerating Gallery Previews (Elements: " + showElements + ")...");
+                try {
+                    const newImages = generatePanelPreviews(stageRef.current, panels);
+                    setPreviewImages(newImages);
+                } catch (e) {
+                    console.error("Failed to regenerate previews", e);
+                }
+            }
+        }, 300); // 300ms is usually safe for a visual update
+    };
 
     return (
         <div className="flex-1 relative flex flex-col min-w-0 bg-[#1e1e1e]">
@@ -88,8 +112,6 @@ export const EditorCanvasArea: React.FC<EditorCanvasAreaProps> = ({
                         </div>
                     )}
                 </div>
-
-                {/* Filmstrip Moved to Layout Level */}
             </div>
 
             {/* MODALS */}
@@ -97,6 +119,7 @@ export const EditorCanvasArea: React.FC<EditorCanvasAreaProps> = ({
                 isOpen={showPreview}
                 onClose={() => setShowPreview(false)}
                 images={previewImages}
+                onToggleElements={handleRegeneratePreviews}
             />
         </div>
     );

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useEditorUIStore } from '@features/editor/uiStore';
+import { useEditorStore } from '@features/editor/store';
 
 // Components
 import { VectorizeMenu } from '@features/editor/components/menus/VectorizeMenu';
@@ -30,7 +31,7 @@ export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
     return (
         <aside className="absolute left-4 top-24 bottom-24 w-fit z-40 bg-transparent flex flex-col pointer-events-none">
             {/* DOCK CONTAINER */}
-            <div className="w-[350px] bg-black/60 backdrop-blur-md rounded-2xl border border-glass-border shadow-glow-sm flex flex-col items-center py-4 overflow-hidden pointer-events-auto h-full">
+            <div className="w-[300px] bg-black/60 backdrop-blur-md rounded-2xl border border-glass-border shadow-glow-sm flex flex-col items-center py-4 overflow-hidden pointer-events-auto h-full">
 
                 {/* Content Area - Logic to switch between icons mode (collapsed) and full mode (expanded) is handled via CSS/Group hover for now 
                     or we keep it simple: The panel IS the dock. 
@@ -77,12 +78,25 @@ export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
                             isPanelsConfirmed={true}
                             onConfirmPanels={() => { }}
                             onOpenPanelGallery={onOpenPanelGallery}
+                            onAddPanel={() => {
+                                // Add Panel Logic
+                                const { setPanels, panels } = useEditorStore.getState();
+                                const newId = `panel-${Date.now()}`;
+                                const newPanel: any = {
+                                    id: newId,
+                                    type: 'panel',
+                                    order: panels.length + 1,
+                                    box_2d: [100, 100, 500, 500], // Default Box
+                                    points: [100, 100, 500, 100, 500, 500, 100, 500] // Default Rect
+                                };
+                                setPanels((prev: any[]) => [...prev, newPanel]);
+                            }}
                             isCleaned={isCleaned}
                         />
                     )}
 
                     {activeMode === 'edit' && (
-                        <LeftSidebar />
+                        <LeftSidebar onOpenPanelGallery={onOpenPanelGallery} />
                     )}
 
                     {activeMode === 'translate' && <TranslateMenu />}

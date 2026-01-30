@@ -4,6 +4,7 @@ import { Square, Circle, Cloud, Zap } from 'lucide-react';
 import { EditorTool } from '@shared/types';
 
 import { useEditorUIStore } from '@features/editor/uiStore';
+import { EditMenu } from '@features/editor/components/menus/EditMenu';
 
 interface RightSidebarProps {
 }
@@ -60,6 +61,11 @@ export const RightSidebar: React.FC<RightSidebarProps> = () => {
                         Selecione um formato acima e clique na imagem para criar um novo balão.
                     </p>
                 </div>
+            </div>
+
+            {/* EDIT MENU (Contextual props) */}
+            <div className="mt-4 pt-4 border-t border-white/5">
+                <EditMenu />
             </div>
         </div>
     );
