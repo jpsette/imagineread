@@ -141,6 +141,10 @@ export interface ElectronLocal {
     readFile: (path: string) => Promise<{ success: boolean; content?: string; error?: string }>;
     createDirectory: (path: string) => Promise<{ success: boolean; error?: string }>;
     readDirectory: (path: string) => Promise<{ success: boolean; files?: { name: string, isDirectory: boolean }[]; error?: string }>;
+    copyFile: (source: string, dest: string) => Promise<{ success: boolean; error?: string }>;
+    selectFiles: (options?: { filters?: { name: string, extensions: string[] }[] }) => Promise<{ success: boolean; filePaths?: string[]; canceled?: boolean; error?: string }>;
+    downloadFile: (url: string, destPath: string) => Promise<{ success: boolean; error?: string }>;
+    deletePath: (targetPath: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export interface ElectronAPI {

@@ -125,7 +125,10 @@ export const useTileMath = ({
                     x,
                     y,
                     key: `${imageId}-${zoomLevel}-${x}-${y}`,
-                    url: `http://localhost:8000/tiles/${imageId}/${zoomLevel}/${x}/${y}`,
+                    // Use different endpoint for local files vs cloud files
+                    url: imageId.startsWith('/')
+                        ? `http://localhost:8000/tiles/local/${zoomLevel}/${x}/${y}?path=${encodeURIComponent(imageId)}`
+                        : `http://localhost:8000/tiles/${imageId}/${zoomLevel}/${x}/${y}`,
                     xPos: xPos,
                     yPos: yPos
                 });

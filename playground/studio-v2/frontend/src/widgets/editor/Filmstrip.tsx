@@ -184,7 +184,9 @@ const FilmstripCell = (props: FilmstripCellProps) => {
     const handlePageClick = (pageId: string) => {
         if (pageId === currentPageId) return;
 
-        const targetPath = `/editor/${pageId}`;
+        // Encode pageId for URL safety (local paths contain slashes)
+        const encodedId = encodeURIComponent(pageId);
+        const targetPath = `/editor/${encodedId}`;
 
         if (isDirty) {
             setPendingNavigationPath(targetPath);

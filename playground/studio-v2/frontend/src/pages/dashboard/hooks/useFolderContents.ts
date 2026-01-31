@@ -10,26 +10,30 @@ export const useFolderContents = (folderId: string | null, project?: Project | n
 
         queryFn: async () => {
             console.log(`🔍 [useFolderContents] Fetching for folder: ${folderId}, Project: ${project?.name} (${project?.id})`);
-            
+
+            // === LOCAL PATH DETECTION ===
+            // A path starting with "/" is a local filesystem path
+            const isLocalPath = folderId?.startsWith('/') || false;
+
             // === LOCAL MODE STRATEGY ===
-            // If project is LOCAL (has localPath), we use the Bridge.
-            if (project?.localPath) {
-                console.log(`📂 [useFolderContents] Using Local Bridge. Path: ${project.localPath}`);
+            // If project is LOCAL (has localPath) OR folderId is a local path
+            if (project?.localPath || isLocalPath) {
+                const basePath = project?.localPath || folderId;
+                const projectId = project?.id || 'local';
+
+                console.log(`📂 [useFolderContents] Using Local Bridge. Path: ${basePath}`);
 
                 // Case A: Root Folder Request
                 if (folderId === 'LOCAL_PROJECT_ROOT' || !folderId) {
-                    return LocalFileSystemBridge.readDirectory(project.localPath, project.id);
+                    return LocalFileSystemBridge.readDirectory(basePath!, projectId);
                 }
 
-                // Case B: Subfolder Request (folderId is absolute path)
-                // We assume folderId IS the path for local items.
-                // Security Check: simple check to ensure we don't traverse up? 
-                // For now, trusting the app logic.
-                return LocalFileSystemBridge.readDirectory(folderId, project.id);
+                // Case B: Subfolder/File Directory Request (folderId is absolute path)
+                return LocalFileSystemBridge.readDirectory(folderId, projectId);
             }
 
             // === CLOUD MODE STRATEGY (Legacy) ===
-            // Guard against leaking Cloud Root into Local Project (if project is local but missing path - rare edge case)
+            // Guard against leaking Cloud Root into Local Project
             if (folderId === 'LOCAL_PROJECT_ROOT') return [];
 
             console.log(`☁️ [useFolderContents] Using API (Cloud Mode). ParentId: ${folderId}`);

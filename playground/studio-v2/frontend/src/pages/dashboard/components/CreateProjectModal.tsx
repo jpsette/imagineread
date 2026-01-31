@@ -68,9 +68,14 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             alert("Modo Local não disponível neste ambiente.");
             return;
         }
-        const path = await window.electron.local.selectDirectory();
-        if (path) {
-            setLocalPath(path);
+        const fullPath = await window.electron.local.selectDirectory();
+        if (fullPath) {
+            setLocalPath(fullPath);
+            // Extract folder name as suggested project name
+            const folderName = fullPath.split('/').pop() || '';
+            if (!newName.trim()) {
+                setNewName(folderName);
+            }
         }
     };
 

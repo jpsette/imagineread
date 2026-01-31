@@ -29,22 +29,62 @@ export const useFileActions = () => {
 
     const createFolder = async (name: string, parentId: string, color?: string) => {
         try {
-            await api.createFolder({ name, parentId, color });
-            // Invalidate Cache
+            // LOCAL PROJECT DETECTION: If parentId is a filesystem path, use Electron API
+            const isLocalPath = parentId.startsWith('/');
+
+            if (isLocalPath) {
+                console.log('📂 [createFolder] Local path detected, using Electron createDirectory');
+
+                if (window.electron?.local?.createDirectory) {
+                    const newFolderPath = `${parentId}/${name}`;
+                    const result = await window.electron.local.createDirectory(newFolderPath);
+                    if (!result.success) {
+                        throw new Error(result.error || 'Failed to create folder');
+                    }
+                    console.log('✅ [createFolder] Local folder created:', newFolderPath);
+                } else {
+                    console.error('createDirectory API not available');
+                    alert('Criação de pasta local não disponível.');
+                    return;
+                }
+            } else {
+                // Cloud mode: call backend API
+                await api.createFolder({ name, parentId, color });
+            }
+
             invalidate();
         } catch (e) {
             console.error("Failed to create folder", e);
             alert('Erro ao criar pasta');
-            throw e; // Re-throw so UI knows to clear state
+            throw e;
         }
     };
 
     const deleteFolder = async (id: string) => {
         try {
-            await api.deleteFileSystemEntry(id);
+            const isLocalPath = id.startsWith('/');
+
+            if (isLocalPath) {
+                console.log('📂 [deleteFolder] Local path detected, using Electron deletePath:', id);
+
+                if (window.electron?.local?.deletePath) {
+                    const result = await window.electron.local.deletePath(id);
+                    if (!result.success) {
+                        throw new Error(result.error || 'Failed to delete local folder');
+                    }
+                    console.log('✅ [deleteFolder] Local folder deleted successfully');
+                } else {
+                    console.warn('⚠️ [deleteFolder] deletePath API not available');
+                    alert('Delete não disponível. Use o Finder para excluir a pasta.');
+                    return;
+                }
+            } else {
+                await api.deleteFileSystemEntry(id);
+            }
+
             invalidate();
 
-            // Local Optimistic Update (Legacy Store support)
+            // Local Optimistic Update
             const newFs = fileSystem.filter(f => f.id !== id && f.parentId !== id);
             setFileSystem(newFs);
         } catch (e) {
@@ -54,15 +94,41 @@ export const useFileActions = () => {
     };
 
     const deletePages = async (pageIds: string[]) => {
-        // Confirmation is usually handled by UI, but we ensure cleanliness here
         try {
-            // Close Tabs FIRST to prevent "Zombie State" where editor tries to save deleted file
+            // Close Tabs FIRST to prevent "Zombie State"
             const { closeTab } = useTabStore.getState();
             pageIds.forEach(id => {
                 closeTab(id);
             });
 
-            await Promise.all(pageIds.map(id => api.deleteFileSystemEntry(id)));
+            // LOCAL PROJECT DETECTION: Filter out local paths
+            const cloudIds = pageIds.filter(id => !id.startsWith('/'));
+            const localIds = pageIds.filter(id => id.startsWith('/'));
+
+            // Delete local files via Electron API
+            if (localIds.length > 0) {
+                console.log('📂 [deletePages] Deleting local files:', localIds);
+
+                if (window.electron?.local?.deletePath) {
+                    const results = await Promise.all(
+                        localIds.map(id => window.electron!.local.deletePath(id))
+                    );
+                    const failures = results.filter(r => !r.success);
+                    if (failures.length > 0) {
+                        console.error('Some local files failed to delete:', failures);
+                    } else {
+                        console.log('✅ [deletePages] Local files deleted successfully');
+                    }
+                } else {
+                    console.warn('⚠️ [deletePages] deletePath API not available');
+                }
+            }
+
+            // Delete cloud files via backend API
+            if (cloudIds.length > 0) {
+                await Promise.all(cloudIds.map(id => api.deleteFileSystemEntry(id)));
+            }
+
             invalidate();
 
             // Local Optimistic Update
@@ -207,6 +273,116 @@ export const useFileActions = () => {
         }
     };
 
+    /**
+     * Import files into a LOCAL project using Electron's native dialog.
+     */
+    const importFilesLocal = async (targetDir: string, onCopyStart?: () => void): Promise<boolean> => {
+        console.log('[importFilesLocal] Called with targetDir:', targetDir);
+        if (!window.electron?.local?.selectFiles) {
+            console.error('selectFiles API not available');
+            return false;
+        }
+
+        const result = await window.electron.local.selectFiles();
+
+        if (!result.success || !result.filePaths || result.filePaths.length === 0) {
+            if (!result.canceled) {
+                console.error('Failed to select files:', result.error);
+            }
+            return false;
+        }
+
+        onCopyStart?.();
+
+        let successCount = 0;
+        for (const sourcePath of result.filePaths) {
+            const fileName = sourcePath.split('/').pop() || sourcePath.split('\\').pop() || 'file';
+            const destPath = `${targetDir}/${fileName}`;
+
+            const copyResult = await window.electron.local.copyFile(sourcePath, destPath);
+            if (copyResult.success) {
+                successCount++;
+            } else {
+                console.error(`Failed to copy ${fileName}:`, copyResult.error);
+            }
+        }
+
+        if (successCount > 0) {
+            invalidate();
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Import a comic (PDF, CBR, images) into a LOCAL project.
+     */
+    const importComicLocal = async (projectPath: string, onImportStart?: () => void): Promise<boolean> => {
+        console.log('[importComicLocal] Called with projectPath:', projectPath);
+
+        if (!window.electron?.local?.selectFiles) {
+            console.error('selectFiles API not available');
+            return false;
+        }
+
+        const result = await window.electron.local.selectFiles();
+
+        if (!result.success || !result.filePaths || result.filePaths.length === 0) {
+            if (!result.canceled) {
+                console.error('Failed to select files:', result.error);
+            }
+            return false;
+        }
+
+        console.log('[importComicLocal] Files selected:', result.filePaths);
+        onImportStart?.();
+
+        const API_URL = 'http://127.0.0.1:8000';
+        let successCount = 0;
+
+        for (const sourcePath of result.filePaths) {
+            const ext = sourcePath.split('.').pop()?.toLowerCase();
+
+            if (ext === 'pdf' || ext === 'cbr' || ext === 'cbz' || ['jpg', 'jpeg', 'png', 'webp'].includes(ext || '')) {
+                try {
+                    const response = await fetch(`${API_URL}/import_comic`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            source_path: sourcePath,
+                            project_path: projectPath
+                        })
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        const error = await response.json();
+                        console.error(`[importComicLocal] Failed to import:`, error);
+                    }
+                } catch (error) {
+                    console.error(`[importComicLocal] Error importing:`, error);
+                }
+            } else {
+                // Unknown format - copy to project root
+                const fileName = sourcePath.split('/').pop() || 'file';
+                const destPath = `${projectPath}/${fileName}`;
+                const copyResult = await window.electron.local.copyFile(sourcePath, destPath);
+                if (copyResult.success) {
+                    successCount++;
+                }
+            }
+        }
+
+        if (successCount > 0) {
+            invalidate();
+            return true;
+        }
+
+        return false;
+    };
+
     return {
         createFolder,
         deleteFolder,
@@ -215,6 +391,8 @@ export const useFileActions = () => {
         uploadPDF,
         reorderItems,
         renameItem,
-        togglePin
+        togglePin,
+        importFilesLocal,
+        importComicLocal
     };
 };

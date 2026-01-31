@@ -1,8 +1,6 @@
 import React, { useRef, useMemo } from 'react';
 import { Folder, Upload } from 'lucide-react';
-import { Button } from '@shared/ui/Button';
 import { Card } from '@shared/ui/Card';
-import { Input } from '@shared/ui/Input';
 import { Project, FileEntry } from '@shared/types';
 
 interface ProjectDetailProps {
@@ -14,26 +12,17 @@ interface ProjectDetailProps {
     onOpenComic: (comicId: string) => void;
     onBack: () => void;
 
-    // Controlled State Props
-    isCreatingFolder: boolean;
+    // Library creation via modal
     setIsCreatingFolder: (v: boolean) => void;
-    newFolderName: string;
-    setNewFolderName: (v: string) => void;
-    newFolderColor: string;
-    setNewFolderColor: (v: string) => void;
 
     // Actions
-    // Actions
-    onCreateFolder: () => void;
     onDeleteFolder: (id: string) => void;
     onImportFiles: (files: File[]) => void;
+    onImportFilesLocal?: () => void; // For local projects - uses native dialog
 
-    isImporting?: boolean; // New Prop for Import Loading State
+    isImporting?: boolean;
     onTogglePin: (item: FileEntry) => void;
-    onEditItem: (item: FileEntry) => void; // New Prop
-
-    PROJECT_THEMES?: any;
-
+    onEditItem: (item: FileEntry) => void;
 }
 
 import { useFolderContents } from './hooks/useFolderContents'; // NEW HOOK
@@ -44,12 +33,10 @@ import { ProjectItemCard } from './components/ProjectDetail/ProjectItemCard';
 import { ProjectHeader } from './components/ProjectDetail/ProjectHeader';
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({
-    project, currentFolderId, fileSystem: fullFileSystem, searchTerm, PROJECT_THEMES,
+    project, currentFolderId, fileSystem: fullFileSystem, searchTerm,
     onOpenItem, onOpenComic, onBack,
-    isCreatingFolder, setIsCreatingFolder,
-    newFolderName, setNewFolderName,
-    newFolderColor, setNewFolderColor,
-    onCreateFolder, onDeleteFolder, onImportFiles, onTogglePin,
+    setIsCreatingFolder,
+    onDeleteFolder, onImportFiles, onImportFilesLocal, onTogglePin,
     onEditItem, isImporting = false
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,26 +72,50 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
     // --- BREADCRUMB LOGIC ---
     const breadcrumbs = useMemo(() => {
-        if (!project || !fullFileSystem) return [];
+        if (!project) return [];
         const path: { id: string, name: string }[] = [];
 
-        const buildPath = (currentId: string | null) => {
-            if (!currentId) return;
-            if (currentId === project.rootFolderId) return;
+        // For LOCAL projects, parse the filesystem path to build breadcrumbs
+        const isLocalProject = !!project.localPath;
 
-            const folder = fullFileSystem.find(f => f.id === currentId);
-            if (folder) {
-                path.unshift({ id: folder.id, name: folder.name });
-                if (folder.parentId) buildPath(folder.parentId);
+        if (isLocalProject && currentFolderId && currentFolderId.startsWith('/')) {
+            // currentFolderId is a filesystem path like /Users/jp/.../Star Wars/Ashoka
+            // project.localPath is /Users/jp/.../Star Wars
+            // We need to extract the relative path
+            const projectRoot = project.localPath!; // Safe because isLocalProject is true
+
+            if (currentFolderId !== projectRoot && currentFolderId.startsWith(projectRoot)) {
+                // Get relative path after project root
+                const relativePath = currentFolderId.slice(projectRoot.length + 1);
+                const segments = relativePath.split('/').filter(Boolean);
+
+                // Build breadcrumb path incrementally
+                let cumulativePath = projectRoot;
+                for (const segment of segments) {
+                    cumulativePath = `${cumulativePath}/${segment}`;
+                    path.push({ id: cumulativePath, name: segment });
+                }
             }
-        };
+        } else {
+            // CLOUD mode: use fullFileSystem to find folders
+            const buildPath = (currentId: string | null) => {
+                if (!currentId) return;
+                if (currentId === project.rootFolderId) return;
 
-        if (currentFolderId && currentFolderId !== project.rootFolderId) {
-            buildPath(currentFolderId);
+                const folder = fullFileSystem.find(f => f.id === currentId);
+                if (folder) {
+                    path.unshift({ id: folder.id, name: folder.name });
+                    if (folder.parentId) buildPath(folder.parentId);
+                }
+            };
+
+            if (currentFolderId && currentFolderId !== project.rootFolderId) {
+                buildPath(currentFolderId);
+            }
         }
 
         return [
-            { id: project.rootFolderId || 'root', name: project.name },
+            { id: project.localPath || project.rootFolderId || 'root', name: project.name },
             ...path
         ];
     }, [currentFolderId, project, fullFileSystem]);
@@ -124,6 +135,39 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
             )
         );
         return image?.url;
+    };
+
+    // Get cover image for local comics (first page from .origin folder)
+    const getComicCover = (item: FileEntry) => {
+        // Cast to any to access localPath which may not be in type definition
+        const anyItem = item as any;
+
+        // Check if it's a PDF file (by extension or mimeType)
+        const isPDF = item.name?.toLowerCase().endsWith('.pdf') ||
+            item.mimeType?.includes('pdf');
+
+        // For PDF files, the .origin folder is in the PARENT directory
+        if (isPDF && anyItem.localPath) {
+            const parentPath = anyItem.localPath.substring(0, anyItem.localPath.lastIndexOf('/'));
+            return `media://${parentPath}/.origin/page_001.jpg`;
+        }
+
+        if (isPDF && item.id.startsWith('/')) {
+            const parentPath = item.id.substring(0, item.id.lastIndexOf('/'));
+            return `media://${parentPath}/.origin/page_001.jpg`;
+        }
+
+        // For local comics (folder type), derive cover from first page in .origin folder
+        if (anyItem.localPath) {
+            return `media://${anyItem.localPath}/.origin/page_001.jpg`;
+        }
+
+        // For items with an id that looks like a path (legacy folder-based comics)
+        if (item.id.startsWith('/') && (item.type === 'comic' || item.isComic)) {
+            return `media://${item.id}/.origin/page_001.jpg`;
+        }
+
+        return undefined;
     };
 
     // Breadcrumb navigation handler
@@ -165,39 +209,29 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
             <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6 pb-20">
 
-                    {/* CARD 1: CREATE FOLDER */}
-                    {isCreatingFolder ? (
-                        <Card className="h-72 p-4 border border-accent-blue bg-surface flex flex-col justify-center gap-2 shadow-lg shadow-blue-500/10 animate-in zoom-in-95 duration-200">
-                            <span className="text-xs font-bold text-accent-blue uppercase tracking-wider mb-2">Nova Biblioteca</span>
-                            <Input autoFocus value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Nome..." className="text-sm py-2 mb-2" />
-
-                            <div className="flex flex-wrap gap-1 mb-2 mt-2">
-                                {PROJECT_THEMES && PROJECT_THEMES.map((theme: any) => (
-                                    <button
-                                        key={theme.bg}
-                                        onClick={(e) => { e.stopPropagation(); setNewFolderColor(theme.bg); }}
-                                        className={`w-5 h-5 rounded-full transition-all duration-200 border border-transparent ${theme.bg} ${newFolderColor === theme.bg ? 'ring-2 ring-offset-2 ring-offset-surface ring-white scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100 hover:border-white/20'}`}
-                                    />
-                                ))}
-                            </div>
-
-                            <div className="flex gap-2 mt-4">
-                                <Button size="sm" onClick={onCreateFolder} className="flex-1 text-xs font-bold">CRIAR</Button>
-                                <Button size="sm" variant="secondary" onClick={() => setIsCreatingFolder(false)} className="text-xs">X</Button>
-                            </div>
-                        </Card>
-                    ) : (
-                        <Card onClick={() => setIsCreatingFolder(true)}
-                            className="h-72 border border-dashed border-border-color hover:border-accent-blue/50 hover:bg-surface-hover cursor-pointer flex flex-col items-center justify-center gap-4 transition-all group bg-surface/30 opacity-70 hover:opacity-100">
-                            <div className="p-4 rounded-full bg-surface text-text-muted group-hover:bg-accent-blue group-hover:text-white transition-all duration-300 group-hover:scale-110 shadow-inner">
-                                <Folder size={32} />
-                            </div>
-                            <span className="text-xs font-bold text-text-muted group-hover:text-accent-blue uppercase tracking-wider transition-colors">Nova Biblioteca</span>
-                        </Card>
-                    )}
+                    {/* CARD 1: CREATE LIBRARY (Opens Modal) */}
+                    <Card onClick={() => setIsCreatingFolder(true)}
+                        className="h-72 border border-dashed border-border-color hover:border-accent-blue/50 hover:bg-surface-hover cursor-pointer flex flex-col items-center justify-center gap-4 transition-all group bg-surface/30 opacity-70 hover:opacity-100">
+                        <div className="p-4 rounded-full bg-surface text-text-muted group-hover:bg-accent-blue group-hover:text-white transition-all duration-300 group-hover:scale-110 shadow-inner">
+                            <Folder size={32} />
+                        </div>
+                        <span className="text-xs font-bold text-text-muted group-hover:text-accent-blue uppercase tracking-wider transition-colors">Nova Biblioteca</span>
+                    </Card>
 
                     {/* CARD 2: IMPORT */}
-                    <Card onClick={() => fileInputRef.current?.click()}
+                    <Card onClick={() => {
+                        console.log('[ProjectDetail] Import clicked');
+                        console.log('[ProjectDetail] project?.localPath:', project?.localPath);
+                        console.log('[ProjectDetail] onImportFilesLocal:', typeof onImportFilesLocal);
+                        // Use native Electron dialog for local projects
+                        if (project?.localPath && onImportFilesLocal) {
+                            console.log('[ProjectDetail] Calling onImportFilesLocal');
+                            onImportFilesLocal();
+                        } else {
+                            console.log('[ProjectDetail] Using fileInputRef');
+                            fileInputRef.current?.click();
+                        }
+                    }}
                         className="h-72 border border-dashed border-border-color hover:border-purple-500/50 hover:bg-surface-hover cursor-pointer flex flex-col items-center justify-center gap-4 transition-all group bg-surface/30 opacity-70 hover:opacity-100">
                         <div className="p-4 rounded-full bg-surface text-text-muted group-hover:bg-purple-500 group-hover:text-white transition-all duration-300 group-hover:scale-110 shadow-inner">
                             <Upload size={32} />
@@ -210,7 +244,11 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                     {/* DATA ITEMS */}
                     {items.map(item => {
                         // FIX: Use backend-provided coverUrl if available (Lazy Loading support)
-                        const coverImage = item.coverUrl || (item.type === 'folder' ? getFolderCover(item.id) : item.url);
+                        // For comics (PDF/CBZ), use first page as cover
+                        const isComicOrPDF = item.type === 'comic' || item.isComic || item.mimeType?.startsWith('application/');
+                        const coverImage = item.coverUrl ||
+                            (item.type === 'folder' ? getFolderCover(item.id) :
+                                (isComicOrPDF ? getComicCover(item) : item.url));
                         const isSelected = selectedIds.has(item.id);
 
                         const handleClick = (e: React.MouseEvent) => {

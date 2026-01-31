@@ -31,7 +31,15 @@ export const useProjectActions = () => {
                 // === LOCAL MODE ===
                 const { LocalFileSystemService } = await import('@shared/services/filesystem/LocalFileSystemService');
                 const localService = new LocalFileSystemService();
-                const projectFile = await localService.createProject(name, path, color);
+
+                // Determine if user kept the same name as the selected folder
+                const selectedFolderName = path.split('/').pop() || '';
+                const useExistingFolder = selectedFolderName === name;
+
+                const projectFile = await localService.createProject(name, path, color, useExistingFolder);
+
+                // Calculate effective path (where project actually lives)
+                const effectivePath = useExistingFolder ? path : `${path}/${name}`;
 
                 // Map ProjectFile (New) -> Project (Old) for UI compatibility
                 newP = {
@@ -42,11 +50,11 @@ export const useProjectActions = () => {
                     lastModified: projectFile.meta.updatedAt,
                     isPinned: false,
                     rootFolderId: 'LOCAL_PROJECT_ROOT', // Explicit ID to prevent Cloud API fetching,
-                    localPath: path + '/' + name // PERSISTENCE: Must save path!
+                    localPath: effectivePath // PERSISTENCE: Must save path!
                 };
 
                 // === PERSISTENCE: Register the path ===
-                LocalProjectRegistry.registerPath(path + '/' + name);
+                LocalProjectRegistry.registerPath(effectivePath);
 
             } else {
                 // === CLOUD MODE (Legacy) ===

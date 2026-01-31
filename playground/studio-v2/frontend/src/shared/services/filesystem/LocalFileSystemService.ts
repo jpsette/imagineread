@@ -2,21 +2,53 @@ import { IFileSystemService } from './IFileSystemService';
 import { ProjectFile, ProjectPage } from '@shared/types/ProjectSchema';
 import { v4 as uuidv4 } from 'uuid';
 
+// Hidden folder names that should be filtered from UI
+// Must match backend config.LOCAL_PROJECT_FOLDERS
+const HIDDEN_FOLDERS = ['.origin', '.cleaned', '.exports'];
+
+// Backend API URL
+const API_URL = 'http://127.0.0.1:8000';
+
+/**
+ * Check if a folder/file name should be hidden from the user
+ */
+export const isHiddenFolder = (name: string): boolean => {
+    return name.startsWith('.') || HIDDEN_FOLDERS.includes(name);
+};
+
+// Comic metadata stored in project.irproject
+interface ComicEntry {
+    id: string;
+    folder: string;
+    name: string;
+    pageCount: number;
+    createdAt: string;
+}
+
+// Extended ProjectFile with comics list
+interface ProjectFileV2 extends ProjectFile {
+    version: 2;
+    comics?: ComicEntry[];
+}
+
 export class LocalFileSystemService implements IFileSystemService {
 
-    async createProject(name: string, location: string, color?: string): Promise<ProjectFile> {
+    async createProject(name: string, location: string, color?: string, useExistingFolder = false): Promise<ProjectFile> {
         // 0. Guard Electron
         if (!window.electron?.local) throw new Error("Local FileSystem not available");
 
-        // 1. Create Project Structure
-        const projectDir = `${location}/${name}`;
+        // 1. Create Project Folder
+        // If useExistingFolder is true, use location directly (user selected a folder with same name)
+        // Otherwise, create a subfolder with the project name
+        const projectDir = useExistingFolder ? location : `${location}/${name}`;
         await window.electron.local.createDirectory(projectDir);
-        await window.electron.local.createDirectory(`${projectDir}/assets`);
-        await window.electron.local.createDirectory(`${projectDir}/assets/pages`);
+
+        // NOTE: Hidden folders (.origin, .cleaned, .exports) are now created
+        // per-comic by importComic, not at project root
 
         // 2. Create Metadata File (.irproject)
-        const projectFile: ProjectFile = {
-            version: 1,
+        const projectFile: ProjectFileV2 = {
+            version: 2,
             meta: {
                 id: uuidv4(),
                 name: name,
@@ -25,7 +57,8 @@ export class LocalFileSystemService implements IFileSystemService {
                 author: 'Local User',
                 color: color || 'bg-zinc-500'
             },
-            pages: [],
+            comics: [],  // New: list of imported comics
+            pages: [],   // Legacy: kept for backwards compatibility
             settings: {
                 language: 'pt-BR',
                 exportFormat: 'pdf'
@@ -69,14 +102,67 @@ export class LocalFileSystemService implements IFileSystemService {
         return result.success;
     }
 
-    async importPage(_project: ProjectFile, sourceFilePath: string): Promise<ProjectPage> {
-        // 1. Generate unique filename
-        // const ext = sourceFilePath.split('.').pop();
-        // const _newFilename = `page_${uuidv4()}.${ext}`;
+    /**
+     * Import a comic (PDF, images) into a project.
+     * Creates a comic folder with proper structure and extracts pages.
+     */
+    async importComic(projectPath: string, sourcePath: string, customName?: string): Promise<ComicEntry> {
+        console.log('📚 [LocalFS] Importing comic:', sourcePath);
 
-        // TODO: Implement file copy logic via Electron Bridge
-        console.warn("LocalFileSystem: Page Import not fully implemented yet");
+        // Call backend to do the heavy lifting
+        const response = await fetch(`${API_URL}/import_comic`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                source_path: sourcePath,
+                project_path: projectPath,
+                comic_name: customName || undefined
+            })
+        });
 
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to import comic');
+        }
+
+        const result = await response.json();
+        console.log('✅ [LocalFS] Comic imported:', result);
+
+        // Create comic entry for project.irproject
+        const comicEntry: ComicEntry = {
+            id: result.comic_id,
+            folder: result.comic_folder,
+            name: result.comic_name,
+            pageCount: result.page_count,
+            createdAt: new Date().toISOString()
+        };
+
+        // Update project.irproject with new comic
+        try {
+            const project = await this.loadProject(projectPath) as ProjectFileV2;
+
+            // Ensure comics array exists
+            if (!project.comics) {
+                project.comics = [];
+            }
+
+            // Add comic to list
+            project.comics.push(comicEntry);
+            project.meta.updatedAt = new Date().toISOString();
+
+            await this.saveProject(project, projectPath);
+            console.log('✅ [LocalFS] Project updated with comic:', comicEntry.name);
+        } catch (e) {
+            console.error('Failed to update project.irproject:', e);
+            // Don't fail the import if project update fails
+        }
+
+        return comicEntry;
+    }
+
+    async importPage(_project: ProjectFile, _sourceFilePath: string): Promise<ProjectPage> {
+        // Legacy method - use importComic for new imports
+        console.warn("LocalFileSystem: importPage is deprecated, use importComic instead");
         return {} as any;
     }
 

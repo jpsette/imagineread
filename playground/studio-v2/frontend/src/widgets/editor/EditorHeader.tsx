@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Save, ArrowLeft, X, Undo, Redo, Check, Loader2 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -10,6 +10,7 @@ import { useEditorStore } from '@features/editor/store';
 import { editorModes } from '@features/editor/tools/definitions/editorModes';
 import { EditorMode } from '@shared/types';
 import { UnsavedChangesModal } from '@features/editor/components/modals/UnsavedChangesModal';
+import { useLocalProjectSave } from '@features/editor/hooks/useLocalProjectSave';
 
 export const EditorHeader = () => {
     // --- SMART HEADER LOGIC ---
@@ -29,6 +30,25 @@ export const EditorHeader = () => {
         pendingNavigationPath, setPendingNavigationPath
     } = useEditorUIStore();
 
+    // LOCAL PROJECT DETECTION
+    const isLocalFile = fileId?.startsWith('/') || false;
+
+    // For local files, derive the comic path (parent of .origin folder)
+    // fileId is like /path/to/project/ComicName/.origin/page_001.jpg
+    // We need the comic root: /path/to/project/ComicName
+    const comicPath = useMemo(() => {
+        if (!isLocalFile || !fileId) return null;
+        const parts = fileId.split('/');
+        const originIndex = parts.findIndex(p => p === '.origin');
+        if (originIndex > 0) {
+            return parts.slice(0, originIndex).join('/');
+        }
+        // Fallback: parent of parent
+        return parts.slice(0, -2).join('/');
+    }, [fileId, isLocalFile]);
+
+    const { saveToLocal } = useLocalProjectSave(comicPath);
+
     // Compute Status
     const saveStatus = isSaving ? 'saving' : (isSaved && !isDirty ? 'saved' : 'idle');
 
@@ -38,20 +58,35 @@ export const EditorHeader = () => {
 
         setIsSaving(true);
         const toastId = toast.loading('Salvando alterações...');
+
         try {
             const currentBalloons = useEditorStore.getState().balloons;
             const currentPanels = useEditorStore.getState().panels;
             const cleanImageUrl = useEditorUIStore.getState().cleanImageUrl;
 
-            // API Call
-            await api.updateFileData(fileId, {
-                balloons: currentBalloons,
-                panels: currentPanels,
-                cleanUrl: cleanImageUrl || undefined,
-            });
+            if (isLocalFile) {
+                // LOCAL SAVE: Use Electron filesystem
+                const pageId = fileId.split('/').pop()?.replace(/\.[^.]+$/, '') || 'unknown';
 
-            // Invalidate Cache
-            queryClient.invalidateQueries({ queryKey: ['file', fileId] });
+                const success = await saveToLocal({
+                    pageId,
+                    balloons: currentBalloons,
+                    panels: currentPanels,
+                    cleanedImagePath: cleanImageUrl || undefined,
+                });
+
+                if (!success) throw new Error('Failed to save to local project');
+            } else {
+                // CLOUD SAVE: Use API
+                await api.updateFileData(fileId, {
+                    balloons: currentBalloons,
+                    panels: currentPanels,
+                    cleanUrl: cleanImageUrl || undefined,
+                });
+
+                // Invalidate Cache
+                queryClient.invalidateQueries({ queryKey: ['file', fileId] });
+            }
 
             // Update Store
             setIsDirty(false);
@@ -67,6 +102,7 @@ export const EditorHeader = () => {
             setIsSaving(false);
         }
     };
+
 
     // Navigation Helper
     const performNavigation = () => {

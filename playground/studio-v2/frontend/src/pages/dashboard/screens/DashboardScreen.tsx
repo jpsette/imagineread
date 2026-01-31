@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MainLayout } from '../../../layouts/MainLayout';
 import DraggableWindow from '@shared/ui/DraggableWindow';
 import { LazyExplorer } from '../components/LazyExplorer/LazyExplorer';
@@ -8,6 +8,7 @@ import ProjectManager from '../ProjectManager';
 import { ProjectDetail } from '../ProjectDetail';
 import { RenameItemModal } from '../components/RenameItemModal';
 import { CreateProjectModal } from '../components/CreateProjectModal';
+import { CreateLibraryModal } from '../components/CreateLibraryModal';
 import { api } from '@shared/api/api';
 
 // Stores & Hooks
@@ -53,12 +54,13 @@ export const DashboardScreen: React.FC = () => {
 
     // === ACTIONS (HOOKS) ===
     const { createProject, updateProject, deleteProject, togglePin: togglePinProject } = useProjectActions();
-    const { createFolder, deleteFolder, uploadPages, uploadPDF, renameItem, togglePin } = useFileActions();
+    const { createFolder, deleteFolder, uploadPages, uploadPDF, renameItem, togglePin, importComicLocal } = useFileActions();
 
     // === LOCAL DASHBOARD STATE ===
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
 
     // === LAZY LOAD DATA ===
+    const queryClient = useQueryClient();
 
 
 
@@ -78,8 +80,6 @@ export const DashboardScreen: React.FC = () => {
 
     // Project Detail State
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-    const [newFolderName, setNewFolderName] = useState('');
-    const [newFolderColor, setNewFolderColor] = useState(PROJECT_THEMES[1].bg);
 
     // === HANDLERS ===
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -130,22 +130,6 @@ export const DashboardScreen: React.FC = () => {
         }
     };
 
-    const handleCreateFolder = async () => {
-        if (!newFolderName.trim() || !currentProjectId) return;
-        // Determine parent: currentFolderId OR project root
-        let parent: string | null = currentFolderId;
-        if (!parent) {
-            const proj = projects.find(p => p.id === currentProjectId);
-            if (proj) parent = proj.rootFolderId || null;
-        }
-
-        if (parent) {
-            await createFolder(newFolderName, parent, newFolderColor);
-            setIsCreatingFolder(false);
-            setNewFolderName('');
-        }
-    };
-
     const handleDeleteFolderWrapper = (id: string) => {
         deleteFolder(id);
         if (currentFolderId === id) {
@@ -180,6 +164,38 @@ export const DashboardScreen: React.FC = () => {
 
             if (images.length > 0) {
                 await uploadPages(images, target);
+            }
+        } finally {
+            setIsImporting(false);
+        }
+    };
+
+    /**
+     * Handle import for LOCAL projects using native Electron dialog.
+     * Uses IPC to copy files directly to the project folder.
+     */
+    const handleImportFilesLocal = async () => {
+        console.log('[handleImportFilesLocal] Called');
+        const currentProject = projects.find(p => p.id === currentProjectId);
+        console.log('[handleImportFilesLocal] currentProject:', currentProject);
+        if (!currentProject?.localPath) {
+            console.log('[handleImportFilesLocal] No localPath, returning');
+            return;
+        }
+
+        // Use currentFolderId if inside a library/folder, otherwise use project root
+        const targetPath = currentFolderId || currentProject.localPath;
+        console.log('[handleImportFilesLocal] targetPath:', targetPath);
+
+        try {
+            // Use importComicLocal which creates proper comic folder structure
+            const success = await importComicLocal(targetPath, () => setIsImporting(true));
+
+            if (success) {
+                // Invalidate folder contents cache to refresh UI
+                queryClient.invalidateQueries({ queryKey: ['filesystem', currentFolderId] });
+                queryClient.invalidateQueries({ queryKey: ['filesystem', targetPath] });
+                alert('Quadrinho importado com sucesso!');
             }
         } finally {
             setIsImporting(false);
@@ -300,26 +316,21 @@ export const DashboardScreen: React.FC = () => {
                             currentFolderId={currentFolderId}
                             fileSystem={fullFileSystem || []}
                             searchTerm={searchTerm}
-                            PROJECT_THEMES={PROJECT_THEMES}
 
-                            // Controlled State Props
-                            isCreatingFolder={isCreatingFolder}
+                            // Library Modal Trigger
                             setIsCreatingFolder={setIsCreatingFolder}
-                            newFolderName={newFolderName}
-                            setNewFolderName={setNewFolderName}
-                            newFolderColor={newFolderColor}
-                            setNewFolderColor={setNewFolderColor}
 
                             // Actions
                             onOpenItem={(node: FileEntry) => setCurrentFolderId(node.id)}
-                            onOpenComic={(comicId) => navigate(`/comic/${comicId}`)}
-                            onCreateFolder={handleCreateFolder}
-
+                            onOpenComic={(comicId) => {
+                                const encodedId = encodeURIComponent(comicId);
+                                navigate(`/comic/${encodedId}`);
+                            }}
                             onDeleteFolder={handleDeleteFolderWrapper}
                             onImportFiles={handleImportFiles}
+                            onImportFilesLocal={handleImportFilesLocal}
                             onTogglePin={togglePin}
                             onBack={() => setView('dashboard')}
-                            // Unified Editing
                             onEditItem={(item) => setItemToRename(item)}
                             isImporting={isImporting}
                         />
@@ -350,6 +361,25 @@ export const DashboardScreen: React.FC = () => {
                 newColor={newItemColor}
                 setNewColor={setNewItemColor}
                 projectThemes={PROJECT_THEMES}
+            />
+
+            {/* CREATE LIBRARY MODAL (Inside Project) */}
+            <CreateLibraryModal
+                isOpen={isCreatingFolder}
+                onClose={() => setIsCreatingFolder(false)}
+                onCreate={async (name, color) => {
+                    // Determine parent: currentFolderId OR project root
+                    let parent: string | null = currentFolderId;
+                    if (!parent) {
+                        const proj = projects.find(p => p.id === currentProjectId);
+                        if (proj) parent = proj.localPath || proj.rootFolderId || null;
+                    }
+
+                    if (parent) {
+                        await createFolder(name, parent, color);
+                        setIsCreatingFolder(false);
+                    }
+                }}
             />
 
             <input

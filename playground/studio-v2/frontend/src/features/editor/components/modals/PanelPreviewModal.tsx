@@ -1,5 +1,12 @@
+/**
+ * PanelPreviewModal
+ * 
+ * Modal for managing and reordering panels with drag-and-drop.
+ * Sub-components extracted to PanelPreviewItems.tsx.
+ */
+
 import React, { useState } from 'react';
-import { X, Download, GripVertical, GripHorizontal, Eye, EyeOff } from 'lucide-react';
+import { X, Eye, EyeOff } from 'lucide-react';
 import { BaseModal } from '@shared/ui/Modal';
 
 // DND Kit
@@ -18,152 +25,22 @@ import {
     arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
-    useSortable,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 // Stores
 import { useEditorStore } from '@features/editor/store';
 import { useEditorUIStore } from '@features/editor/uiStore';
 
-// === HELPERS ===
-const VISUAL_PREFIX = 'visual-';
-const LIST_PREFIX = 'list-';
-
-// === LEFT COLUMN: VISUAL ITEM ===
-interface SortableVisualItemProps {
-    id: string; // "visual-{panelId}"
-    realId: string; // "{panelId}"
-    index: number;
-    img: string;
-}
-
-const SortableVisualItem = ({ id, index, img }: SortableVisualItemProps) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.3 : 1,
-        zIndex: isDragging ? 999 : 'auto',
-    };
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-            className="w-full bg-[#1e1e1e] p-2 rounded-lg border border-[#333] shadow-lg relative group transition-colors hover:border-zinc-500 cursor-grab active:cursor-grabbing mb-2"
-        >
-            {/* Header info */}
-            <div className="flex items-center justify-between mb-1.5 px-1">
-                <div className="bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-md flex items-center gap-1">
-                    <span>#{index + 1}</span>
-                </div>
-                <div className="text-zinc-500 text-xs flex items-center gap-1">
-                    <GripVertical size={12} />
-                </div>
-            </div>
-
-            {/* Standard Box Container */}
-            <div className="w-full h-32 bg-black/40 rounded border border-zinc-800 flex items-center justify-center overflow-hidden relative">
-                <img
-                    src={img}
-                    alt={`Panel ${index + 1}`}
-                    className="max-w-full max-h-full object-contain pointer-events-none select-none shadow-md"
-                />
-            </div>
-
-            <div className="mt-1.5 flex justify-end items-center px-1">
-                {/* Prevent Drag on Download Link */}
-                <a
-                    href={img}
-                    download={`panel-${index + 1}.png`}
-                    className="text-blue-400 hover:text-blue-300 text-[10px] flex items-center gap-1 cursor-pointer"
-                    onPointerDown={(e) => e.stopPropagation()} // Stop drag start
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <Download size={10} /> Baixar
-                </a>
-            </div>
-        </div>
-    );
-};
-
-// === RIGHT COLUMN: LIST ITEM ===
-interface SortableListItemProps {
-    id: string; // "list-{panelId}"
-    realId: string;
-    index: number;
-}
-
-const SortableListItem = ({ id, index }: SortableListItemProps) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 999 : 'auto',
-    };
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-            className="w-full h-9 flex items-center justify-between px-3 bg-[#252525] border border-[#333] rounded hover:bg-[#333] hover:border-zinc-600 cursor-grab active:cursor-grabbing group mb-1.5"
-        >
-            <div className="flex items-center gap-2">
-                <GripHorizontal size={14} className="text-zinc-600 group-hover:text-zinc-400" />
-                <span className="text-xs font-medium text-zinc-300">Quadro {index + 1}</span>
-            </div>
-            <div className="bg-emerald-900/50 text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-emerald-800">
-                #{index + 1}
-            </div>
-        </div>
-    );
-}
-
-
-// === OVERLAY COMPONENTS ===
-const VisualDragOverlay = ({ index, img }: { index: number, img: string }) => (
-    <div className="w-full bg-[#2a2a2a] p-2 rounded-lg border border-blue-500 shadow-2xl relative scale-105 cursor-grabbing opacity-90">
-        <div className="bg-blue-600 w-fit text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-md mb-1.5">
-            #{index + 1}
-        </div>
-        <div className="w-full h-32 bg-black/40 rounded border border-zinc-700 flex items-center justify-center overflow-hidden">
-            <img src={img} className="max-w-full max-h-full object-contain" />
-        </div>
-    </div>
-);
-
-const ListDragOverlay = ({ index }: { index: number }) => (
-    <div className="w-full h-9 flex items-center justify-between px-3 bg-blue-900/40 border border-blue-500 rounded shadow-xl cursor-grabbing">
-        <div className="flex items-center gap-2">
-            <GripHorizontal size={14} className="text-blue-300" />
-            <span className="text-xs font-bold text-white">Quadro {index + 1}</span>
-        </div>
-    </div>
-);
-
+// Extracted Components
+import {
+    VISUAL_PREFIX,
+    LIST_PREFIX,
+    SortableVisualItem,
+    SortableListItem,
+    VisualDragOverlay,
+    ListDragOverlay
+} from './PanelPreviewItems';
 
 interface PanelPreviewModalProps {
     isOpen: boolean;
@@ -203,7 +80,6 @@ export const PanelPreviewModal: React.FC<PanelPreviewModalProps> = ({
 
         if (!over) return;
 
-        // Strip prefixes to compare real IDs
         const activeRaw = (active.id as string).replace(VISUAL_PREFIX, '').replace(LIST_PREFIX, '');
         const overRaw = (over.id as string).replace(VISUAL_PREFIX, '').replace(LIST_PREFIX, '');
 
@@ -211,18 +87,16 @@ export const PanelPreviewModal: React.FC<PanelPreviewModalProps> = ({
             const oldIndex = panels.findIndex((p) => p.id === activeRaw);
             const newIndex = panels.findIndex((p) => p.id === overRaw);
 
-            // 1. Store Update
             const newPanels = arrayMove(panels, oldIndex, newIndex);
             const reorderedPanels = newPanels.map((p, idx) => ({ ...p, order: idx + 1 }));
             setPanels(reorderedPanels);
 
-            // 2. UI Update
             const newImages = arrayMove(images, oldIndex, newIndex);
             setPreviewImages(newImages);
         }
     };
 
-    // Determine what we are dragging to show correct overlay
+    // Determine overlay state
     const isDraggingVisual = activeId?.startsWith(VISUAL_PREFIX);
     const activeRawId = activeId ? activeId.replace(VISUAL_PREFIX, '').replace(LIST_PREFIX, '') : null;
     const activeIndex = panels.findIndex(p => p.id === activeRawId);
@@ -234,8 +108,8 @@ export const PanelPreviewModal: React.FC<PanelPreviewModalProps> = ({
         <BaseModal
             isOpen={isOpen}
             onClose={onClose}
-            size="4xl" // Reduced from 6xl
-            className="h-[75vh] bg-[#1e1e1e] border-[#333]" // Reduced height
+            size="4xl"
+            className="h-[75vh] bg-[#1e1e1e] border-[#333]"
             header={
                 <div className="flex items-center justify-between p-3 border-b border-[#333] shrink-0">
                     <h2 className="text-sm font-bold text-white flex items-center gap-2">
@@ -243,7 +117,6 @@ export const PanelPreviewModal: React.FC<PanelPreviewModalProps> = ({
                     </h2>
 
                     <div className="flex items-center gap-3">
-                        {/* ELEMENTS TOGGLE */}
                         {onToggleElements && (
                             <button
                                 onClick={() => onToggleElements(!showBalloons)}
@@ -283,7 +156,7 @@ export const PanelPreviewModal: React.FC<PanelPreviewModalProps> = ({
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >
-                    {/* LEFT COL: VISUALS (Scrollable) */}
+                    {/* LEFT COL: VISUALS */}
                     <div className="w-2/3 h-full overflow-y-auto p-4 border-r border-[#333]">
                         <h3 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-3">Visualização</h3>
 
@@ -306,7 +179,7 @@ export const PanelPreviewModal: React.FC<PanelPreviewModalProps> = ({
                         </SortableContext>
                     </div>
 
-                    {/* RIGHT COL: LIST (Scrollable) */}
+                    {/* RIGHT COL: LIST */}
                     <div className="w-1/3 h-full overflow-y-auto p-3 bg-[#181818]">
                         <h3 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-3">Lista de Ordem</h3>
 

@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist database and library data
+      - imagine_read_data:/app/data
+      # Mount credentials for Google AI (optional - for AI features)
+      - ./backend/credentials.json:/app/credentials.json:ro
+    environment:
+      - PROJECT_ID=${PROJECT_ID:-seismic-mantis-483123-g8}
+      - LOCATION=${LOCATION:-us-central1}
+      - MODEL_ID=${MODEL_ID:-gemini-2.5-flash}
+      - CREDENTIALS_PATH=/app/credentials.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_URL=http://localhost:8000
+
+volumes:
+  imagine_read_data:

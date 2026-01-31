@@ -19,6 +19,10 @@ contextBridge.exposeInMainWorld('electron', {
         readFile: (path: string) => ipcRenderer.invoke('read-file', path),
         createDirectory: (path: string) => ipcRenderer.invoke('create-directory', path),
         readDirectory: (path: string) => ipcRenderer.invoke('read-directory', path),
+        copyFile: (source: string, dest: string) => ipcRenderer.invoke('copy-file', { sourcePath: source, destPath: dest }),
+        selectFiles: (options?: { filters?: { name: string, extensions: string[] }[] }) => ipcRenderer.invoke('select-files', options),
+        downloadFile: (url: string, destPath: string) => ipcRenderer.invoke('download-file', { url, destPath }),
+        deletePath: (targetPath: string) => ipcRenderer.invoke('delete-path', targetPath),
     },
 
     // Legacy / Utils

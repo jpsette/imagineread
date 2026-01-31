@@ -51,7 +51,7 @@ export const BalloonText: React.FC<BalloonTextProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             fontFamily: balloon.fontFamily || 'Comic Neue',
-            fontSize: `${balloon.fontSize || 14}px`,
+            fontSize: `${balloon.fontSize || 11}px`,
             color: balloon.textColor || '#000000',
             fontWeight: (balloon.fontStyle || '').includes('bold') ? 'bold' : 'normal',
             fontStyle: (balloon.fontStyle || '').includes('italic') ? 'italic' : 'normal',
@@ -119,7 +119,7 @@ export const BalloonText: React.FC<BalloonTextProps> = ({
                 height={height}
                 padding={padding}
                 fontFamily={balloon.fontFamily || 'Comic Neue'}
-                fontSize={balloon.fontSize || 14}
+                fontSize={balloon.fontSize || 11}
                 fill={balloon.textColor || '#000000'}
                 fontStyle={balloon.fontStyle || 'normal'}
                 textDecoration={balloon.textDecoration || ''}

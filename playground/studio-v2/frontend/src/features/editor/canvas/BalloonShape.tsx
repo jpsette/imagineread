@@ -184,7 +184,7 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
                 id={balloon.id}
                 x={x}
                 y={y}
-                draggable={!isEditing}
+                draggable={isSelected && !isEditing}
                 onClick={(e) => { e.cancelBubble = true; onSelect(); }}
                 onTap={(e) => { e.cancelBubble = true; onSelect(); }}
                 onDblClick={(e) => { e.cancelBubble = true; onEditRequest(); }}

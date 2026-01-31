@@ -30,6 +30,7 @@ export const useCanvasTools = ({
         // 1. Deselect if just clicking background
         if (clickedOnEmpty && activeTool === 'select') {
             onSelect(null);
+            setEditingId(null); // Exit editing mode to restore Stage dragging
             return;
         }
 

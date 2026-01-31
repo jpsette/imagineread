@@ -44,6 +44,13 @@ if isinstance(APP_DATA_DIR, Path):
 # DEFINE SUBDIRECTORIES
 TEMP_DIR = os.path.join(APP_DATA_DIR, "temp")
 LIBRARY_DIR = os.path.join(APP_DATA_DIR, "library")
+# --- LOCAL PROJECT FOLDER STRUCTURE ---
+# These folders are hidden from the user (dot-prefix for macOS/Linux convention)
+LOCAL_PROJECT_FOLDERS = {
+    "origin": ".origin",      # Original extracted pages (from PDF/CBR)
+    "cleaned": ".cleaned",    # Cleaned pages (post-cleanup)
+    "exports": ".exports",    # Future exports (panels, translations, etc.)
+}
 # Database is also moved to safe storage
 DATABASE_URL = f"sqlite:///{os.path.join(APP_DATA_DIR, 'imagine_read.db')}"
 
