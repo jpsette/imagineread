@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import Konva from 'konva';
-import { Balloon, EditorTool } from '../../../../types'; // Imports from src/types
+import { Balloon, EditorTool } from '@shared/types'; // Imports from src/types
 
 interface UseCanvasToolsProps {
     activeTool: EditorTool;
@@ -30,6 +30,7 @@ export const useCanvasTools = ({
         // 1. Deselect if just clicking background
         if (clickedOnEmpty && activeTool === 'select') {
             onSelect(null);
+            setEditingId(null); // Exit editing mode to restore Stage dragging
             return;
         }
 

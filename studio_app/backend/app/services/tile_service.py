@@ -32,6 +32,28 @@ class TileService:
             
         return self._generate_tile(source_path, tile_dir, zoom, x, y)
 
+    def get_tile_for_local_path(self, source_path: str, zoom: int, x: int, y: int) -> str | None:
+        """
+        Generates tiles for LOCAL files (not in database).
+        Uses MD5 hash of path as cache key.
+        """
+        import hashlib
+        
+        # Create unique cache key from file path
+        path_hash = hashlib.md5(source_path.encode()).hexdigest()
+        
+        tile_dir = os.path.join(TEMP_DIR, "tiles", f"local_{path_hash}", str(zoom))
+        tile_name = f"{x}_{y}.jpg"
+        tile_path = os.path.join(tile_dir, tile_name)
+        
+        # Return cached tile if exists
+        if os.path.exists(tile_path):
+            return tile_path
+        
+        # Generate new tile
+        return self._generate_tile(source_path, tile_dir, zoom, x, y)
+
+
     def _find_source_image(self, image_id: str, db=None) -> str | None:
         # STRATEGY 1: Database Lookup (For File IDs)
         if db:

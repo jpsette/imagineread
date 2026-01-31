@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Group, Rect, Text, Transformer, Ellipse } from 'react-konva';
 import Konva from 'konva';
-import { Balloon } from '../../../types';
+import { Balloon } from '@shared/types';
 
 interface CanvasItemProps {
     item: Balloon;

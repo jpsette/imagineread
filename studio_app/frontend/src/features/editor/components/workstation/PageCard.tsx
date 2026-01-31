@@ -1,7 +1,7 @@
 import React from 'react';
 import { Check } from 'lucide-react';
-import { Button } from '../../../../ui/Button';
-import { FileEntry } from '../../../../types';
+import { Button } from '@shared/ui/Button';
+import { FileEntry } from '@shared/types';
 
 interface PageCardProps {
     page: FileEntry;
@@ -27,8 +27,16 @@ export const PageCard = React.memo<PageCardProps>(({ page, isSelected, onClick, 
                 className="w-full h-full object-cover select-none"
                 loading="lazy"
                 draggable={false}
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                onError={(e) => { 
+                    e.currentTarget.style.display = 'none'; 
+                    e.currentTarget.parentElement?.classList.add('bg-red-900/20');
+                }}
             />
+            
+            {/* Fallback for broken image */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 bg-black/50">
+               {/* Just a hover effect */}
+            </div>
             {isSelected && (
                 <div className="absolute top-2 right-2 w-6 h-6 bg-accent-blue rounded-full flex items-center justify-center shadow-lg">
                     <Check size={14} className="text-white" strokeWidth={3} />

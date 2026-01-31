@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, protocol, net } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
@@ -6,6 +6,12 @@ import { spawn, ChildProcess } from 'child_process'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Register 'media' as a privileged scheme BEFORE app is ready
+// This allows media:// URLs to be treated like standard URLs (fetch, CORS, etc.)
+protocol.registerSchemesAsPrivileged([
+    { scheme: 'media', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } }
+]);
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -38,7 +44,7 @@ function startPythonSubprocess() {
         }
     }
 
-    pythonProcess = spawn(pythonExecutable, [backendPath], {
+    pythonProcess = spawn(pythonExecutable, [backendPath, '--ignore', 'ignore'], {
         cwd: path.dirname(backendPath), // Run inside backend folder so imports work
         stdio: 'inherit' // Pipe output to parent console
     })
@@ -101,6 +107,21 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(() => {
+    // Register handler for media:// URLs
+    // Chromium normalizes media:///Users/path to media://users/path (host=users, path=/path)
+    // We need to reconstruct the original absolute path: /Users/path
+    protocol.handle('media', (request) => {
+        const url = new URL(request.url);
+        // Reconstruct: /<hostname><pathname> (hostname becomes first path segment)
+        // Example: media://users/jp/Documents -> /Users/jp/Documents
+        // Note: hostname is lowercased by browser, so we capitalize first letter for macOS
+        const hostname = url.hostname;
+        const capitalizedHost = hostname.charAt(0).toUpperCase() + hostname.slice(1);
+        const filePath = decodeURIComponent(`/${capitalizedHost}${url.pathname}`);
+        console.log(`[media] Request: ${request.url} -> file://${filePath}`);
+        return net.fetch(`file://${filePath}`);
+    });
+
     startPythonSubprocess()
     createWindow()
     setupIpcHandlers()
@@ -188,6 +209,105 @@ function setupIpcHandlers() {
             return { success: true };
         } catch (error: any) {
             console.error('Failed to create directory:', dirPath, error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 5. Read Directory (List Files)
+    ipcMain.handle('read-directory', async (_, dirPath) => {
+        try {
+            const dirents = await fs.promises.readdir(dirPath, { withFileTypes: true });
+            const files = dirents.map(dirent => ({
+                name: dirent.name,
+                isDirectory: dirent.isDirectory(),
+                // Add explicit file extension check if needed later
+            }));
+            return { success: true, files };
+        } catch (error: any) {
+            console.error('Failed to read directory:', dirPath, error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 6. Copy File (for local imports)
+    ipcMain.handle('copy-file', async (_, { sourcePath, destPath }) => {
+        try {
+            // Ensure destination directory exists
+            const destDir = path.dirname(destPath);
+            await fs.promises.mkdir(destDir, { recursive: true });
+            await fs.promises.copyFile(sourcePath, destPath);
+            return { success: true };
+        } catch (error: any) {
+            console.error('Failed to copy file:', sourcePath, '->', destPath, error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 7. Select Files Dialog (returns full paths - bypasses browser security)
+    ipcMain.handle('select-files', async (_, options?: { filters?: { name: string, extensions: string[] }[] }) => {
+        console.log('[select-files] Handler called with options:', options);
+        if (!win) return { success: false, error: 'No window' };
+        const result = await dialog.showOpenDialog(win, {
+            properties: ['openFile', 'multiSelections'],
+            filters: options?.filters || [
+                { name: 'All Files', extensions: ['*'] },
+                { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff'] },
+                { name: 'PDF', extensions: ['pdf'] },
+                { name: 'Comics', extensions: ['cbz', 'cbr', 'cb7'] }
+            ]
+        });
+        console.log('[select-files] Dialog result:', result);
+        if (result.canceled) return { success: false, canceled: true };
+        return { success: true, filePaths: result.filePaths };
+    });
+
+    // 8. Download File from URL (for cleaned images from backend)
+    ipcMain.handle('download-file', async (_, { url, destPath }) => {
+        try {
+            console.log('[download-file] Downloading:', url, '->', destPath);
+
+            // Ensure destination directory exists
+            const destDir = path.dirname(destPath);
+            await fs.promises.mkdir(destDir, { recursive: true });
+
+            // Fetch the file
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
+            }
+
+            // Get the buffer and write to file
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            await fs.promises.writeFile(destPath, buffer);
+
+            console.log('[download-file] Success:', destPath);
+            return { success: true };
+        } catch (error: any) {
+            console.error('Failed to download file:', url, '->', destPath, error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 9. Delete File/Folder (for local project deletion)
+    ipcMain.handle('delete-path', async (_, targetPath: string) => {
+        try {
+            console.log('[delete-path] Deleting:', targetPath);
+
+            const stats = await fs.promises.stat(targetPath);
+
+            if (stats.isDirectory()) {
+                // Recursively delete directory
+                await fs.promises.rm(targetPath, { recursive: true, force: true });
+            } else {
+                // Delete single file
+                await fs.promises.unlink(targetPath);
+            }
+
+            console.log('[delete-path] Success:', targetPath);
+            return { success: true };
+        } catch (error: any) {
+            console.error('Failed to delete path:', targetPath, error);
             return { success: false, error: error.message };
         }
     });

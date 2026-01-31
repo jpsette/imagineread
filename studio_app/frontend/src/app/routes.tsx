@@ -1,15 +1,15 @@
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { DashboardScreen } from '../features/dashboard/screens/DashboardScreen';
+import { DashboardScreen } from '@pages/dashboard/screens/DashboardScreen';
 
 // Lazy Imports (Named Exports trick)
 // Lazy Imports (Named Exports trick)
 const WorkstationScreen = React.lazy(() =>
-    import('../features/editor/screens/WorkstationScreen').then(module => ({ default: module.WorkstationScreen }))
+    import('@pages/editor/WorkstationScreen').then(module => ({ default: module.WorkstationScreen }))
 );
 
 // Static Import for Stability (Prevents unmount on ID change)
-import { EditorScreen } from '../features/editor/screens/EditorScreen';
+import { EditorScreen } from '@pages/editor/EditorScreen';
 
 const EditorLoader = () => (
     <div className="fixed inset-0 bg-black flex items-center justify-center text-white">

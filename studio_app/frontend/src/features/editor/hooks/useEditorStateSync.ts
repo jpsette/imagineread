@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useEditorStore } from '../store';
-import { useEditorUIStore } from '../uiStore';
+import { useEditorUIStore } from '@features/editor/uiStore';
 import { commandManager } from '../commands/CommandManager';
-import { Balloon, Panel } from '../../../types';
+import { Balloon, Panel } from '@shared/types';
 
 interface UseEditorStateSyncProps {
     fileId: string;

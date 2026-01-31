@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useEditorUIStore } from '../uiStore';
+import { useEditorUIStore } from '@features/editor/uiStore';
 import { useEditorStore } from '../store';
 import { ToolRegistry } from '../tools/ToolRegistry';
 

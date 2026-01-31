@@ -2,11 +2,11 @@ import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useEditorStore } from '../store';
-import { useEditorUIStore } from '../uiStore';
-import { api } from '../../../services/api';
+import { useEditorUIStore } from '@features/editor/uiStore';
+import { api } from '@shared/api/api';
 import { commandManager } from '../commands/CommandManager';
 import { AddBalloonCommand, RemoveBalloonCommand, UpdateBalloonCommand } from '../commands/balloonCommands';
-import { Balloon } from '../../../types';
+import { Balloon } from '@shared/types';
 
 interface UseEditorCommandsProps {
     fileId: string;

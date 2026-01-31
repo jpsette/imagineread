@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useJobStore } from '../stores/useJobStore';
 import { Activity, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Loader2, Download } from 'lucide-react';
-import { Job, JobState } from '../types';
+import { Job, JobState } from '@shared/types';
 
 const StatusIcon = ({ status }: { status: JobState }) => {
     switch (status) {

@@ -4,7 +4,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-import { FileEntry } from '../../../../types';
+import { FileEntry } from '@shared/types';
 import { PageCard } from './PageCard';
 
 // === TYPES ===

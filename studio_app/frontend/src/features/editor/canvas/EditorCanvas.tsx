@@ -1,18 +1,19 @@
 import React, { useRef } from 'react';
-import { Stage, Layer, Image as KonvaImage } from 'react-konva';
+import { Stage } from 'react-konva';
 import useImage from 'use-image';
 import Konva from 'konva';
-import { BalloonShape } from './BalloonShape';
-import { PanelShape } from './PanelShape';
-import { Balloon, Panel, EditorTool } from '../../../types';
-// import { useEditorStore } from '../store'; // Unused
-import { useEditorUIStore } from '../uiStore';
+import { Balloon, Panel, EditorTool } from '@shared/types';
+import { useEditorUIStore } from '@features/editor/uiStore';
 
 // HOOKS
 import { useCanvasNavigation } from './hooks/useCanvasNavigation';
 import { useCanvasTools } from './hooks/useCanvasTools';
 
-import { TileGrid } from './tiles/components/TileGrid';
+// LAYERS
+import { BackgroundLayer } from './layers/BackgroundLayer';
+import { TilesLayer } from './layers/TilesLayer';
+import { PanelsLayer } from './layers/PanelsLayer';
+import { BalloonsLayer } from './layers/BalloonsLayer';
 
 
 interface EditorCanvasProps {
@@ -25,7 +26,7 @@ interface EditorCanvasProps {
     activeTool?: EditorTool;
     setActiveTool?: (tool: EditorTool) => void;
     onSelect?: (id: string | null) => void;
-    onUpdate?: (id: string, attrs: Partial<Balloon>) => void;
+    onUpdate?: (id: string, attrs: Partial<Balloon> | Partial<Panel>) => void;
     onImageLoad?: (width: number, height: number) => void;
     onEditRequest?: (balloon: Balloon) => void;
     onBalloonAdd: (balloon: Balloon) => void;
@@ -33,28 +34,6 @@ interface EditorCanvasProps {
     setEditingId?: (id: string | null) => void;
     onCanvasReady?: (ready: boolean) => void; // New Prop
 }
-
-// Background Component - Updated to accept 'visible' prop
-const BackgroundImage = ({
-    image,
-    name,
-    visible = true
-}: {
-    image: HTMLImageElement | undefined,
-    name: string,
-    visible?: boolean
-}) => {
-    if (!image) return null;
-    return (
-        <KonvaImage
-            name={name}
-            image={image}
-            visible={visible} // Control visibility without unmounting
-            perfectDrawEnabled={false}
-            listening={false}
-        />
-    );
-};
 
 export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
     imageUrl,
@@ -163,7 +142,7 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         imgOriginal
     });
 
-    const handleEditRequest = (balloon: Balloon) => {
+    const handleEditRequestInternal = (balloon: Balloon) => {
         setEditingId(balloon.id);
         setActiveTool('select');
         onEditRequest(balloon);
@@ -210,80 +189,44 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                 draggable={activeTool === 'select' && !editingId}
                 onMouseDown={handleStageClick}
             >
-                {/* 1. BACKGROUND LAYER (Static) */}
-                {/* Isolated in its own canvas to prevent flickering during Tile redraws */}
-                <Layer listening={false}>
-                    <BackgroundImage
-                        name="base-image"
-                        image={isCleanVisible ? (imgClean || imgOriginal) : imgOriginal} // Fallback to Original if Clean not loaded
-                        visible={statusOriginal === 'loaded'} // Only show if fully loaded to prevent partial render
-                    />
-                </Layer>
+                <BackgroundLayer
+                    isCleanVisible={isCleanVisible}
+                    imgClean={imgClean}
+                    imgOriginal={imgOriginal}
+                    isLoaded={statusOriginal === 'loaded'}
+                />
 
-                {/* 2. TILES LAYER (Dynamic) */}
-                <Layer listening={false} perfectDrawEnabled={false}>
-                    {/* DEEP ZOOM TILES */}
-                    {imgOriginal && statusOriginal === 'loaded' && (
-                        <TileGrid
-                            imageId={activeTileId}
-                            imageWidth={imgOriginal.naturalWidth}
-                            imageHeight={imgOriginal.naturalHeight}
-                            stageScale={scale}
-                            stageX={position.x}
-                            stageY={position.y}
-                            stageWidth={dimensions.width}
-                            stageHeight={dimensions.height}
-                        // baseImage removed
-                        />
-                    )}
-                </Layer>
+                <TilesLayer
+                    imgOriginal={imgOriginal}
+                    activeTileId={activeTileId}
+                    stageScale={scale}
+                    stageX={position.x}
+                    stageY={position.y}
+                    stageWidth={dimensions.width}
+                    stageHeight={dimensions.height}
+                />
 
-                {/* 3. PANELS LAYER */}
                 {showPanels && (
-                    <Layer perfectDrawEnabled={false}>
-                        {/* Z-INDEX LOGIC: Sort panels so selected one renders last (on top) */}
-                        {[...panels]
-                            .sort((a, b) => (a.id === selectedId ? 1 : b.id === selectedId ? -1 : 0))
-                            .map((panel) => (
-                                <PanelShape
-                                    key={panel.id}
-                                    panel={panel}
-                                    isSelected={panel.id === selectedId}
-                                    onSelect={() => handleSelect(panel.id)}
-                                    onUpdate={(id, attrs) => onUpdate(id, attrs as any)}
-                                />
-                            ))}
-                    </Layer>
+                    <PanelsLayer
+                        panels={panels}
+                        selectedId={selectedId}
+                        onSelect={handleSelect}
+                        onUpdate={(id, attrs) => onUpdate(id, attrs)}
+                    />
                 )}
 
-                {/* 3. BALLOONS LAYER (With Logic for Masks vs Balloons) */}
-                <Layer perfectDrawEnabled={false}>
-                    {balloons.map((balloon) => {
-                        // Logic: Is this a mask or a balloon?
-                        const isMask = balloon.type === 'mask';
-                        const shouldShowShape = isMask ? showMasks : showBalloons;
-
-                        return (
-                            <BalloonShape
-                                key={balloon.id}
-                                balloon={balloon}
-                                isSelected={balloon.id === selectedId}
-                                // @ts-ignore
-                                isEditing={editingId === balloon.id}
-                                // VISIBILITY PROPS
-                                showBalloon={shouldShowShape}
-                                showText={showText}
-                                showMaskOverlay={showMasks} // LINK TO UI STORE
-
-                                onSelect={() => handleSelect(balloon.id)}
-                                onChange={(newAttrs) => onUpdate(balloon.id, newAttrs)}
-                                onEditRequest={() => handleEditRequest(balloon)}
-                                // @ts-ignore
-                                onEditingBlur={() => setEditingId(null)}
-                            />
-                        );
-                    })}
-                </Layer>
+                <BalloonsLayer
+                    balloons={balloons}
+                    selectedId={selectedId}
+                    editingId={editingId}
+                    showMasks={showMasks}
+                    showBalloons={showBalloons}
+                    showText={showText}
+                    onSelect={handleSelect}
+                    onUpdate={onUpdate}
+                    onEditRequest={handleEditRequestInternal}
+                    setEditingId={setEditingId}
+                />
             </Stage>
         </div>
     );

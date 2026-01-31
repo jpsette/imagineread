@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { X, Trash2, Edit3, Download } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { Button } from '@shared/ui/Button';
 
 import { ExportModal } from './ExportModal';
-import { FileEntry } from '../../types';
+import { FileEntry } from '@shared/types';
 import { GridCanvas } from './components/workstation/GridCanvas';
 
 // Note: Ensure PageCard is not duplicated if exported from Grid

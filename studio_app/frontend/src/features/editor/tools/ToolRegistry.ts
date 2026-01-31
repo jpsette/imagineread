@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { EditorTool } from '../../../types';
+import { EditorTool } from '@shared/types';
 import { coreTools, shapeTools } from './definitions/editTools';
 
 export interface ToolDefinition {

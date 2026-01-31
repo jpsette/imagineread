@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { WorkflowStep } from '../../hooks/useVectorization';
-import { useEditorUIStore } from '../../uiStore';
+import { useEditorUIStore } from '@features/editor/uiStore';
 import { Wand2, ScanFace, Loader2, Check, Eye, EyeOff } from 'lucide-react';
-import { BTN_PRIMARY, BTN_SUCCESS_CLICKABLE, BTN_DISABLED, BTN_EYE } from './vectorize/styles';
+import { BTN_PRIMARY, BTN_DISABLED, BTN_EYE } from './vectorize/styles';
 
 // Sub-Components
 import { Step4Cleaning } from './vectorize/Step4Cleaning';
 import { Step5Structure } from './vectorize/Step5Structure';
+import { VectorizeLoadingOverlay } from './vectorize/VectorizeLoadingOverlay';
 
 interface VectorizeMenuProps {
     workflowStep: WorkflowStep;
@@ -41,6 +42,7 @@ interface VectorizeMenuProps {
     isPanelsConfirmed?: boolean;
     onConfirmPanels?: () => void;
     onOpenPanelGallery?: () => void;
+    onAddPanel?: () => void;
     initialCleanUrl?: string | null;
     isCleaned?: boolean;
 }
@@ -66,7 +68,8 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     isPanelsConfirmed,
     onDetectPanels,
     onConfirmPanels,
-    onOpenPanelGallery
+    onOpenPanelGallery,
+    onAddPanel
 }) => {
 
     // Removed unused showBalloons/toggleBalloons from destructuring if they aren't passed prop? 
@@ -98,7 +101,7 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     };
 
     return (
-        <div className={`flex flex-col gap-4 p-1 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`flex flex-col gap-3 p-1 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
 
             {/* HEADER */}
             <div className="flex items-center justify-between px-1">
@@ -108,7 +111,7 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                 {isBusy && <Loader2 className="animate-spin text-blue-500" size={14} />}
             </div>
 
-            {/* STEP 1: DETECT EVERYTHING */}
+            {/* STEP 1: DETECT EVERYTHING - FORCE REFRESH v2 */}
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-white flex items-center gap-2">
@@ -117,32 +120,20 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     </label>
                 </div>
 
-                <div className="flex gap-2">
-                    <button
-                        onClick={handleDetectAll}
-                        disabled={isBusy}
-                        title={isDetected ? "Detectado (Refazer)" : "Detectar Balões e Texto"}
-                        className={isBusy ? BTN_DISABLED : (isDetected ? BTN_SUCCESS_CLICKABLE : BTN_PRIMARY)}
-                    >
-                        {isProcessingBalloons || isProcessingOcr ? (
-                            <>
-                                <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full min-w-[16px]"></span>
-                                <span>Processando...</span>
-                            </>
-                        ) : isDetected ? (
-                            <>
-                                <Check className="w-5 h-5 min-w-[20px]" />
-                                <span>Detectado (Refazer)</span>
-                            </>
-                        ) : (
-                            <>
-                                <Wand2 className="w-5 h-5 min-w-[20px]" />
-                                <span>Detectar Balões e Texto</span>
-                            </>
-                        )}
-                    </button>
+                {/* SPLIT LOGIC: SUCCESS vs DEFAULT */}
+                {isDetected && !isBusy ? (
+                    /* SUCCESS STATE (Green) */
+                    <div className="flex gap-2">
+                        <button
+                            key="btn-detected"
+                            onClick={handleDetectAll}
+                            className="w-full h-[32px] px-3 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-2 select-none border bg-emerald-600/10 text-emerald-500 border-emerald-600/30 hover:bg-emerald-600/20 active:bg-emerald-600/25 cursor-pointer hover:bg-emerald-600/30 active:scale-[0.98] !w-auto flex-1"
+                            title="Detectado (Refazer)"
+                        >
+                            <Check className="w-5 h-5 min-w-[20px]" />
+                            <span>Detectado (Refazer)</span>
+                        </button>
 
-                    {isDetected && (
                         <button
                             onClick={handleToggleEverything}
                             className={BTN_EYE(!showBalloons)}
@@ -154,8 +145,31 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                                 <EyeOff className="w-4 h-4" />
                             )}
                         </button>
-                    )}
-                </div>
+                    </div>
+                ) : (
+                    /* DEFAULT / PROCESSING STATE (Blue) */
+                    <div className="flex gap-2">
+                        <button
+                            key="btn-detect"
+                            onClick={handleDetectAll}
+                            disabled={isBusy}
+                            title="Detectar Balões e Texto"
+                            className={isBusy ? BTN_DISABLED : BTN_PRIMARY}
+                        >
+                            {isProcessingBalloons || isProcessingOcr ? (
+                                <>
+                                    <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full min-w-[16px]"></span>
+                                    <span>Processando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Wand2 className="w-5 h-5 min-w-[20px]" />
+                                    <span>Detectar Balões e Texto</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="h-px bg-white/5 w-full"></div>
@@ -229,9 +243,18 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     isProcessingPanels={isProcessingPanels}
                     onDetectPanels={onDetectPanels}
                     onConfirmPanels={onConfirmPanels}
+
                     onOpenPanelGallery={onOpenPanelGallery}
+                    onAddPanel={onAddPanel} // Pass through
                 />
             </div>
+            {/* OVERLAY: Covers the entire screen when processing */}
+            <VectorizeLoadingOverlay
+                isProcessingBalloons={isProcessingBalloons}
+                isProcessingOcr={isProcessingOcr}
+                isProcessingPanels={isProcessingPanels}
+                isProcessingCleaning={isProcessingCleaning}
+            />
 
         </div>
     );

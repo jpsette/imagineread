@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { EditorTool, EditorMode } from '../../types';
+import { EditorTool, EditorMode } from '@shared/types';
 
 interface EditorUIState {
     // Modes & Tools

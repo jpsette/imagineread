@@ -1,6 +1,6 @@
 import React from 'react';
 import { Circle, Line } from 'react-konva';
-import { Balloon } from '../../../../types';
+import { Balloon } from '@shared/types';
 
 interface BalloonVertexEditorProps {
     balloon: Balloon;
@@ -173,12 +173,13 @@ export const BalloonVertexEditor: React.FC<BalloonVertexEditorProps> = ({
             {points.map((p, i) => (
                 <Circle
                     key={`vertex-${i}-${p.x}-${p.y}`} // Stable key based on content? Or just index? Index is better for React reuse but key needs to change if we add points. using index is fine if we re-render on structure change.
+                    name="vertex-handle"
                     x={p.x}
                     y={p.y}
                     radius={6}
                     fill="#ff0000"
                     stroke="white"
-                    strokeWidth={2}
+                    strokeWidth={0.5}
                     draggable
                     onDragMove={(e) => handlePointDragMove(i, e)}
                     onDragEnd={handlePointDragEnd}

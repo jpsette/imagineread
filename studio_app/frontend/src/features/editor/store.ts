@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Balloon, Panel } from '../../types';
+import { Balloon, Panel } from '@shared/types';
 import { commandManager } from './commands/CommandManager';
 
 interface EditorState {

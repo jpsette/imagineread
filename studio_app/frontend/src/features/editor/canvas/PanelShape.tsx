@@ -1,7 +1,8 @@
-import React from 'react';
-import { Group, Line, Circle, Text } from 'react-konva';
-import { Panel } from '../../../types';
+import React, { useRef, useEffect } from 'react';
+import { Group, Line, Text, Transformer } from 'react-konva';
+import { Panel } from '@shared/types';
 import Konva from 'konva';
+import { PanelVertexEditor } from './parts/PanelVertexEditor';
 
 interface PanelShapeProps {
     panel: Panel;
@@ -18,16 +19,13 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
     onUpdate,
     editable = true
 }) => {
+    const shapeRef = useRef<Konva.Group>(null);
+    const trRef = useRef<Konva.Transformer>(null);
 
-    // Helper to get {x, y} for each point pair
+    // Calculate Box (Geometry)
+    // We trust panel.box_2d or recompute? Better recompute from points to be safe or use box_2d if synced.
+    // Let's recompute for visual consistency.
     const points = panel.points || [];
-    const vertices = [];
-    for (let i = 0; i < points.length; i += 2) {
-        vertices.push({ x: points[i], y: points[i + 1], index: i });
-    }
-
-    // Calculate Bounding Box to position the Delete Button (Top-Right)
-    // Calculate Bounding Box and Center
     const xs = points.filter((_, i) => i % 2 === 0);
     const ys = points.filter((_, i) => i % 2 === 1);
     const minX = Math.min(...xs);
@@ -35,95 +33,205 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
     const minY = Math.min(...ys);
     const maxY = Math.max(...ys);
 
-    // Center point for the large number
-    const centerPos = { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
+    const width = maxX - minX;
+    const height = maxY - minY;
 
-    // Handle Anchor Drag
-    const handleAnchorDragMove = (e: Konva.KonvaEventObject<DragEvent>, index: number) => {
+    // Relative Points for Rendering inside Group
+    const relPoints = points.map((p, i) => {
+        if (i % 2 === 0) return p - minX; // x
+        return p - minY; // y
+    });
+
+    // Center point for Number
+    const centerPos = { x: width / 2, y: height / 2 };
+
+    // --- TRANSFORMER ATTACHMENT ---
+    useEffect(() => {
+        if (isSelected && editable && trRef.current && shapeRef.current) {
+            trRef.current.nodes([shapeRef.current]);
+            trRef.current.getLayer()?.batchDraw();
+        }
+    }, [isSelected, editable, panel.points, panel.box_2d]); // Force update on geom change
+
+    // --- HANDLERS ---
+
+    // 1. DRAG END (Move Whole Panel)
+    const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+        if (e.target !== shapeRef.current) return;
         if (!onUpdate) return;
-        const newPos = e.target.position();
-        const newPoints = [...points];
 
-        // Update x, y at index
-        newPoints[index] = newPos.x;
-        newPoints[index + 1] = newPos.y;
+        const node = shapeRef.current;
+        if (!node) return;
 
-        onUpdate(panel.id, { points: newPoints });
+        // Drift Fix: No Rounding
+        const newX = node.x(); // This corresponds to new minX
+        const newY = node.y(); // This corresponds to new minY
+
+        // Delta
+        const dx = newX - minX;
+        const dy = newY - minY;
+
+        // Shift All Absolute Points
+        const newAbsPoints = points.map((p, i) => {
+            if (i % 2 === 0) return p + dx;
+            return p + dy;
+        });
+
+        const newMinX = newX;
+        const newMinY = newY;
+        const newMaxX = newX + (width * node.scaleX());
+        const newMaxY = newY + (height * node.scaleY());
+
+        onUpdate(panel.id, {
+            points: newAbsPoints,
+            box_2d: [newMinY, newMinX, newMaxY, newMaxX]
+        });
+
+        // Reset Scale (Standard Konva Pattern)
+        node.scaleX(1);
+        node.scaleY(1);
+    };
+
+    // 2. TRANSFORM END (Resize)
+    const handleTransformEnd = () => {
+        if (!onUpdate) return;
+        const node = shapeRef.current;
+        if (!node) return;
+
+        const scaleX = node.scaleX();
+        const scaleY = node.scaleY();
+        const currentX = node.x();
+        const currentY = node.y();
+
+        // Calculate New Points
+        // NewPoint = NewOrigin + (RelPoint * Scale)
+        const newAbsPoints: number[] = [];
+        for (let i = 0; i < relPoints.length; i += 2) {
+            const rx = relPoints[i];
+            const ry = relPoints[i + 1];
+
+            newAbsPoints.push(currentX + rx * scaleX);
+            newAbsPoints.push(currentY + ry * scaleY);
+        }
+
+        // Box
+        const newMinY = currentY;
+        const newMinX = currentX;
+        const newMaxY = currentY + height * scaleY;
+        const newMaxX = currentX + width * scaleX;
+
+        // RESET SCALES
+        node.scaleX(1); node.scaleY(1);
+
+        // CRITICAL FIX: Reset Handle Scales (Same as Balloon)
+        const handles = node.find('.vertex-handle');
+        handles.forEach((handle: any) => {
+            handle.scale({ x: 1, y: 1 });
+        });
+
+        onUpdate(panel.id, {
+            points: newAbsPoints,
+            box_2d: [newMinY, newMinX, newMaxY, newMaxX]
+        });
+    };
+
+    // 3. TRANSFORM (Counter-Scaling Handles)
+    const handleTransform = () => {
+        const node = shapeRef.current;
+        if (!node) return;
+
+        const scaleX = node.scaleX();
+        const scaleY = node.scaleY();
+
+        const handles = node.find('.vertex-handle');
+        const safeScaleX = Math.abs(scaleX) < 0.01 ? 1 : scaleX;
+        const safeScaleY = Math.abs(scaleY) < 0.01 ? 1 : scaleY;
+
+        handles.forEach((handle: any) => {
+            handle.scale({
+                x: 1 / safeScaleX,
+                y: 1 / safeScaleY
+            });
+        });
     };
 
     return (
-        <Group id={panel.id}>
-            {/* The Polygon Panel */}
-            <Line
-                points={panel.points}
-                closed={true}
-                stroke={isSelected ? "#0033CC" : "#0047FF"} // Darker Blue (Selected) / Vibrant Blue (Unselected)
-                strokeWidth={isSelected ? 5 : 3} // Thicker lines
-                dash={isSelected ? [] : [10, 5]} // Solid if selected
-                fill={isSelected ? "rgba(0, 71, 255, 0.6)" : "rgba(0, 71, 255, 0.35)"} // Much higher opacity
-                shadowColor={isSelected ? "rgba(0,0,0,0.5)" : "transparent"}
-                shadowBlur={isSelected ? 5 : 0}
-                onClick={onSelect} // Trigger selection
-                onTap={onSelect}
-                draggable={false}
-                perfectDrawEnabled={false}
-                shadowForStrokeEnabled={false}
-                hitStrokeWidth={20} // Easier to click
-                onMouseEnter={e => {
-                    const container = e.target.getStage()?.container();
-                    if (container) container.style.cursor = 'pointer';
-                }}
-                onMouseLeave={e => {
-                    const container = e.target.getStage()?.container();
-                    if (container) container.style.cursor = 'default';
-                }}
-            />
-
-            {/* Large Centered Number (No Circle) */}
-            <Text
-                x={centerPos.x}
-                y={centerPos.y}
-                text={(panel.order || "?").toString()}
-                fontSize={64} // Large font
-                fontFamily="Arial"
-                fontStyle="bold"
-                fill="white"
-                stroke="black"
-                strokeWidth={2}
-                shadowColor="rgba(0,0,0,0.5)"
-                shadowBlur={10}
-                perfectDrawEnabled={false}
-                shadowForStrokeEnabled={false}
-                align="center"
-                verticalAlign="middle"
-                offsetX={20} // Approximate center offset for a generic number
-                offsetY={32} // Approximate center offset (half font size)
-                listening={false} // Click-through
-            />
-
-            {/* Draggable Anchors (Only if selected & editable) */}
-            {isSelected && editable && vertices.map((v, i) => (
-                <Circle
-                    key={i}
-                    x={v.x}
-                    y={v.y}
-                    radius={6}
-                    fill="#fff"
-                    stroke="#0033CC"
-                    strokeWidth={2}
-                    draggable
-                    onDragMove={(e) => handleAnchorDragMove(e, v.index)}
-                    hitStrokeWidth={10}
+        <>
+            <Group
+                ref={shapeRef}
+                id={panel.id}
+                x={minX}
+                y={minY}
+                draggable={isSelected && editable}
+                onClick={(e) => { e.cancelBubble = true; onSelect(); }}
+                onTap={(e) => { e.cancelBubble = true; onSelect(); }}
+                onDragEnd={handleDragEnd}
+                onTransform={handleTransform}
+                onTransformEnd={handleTransformEnd}
+            >
+                {/* The Polygon Panel (Relative Points) */}
+                <Line
+                    points={relPoints}
+                    closed={true}
+                    stroke={isSelected ? "#0033CC" : "#0047FF"}
+                    strokeWidth={isSelected ? 5 : 3}
+                    dash={isSelected ? [] : [10, 5]}
+                    fill={isSelected ? "rgba(0, 71, 255, 0.6)" : "rgba(0, 71, 255, 0.35)"}
+                    shadowColor={isSelected ? "rgba(0,0,0,0.5)" : "transparent"}
+                    shadowBlur={isSelected ? 5 : 0}
+                    perfectDrawEnabled={false}
+                    shadowForStrokeEnabled={false}
+                    hitStrokeWidth={20}
                     onMouseEnter={e => {
                         const container = e.target.getStage()?.container();
-                        if (container) container.style.cursor = 'move';
+                        if (container) container.style.cursor = 'pointer';
                     }}
                     onMouseLeave={e => {
                         const container = e.target.getStage()?.container();
                         if (container) container.style.cursor = 'default';
                     }}
                 />
-            ))}
-        </Group>
+
+                {/* Large Centered Number */}
+                <Text
+                    x={centerPos.x}
+                    y={centerPos.y}
+                    text={(panel.order || "?").toString()}
+                    fontSize={64}
+                    fontFamily="Arial"
+                    fontStyle="bold"
+                    fill="white"
+                    stroke="black"
+                    strokeWidth={2}
+                    opacity={0.9}
+                    align="center"
+                    verticalAlign="middle"
+                    offsetX={20} // Rough centering
+                    offsetY={32}
+                    listening={false}
+                />
+
+                {/* VERTEX EDITOR (Replaces manual circles) */}
+                {isSelected && editable && onUpdate && (
+                    <PanelVertexEditor
+                        panel={panel}
+                        width={width}
+                        height={height}
+                        onChange={(attrs) => onUpdate(panel.id, attrs)}
+                    />
+                )}
+            </Group>
+
+            {/* TRANSFORMER */}
+            {isSelected && editable && (
+                <Transformer
+                    ref={trRef}
+                    boundBoxFunc={(oldBox, newBox) => {
+                        if (newBox.width < 20 || newBox.height < 20) return oldBox;
+                        return newBox;
+                    }}
+                />
+            )}
+        </>
     );
 };

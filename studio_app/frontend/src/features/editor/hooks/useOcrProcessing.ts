@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Balloon } from '../../../types';
-import { api } from '../../../services/api';
+import { Balloon } from '@shared/types';
+import { api } from '@shared/api/api';
 
 interface UseOcrProcessingProps {
     imageUrl: string;

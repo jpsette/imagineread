@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FileJson, Image, FileText, Download, Loader2 } from 'lucide-react';
-import { BaseModal } from '../../ui/Modal';
-import { API_ENDPOINTS } from '../../config';
+import { BaseModal } from '@shared/ui/Modal';
+import { API_ENDPOINTS } from '@app/config';
 
 interface ExportModalProps {
     isOpen: boolean;

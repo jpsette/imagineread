@@ -1,7 +1,9 @@
 import { create } from 'zustand';
-import { Job } from '../types';
+import { Job } from '@shared/types';
+import { API_BASE_URL } from '@app/config';
 
-const API_BASE = 'http://localhost:8000'; // Hardcoded for now, should move to env
+// Removed Hardcoded API_BASE
+// const API_BASE = 'http://localhost:8000'; 
 
 interface JobStore {
     jobs: Job[];
@@ -28,7 +30,7 @@ export const useJobStore = create<JobStore>((set, get) => ({
     fetchJobs: async (silent = false) => {
         try {
             if (!silent) set({ isLoading: true });
-            const response = await fetch(`${API_BASE}/jobs`);
+            const response = await fetch(`${API_BASE_URL}/jobs`);
             if (!response.ok) throw new Error('Failed to fetch jobs');
 
             const data = await response.json();

@@ -2,9 +2,9 @@
 import Konva from 'konva';
 
 import { toast } from 'sonner';
-import { useEditorUIStore } from '../uiStore';
+import { useEditorUIStore } from '@features/editor/uiStore';
 import { generatePanelPreviews } from '../utils/panelUtils';
-import { Panel } from '../../../types';
+import { Panel } from '@shared/types';
 
 interface UsePanelWorkflowProps {
     stageRef: React.RefObject<Konva.Stage>;

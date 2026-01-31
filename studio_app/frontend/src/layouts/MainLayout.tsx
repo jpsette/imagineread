@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useUIStore } from '../store/useUIStore';
-import { useEditorUIStore } from '../features/editor/uiStore'; // Import specific editor store
+import { useUIStore } from '@app/store/useUIStore';
+import { useEditorUIStore } from '@features/editor/uiStore'; // Import specific editor store
 import { Eye, EyeOff } from 'lucide-react';
 
 interface MainLayoutProps {

@@ -69,6 +69,8 @@ app = FastAPI(title="Imagine Read Engine", lifespan=lifespan)
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
     "http://localhost:3000",
     "app://."
 ]
@@ -104,5 +106,11 @@ app.include_router(tile_routes.router)
 def health_check():
     return {"status": "ok", "service": "Imagine Read Engine (Modular)"}
 
+import argparse
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Imagine Read Backend")
+    parser.add_argument("--port", type=int, default=8000, help="Port to run the server on")
+    args = parser.parse_args()
+    
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

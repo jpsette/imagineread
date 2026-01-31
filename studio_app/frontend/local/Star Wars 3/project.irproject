@@ -1,0 +1,16 @@
+{
+    "version": 1,
+    "meta": {
+        "id": "47303073-31d6-4af5-9e90-57789b6a3983",
+        "name": "Star Wars 3",
+        "createdAt": "2026-01-31T07:40:34.831Z",
+        "updatedAt": "2026-01-31T07:40:34.831Z",
+        "author": "Local User",
+        "color": "bg-rose-500"
+    },
+    "pages": [],
+    "settings": {
+        "language": "pt-BR",
+        "exportFormat": "pdf"
+    }
+}

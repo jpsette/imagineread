@@ -62,7 +62,9 @@ def clean_page_content(client, local_path: str, mask_path: str, filename: str) -
             # Paste AI result ONLY where mask is white
             orig.paste(ai, (0,0), m.convert("L"))
             
-            clean_name = f"clean_{filename}"
+            # FIX: Use session_id to prevent filename collisions across projects
+            base_name, ext = os.path.splitext(filename)
+            clean_name = f"clean_{session_id}_{base_name}{ext}"
             clean_path = os.path.join(TEMP_DIR, clean_name)
             orig.save(clean_path, quality=95)
         

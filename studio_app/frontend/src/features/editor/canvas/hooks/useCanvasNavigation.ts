@@ -1,6 +1,6 @@
 import { useState, useEffect, RefObject, useRef } from 'react';
 import Konva from 'konva';
-import { useEditorUIStore } from '../../uiStore';
+import { useEditorUIStore } from '@features/editor/uiStore';
 
 interface UseCanvasNavigationProps {
     stageRef: RefObject<Konva.Stage>;

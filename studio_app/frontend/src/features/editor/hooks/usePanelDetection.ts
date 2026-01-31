@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { api } from '../../../services/api';
-import { Panel } from '../../../types';
+import { api } from '@shared/api/api';
+import { Panel } from '@shared/types';
 import { commandManager } from '../commands/CommandManager';
 import { SetPanelsCommand } from '../commands/panelCommands';
 

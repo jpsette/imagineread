@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Balloon } from '../../../types';
-import { api } from '../../../services/api';
+import { useState, useEffect, useRef } from 'react';
+import { Balloon } from '@shared/types';
+import { api } from '@shared/api/api';
 
 interface UseImageCleaningProps {
     imageUrl: string;
@@ -21,11 +21,25 @@ export const useImageCleaning = ({
     const [isProcessingCleaning, setIsProcessing] = useState(false);
     const [localCleanUrl, setLocalCleanUrl] = useState<string | null>(cleanUrl || null);
 
+    // Track the current fileId to prevent stale async updates
+    const currentFileIdRef = useRef(fileId);
+    currentFileIdRef.current = fileId;
+
+    // Reset local state when fileId changes (prevents state leakage between files)
+    useEffect(() => {
+        console.log('🔄 [ImageCleaning] FileId changed, resetting local state');
+        setLocalCleanUrl(cleanUrl || null);
+        setIsProcessing(false);
+    }, [fileId, cleanUrl]);
+
     const handleCleanImage = async (onSuccess?: (url: string) => void) => {
         if (!confirm("Isso irá gerar uma versão sem balões. Continuar?")) return;
 
+        // Capture fileId at the start of the async operation
+        const requestFileId = fileId;
+
         setIsProcessing(true);
-        console.log("Chamando Inpainting...");
+        console.log("Chamando Inpainting... for file:", requestFileId);
 
         try {
             const { w: imgW, h: imgH } = imgNaturalSize;
@@ -76,7 +90,13 @@ export const useImageCleaning = ({
             }).filter(Boolean);
 
             console.log("Payload Inpainting:", cleanPayload.length, "items");
-            const result = await api.cleanPage(imageUrl, cleanPayload as any, fileId);
+            const result = await api.cleanPage(imageUrl, cleanPayload as any, requestFileId);
+
+            // STALE REQUEST GUARD: If fileId changed during async operation, discard result
+            if (currentFileIdRef.current !== requestFileId) {
+                console.warn('⚠️ [ImageCleaning] Stale response discarded. Request was for:', requestFileId, 'but current file is:', currentFileIdRef.current);
+                return;
+            }
 
             // ADAPTER PATTERN: The API returns a raw backend response (clean_image_url).
             // We use it directly here to update local state, which flows into our system as 'cleanUrl'.

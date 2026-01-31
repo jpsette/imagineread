@@ -1,4 +1,4 @@
-import { EditorMode } from '../../../../types';
+import { EditorMode } from '@shared/types';
 
 export interface ModeDefinition {
     key: EditorMode;

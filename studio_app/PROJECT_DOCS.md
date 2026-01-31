@@ -81,10 +81,10 @@ If you are new to the codebase, start by reading these 10 files:
 
 1.  **`backend/main.py`**: The heart of the backend. Contains all API endpoints and AI orchestration logic.
 2.  **`frontend/src/App.tsx`**: The main entry point for the React app. Handles routing and global layout.
-3.  **`frontend/src/components/EditorView.tsx`**: The most complex component. Manages the canvas, interaction logic, and bubble rendering.
+3.  **`frontend/src/features/editor/ComicWorkstation.tsx`**: The most complex component. Manages the canvas, interaction logic, and bubble rendering.
 4.  **`PROJECT_DOCS.md`**: This file! The central source of truth.
 5.  **`scripts/update_docs.py`**: The automation script that keeps the stats and structure in this file up to date.
-6.  **`frontend/src/components/ProjectManager.tsx`**: Handles the project list, creation, and folder structure.
+6.  **`frontend/src/pages/dashboard/ProjectManager.tsx`**: Handles the project list, creation, and folder structure.
 7.  **`backend/data.json`**: The persistent database (JSON-based) for projects and settings.
 8.  **`backend/requirements.txt`**: Lists all python dependencies. Critical for environment setup.
 9.  **`frontend/src/types.ts`**: Shared TypeScript definitions. Understanding this helps understand the data flow.

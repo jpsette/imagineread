@@ -1,6 +1,6 @@
 import { Command } from './types';
 import { useEditorStore } from '../store';
-import { Panel } from '../../../types';
+import { Panel } from '@shared/types';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { useFileItem } from '../../../hooks/useFileItem';
-import { useFolderContents } from '../../dashboard/hooks/useFolderContents';
-import { FileEntry } from '../../../types';
+import { useFileItem } from '@shared/hooks/useFileItem';
+import { useFolderContents } from '@pages/dashboard/hooks/useFolderContents';
+import { FileEntry } from '@shared/types';
 
 export interface ComicContext {
     pages: FileEntry[];

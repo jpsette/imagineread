@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { Group, Transformer } from 'react-konva';
-import { Balloon } from '../../../types';
+import { Balloon } from '@shared/types';
 import { BalloonVector } from './parts/BalloonVector';
 import { BalloonText } from './parts/BalloonText';
 import { BalloonVertexEditor } from './parts/BalloonVertexEditor';
@@ -48,7 +48,7 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
             trRef.current.nodes([shapeRef.current]);
             trRef.current.getLayer().batchDraw();
         }
-    }, [isSelected, isEditing]);
+    }, [isSelected, isEditing, balloon.box_2d, balloon.points]);
 
     // HANDLE DRAG & TRANSFORM UPDATES
     // TRANSIENT UPDATE SCHEME:
@@ -67,8 +67,9 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
         isDragging.current = false;
         const node = e.target;
 
-        const newY = Math.round(node.y());
-        const newX = Math.round(node.x());
+        // remove rounding to prevent drift ("walking")
+        const newY = node.y();
+        const newX = node.x();
 
         // Calculate Delta to shift points
         const dy = newY - y;
@@ -77,8 +78,8 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
         const newBox = [
             newY,
             newX,
-            Math.round(newY + (height * node.scaleY())), // Preserves current size
-            Math.round(newX + (width * node.scaleX()))
+            newY + (height * node.scaleY()), // Preserves current size
+            newX + (width * node.scaleX())
         ];
 
         // Shift Points if they exist
@@ -108,8 +109,9 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
         // CORRECTION: Standard is [ymin, xmin, ymax, xmax] -> [y, x, y+h, x+w]
         // Original code used: box_2d: [node.y(), node.x(), ...] which is correct.
 
-        const currentX = Math.round(node.x());
-        const currentY = Math.round(node.y());
+        // remove rounding to fix drift
+        const currentX = node.x();
+        const currentY = node.y();
 
 
 
@@ -125,14 +127,23 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
             }));
         }
 
+        // RESET SCALES
         node.scaleX(1); node.scaleY(1);
+
+        // CRITICAL FIX: Reset Handle Scales
+        // Because of React key stability (e.g. 0,0 point stays 0,0), the Node is reused.
+        // We must manually strip the 'Counter Scale' we applied during transform.
+        const handles = node.find('.vertex-handle');
+        handles.forEach((handle: any) => {
+            handle.scale({ x: 1, y: 1 });
+        });
 
         onChange({
             box_2d: [
                 currentY,
                 currentX,
-                Math.round(currentY + height * scaleY),
-                Math.round(currentX + width * scaleX)
+                currentY + height * scaleY,
+                currentX + width * scaleX
             ],
             points: newPoints
         });
@@ -142,6 +153,30 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
         onChange({ html, text });
     };
 
+    const handleTransform = () => {
+        const node = shapeRef.current;
+        if (!node) return;
+
+        const scaleX = node.scaleX();
+        const scaleY = node.scaleY();
+
+        // COUNTER-SCALE LOGIC:
+        // Prevent vertex handles from deforming when the group is scaled.
+        // We find all nodes with name 'vertex-handle' and apply inverse scale.
+        const handles = node.find('.vertex-handle');
+
+        // Safety: Prevent excessive scaling if scale is too close to 0
+        const safeScaleX = Math.abs(scaleX) < 0.01 ? 1 : scaleX;
+        const safeScaleY = Math.abs(scaleY) < 0.01 ? 1 : scaleY;
+
+        handles.forEach((handle: any) => {
+            handle.scale({
+                x: 1 / safeScaleX,
+                y: 1 / safeScaleY
+            });
+        });
+    };
+
     return (
         <>
             <Group
@@ -149,12 +184,13 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
                 id={balloon.id}
                 x={x}
                 y={y}
-                draggable={!isEditing}
+                draggable={isSelected && !isEditing}
                 onClick={(e) => { e.cancelBubble = true; onSelect(); }}
                 onTap={(e) => { e.cancelBubble = true; onSelect(); }}
                 onDblClick={(e) => { e.cancelBubble = true; onEditRequest(); }}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
+                onTransform={handleTransform} // Added Handler
                 onTransformEnd={handleTransformEnd}
             >
                 {/* 1. VECTOR SHAPE (Controlled by showBalloon) */}
@@ -205,12 +241,20 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
 // Comparison function ignores 'on...' handlers to prevent re-renders when parent creates inline functions.
 // This is critical for preventing "Snap-back" if parent renders during a global event.
 export const BalloonShape = React.memo(BalloonShapeComponent, (prev, next) => {
-    return (
-        prev.balloon === next.balloon &&
-        prev.isSelected === next.isSelected &&
-        prev.isEditing === next.isEditing &&
-        prev.showBalloon === next.showBalloon &&
-        prev.showText === next.showText &&
-        prev.showMaskOverlay === next.showMaskOverlay
-    );
+    // If balloon points/box change, we MUST re-render
+    const balloonChanged = prev.balloon !== next.balloon;
+
+    // If selection changes, we re-render
+    const selectionChanged = prev.isSelected !== next.isSelected;
+
+    // If editing changes
+    const editingChanged = prev.isEditing !== next.isEditing;
+
+    // If visibility changes
+    const visibilityChanged =
+        prev.showBalloon !== next.showBalloon ||
+        prev.showText !== next.showText ||
+        prev.showMaskOverlay !== next.showMaskOverlay;
+
+    return !(balloonChanged || selectionChanged || editingChanged || visibilityChanged);
 });

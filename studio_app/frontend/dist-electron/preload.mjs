@@ -14,7 +14,12 @@ electron.contextBridge.exposeInMainWorld("electron", {
     selectDirectory: () => electron.ipcRenderer.invoke("select-directory"),
     writeFile: (path, content) => electron.ipcRenderer.invoke("write-file", { path, content }),
     readFile: (path) => electron.ipcRenderer.invoke("read-file", path),
-    createDirectory: (path) => electron.ipcRenderer.invoke("create-directory", path)
+    createDirectory: (path) => electron.ipcRenderer.invoke("create-directory", path),
+    readDirectory: (path) => electron.ipcRenderer.invoke("read-directory", path),
+    copyFile: (source, dest) => electron.ipcRenderer.invoke("copy-file", { sourcePath: source, destPath: dest }),
+    selectFiles: (options) => electron.ipcRenderer.invoke("select-files", options),
+    downloadFile: (url, destPath) => electron.ipcRenderer.invoke("download-file", { url, destPath }),
+    deletePath: (targetPath) => electron.ipcRenderer.invoke("delete-path", targetPath)
   },
   // Legacy / Utils
   platform: process.platform,

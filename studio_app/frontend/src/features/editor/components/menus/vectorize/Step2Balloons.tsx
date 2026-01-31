@@ -1,6 +1,6 @@
 import React from 'react';
 import { MessageCircle, Check, Eye, EyeOff } from 'lucide-react';
-import { useEditorUIStore } from '../../../uiStore';
+import { useEditorUIStore } from '@features/editor/uiStore';
 import { BTN_DISABLED, BTN_PRIMARY, BTN_SUCCESS, BTN_EYE } from './styles';
 
 interface Step2BalloonsProps {

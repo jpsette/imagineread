@@ -22,9 +22,9 @@ def get_app_data_path(app_name="Imagine Read"):
     If a .env file exists in the active source directory, we assume Dev Mode 
     and use the local folder to avoid polluting system paths during dev.
     """
-    # 1. Check for Dev Mode (Local .env existence)
-    if os.path.exists(os.path.join(BASE_DIR, ".env")):
-        return BASE_DIR
+    # 1. Check for Dev Mode (Local .env existence OR simple dev override)
+    # FORCE DEV MODE for Playground: Use current directory, not system paths
+    return BASE_DIR
 
     # 2. Resolve System Path
     home = Path.home()
@@ -44,6 +44,13 @@ if isinstance(APP_DATA_DIR, Path):
 # DEFINE SUBDIRECTORIES
 TEMP_DIR = os.path.join(APP_DATA_DIR, "temp")
 LIBRARY_DIR = os.path.join(APP_DATA_DIR, "library")
+# --- LOCAL PROJECT FOLDER STRUCTURE ---
+# These folders are hidden from the user (dot-prefix for macOS/Linux convention)
+LOCAL_PROJECT_FOLDERS = {
+    "origin": ".origin",      # Original extracted pages (from PDF/CBR)
+    "cleaned": ".cleaned",    # Cleaned pages (post-cleanup)
+    "exports": ".exports",    # Future exports (panels, translations, etc.)
+}
 # Database is also moved to safe storage
 DATABASE_URL = f"sqlite:///{os.path.join(APP_DATA_DIR, 'imagine_read.db')}"
 

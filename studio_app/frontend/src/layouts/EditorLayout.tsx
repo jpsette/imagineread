@@ -1,6 +1,6 @@
 import React from 'react';
 import { TabPanel } from '../features/tabs/components/TabPanel';
-import { EditorHeader } from '../features/editor/components/layout/EditorHeader';
+import { EditorHeader } from '@widgets/editor/EditorHeader';
 
 interface EditorLayoutProps {
     children: React.ReactNode;

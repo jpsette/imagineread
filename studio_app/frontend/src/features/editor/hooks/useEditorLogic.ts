@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
-import { Balloon, Panel } from '../../../types';
+import { Balloon, Panel } from '@shared/types';
 import { useEditorStore } from '../store';
-import { useEditorUIStore } from '../uiStore';
+import { useEditorUIStore } from '@features/editor/uiStore';
 import { useEditorStateSync } from './useEditorStateSync';
 import { useEditorCommands } from './useEditorCommands';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Scan, Check, Eye, EyeOff } from 'lucide-react';
-import { useEditorUIStore } from '../../../uiStore';
+import { useEditorUIStore } from '@features/editor/uiStore';
 import { WorkflowStep } from '../../../hooks/useVectorization';
 import { BTN_DISABLED, BTN_PRIMARY, BTN_SUCCESS, BTN_EYE } from './styles';
 interface Step1MaskProps {

@@ -1,6 +1,6 @@
 import { Command } from './types';
 import { useEditorStore } from '../store'; // Direct store access
-import { Balloon } from '../../../types';
+import { Balloon } from '@shared/types';
 
 // Utility to generate unique IDs for commands
 const generateId = () => Math.random().toString(36).substr(2, 9);
