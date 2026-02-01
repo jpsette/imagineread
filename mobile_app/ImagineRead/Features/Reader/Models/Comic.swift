@@ -11,7 +11,7 @@ import PDFKit
 // MARK: - Comic Model
 
 /// Represents a comic with its pages
-struct Comic: Identifiable {
+struct Comic: Identifiable, Equatable {
     let id: UUID
     let title: String
     let pageCount: Int
@@ -30,6 +30,11 @@ struct Comic: Identifiable {
     func page(at index: Int) -> ComicPage? {
         guard index >= 0, index < pageCount else { return nil }
         return ComicPage(index: index, pdfDocument: pdfDocument)
+    }
+    
+    // Equatable - compare by ID only
+    static func == (lhs: Comic, rhs: Comic) -> Bool {
+        lhs.id == rhs.id
     }
 }
 

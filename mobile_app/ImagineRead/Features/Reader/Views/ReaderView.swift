@@ -13,13 +13,22 @@ struct ReaderView: View {
     @Environment(\.dismiss) private var dismiss
     
     let pdfURL: URL
-    let useSample: Bool
     
-    @State private var readingMode: ReadingMode = UserPreferences.shared.readingMode
-    @State private var nightMode: NightMode = UserPreferences.shared.nightMode
-    @State private var filterIntensity: Double = UserPreferences.shared.filterIntensity
+    @State private var readingMode: ReadingMode = .horizontal
+    @State private var nightMode: NightMode = .off
+    @State private var filterIntensity: Double = 0.5
+    @State private var readingLanguage: ReadingLanguage = .portuguese
+    @State private var balloonFontSize: Double = 1.0
     @State private var showControls: Bool = true
+    @State private var showProgressBar: Bool = true
+    @State private var showSettings: Bool = false
+    @State private var showBookmarks: Bool = false
     @State private var isCurrentPageBookmarked: Bool = false
+    @State private var showCompletionModal: Bool = false
+    @State private var suggestions: [LibraryService.ComicItem] = []
+    
+    @EnvironmentObject private var loc: LocalizationService
+    @EnvironmentObject private var prefs: PreferencesService
     
     var body: some View {
         ZStack {
@@ -34,60 +43,132 @@ struct ReaderView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.isLoading)
-        .onAppear {
-            viewModel.loadComic(from: pdfURL)
-            // Navigate to bookmarked page first, otherwise last read page
-            if let bookmarkedPage = UserPreferences.shared.bookmarkedPage(for: pdfURL.path) {
-                viewModel.currentPageIndex = bookmarkedPage
-            } else {
-                let lastPage = UserPreferences.shared.lastReadPage(for: pdfURL.path)
-                if lastPage > 0 {
-                    viewModel.currentPageIndex = lastPage
-                }
+        .onAppear(perform: onViewAppear)
+        .onChange(of: viewModel.comic) { _, comic in
+            if let comic = comic {
+                prefs.saveTotalPages(comic.pageCount, for: pdfURL.path)
             }
         }
         .onChange(of: readingMode) { _, newMode in
-            UserPreferences.shared.readingMode = newMode
+            prefs.saveReadingMode(newMode)
         }
         .onChange(of: viewModel.currentPageIndex) { _, newPage in
-            UserPreferences.shared.saveLastReadPage(newPage, for: pdfURL.path)
+            prefs.saveLastReadPage(newPage, for: pdfURL.path)
+            updateBookmarkState()
+            checkCompletion(newPage)
         }
         .onChange(of: nightMode) { _, newMode in
-            UserPreferences.shared.nightMode = newMode
+            prefs.saveNightMode(newMode)
         }
-        .onChange(of: viewModel.currentPageIndex) { _, _ in
-            updateBookmarkState()
+        .sheet(isPresented: $showSettings) {
+            ReaderSettingsSheet(
+                readingMode: $readingMode,
+                nightMode: $nightMode,
+                filterIntensity: $filterIntensity,
+                showProgressBar: $showProgressBar,
+                readingLanguage: $readingLanguage,
+                balloonFontSize: $balloonFontSize
+            )
         }
-        .onAppear {
-            updateBookmarkState()
+        .sheet(isPresented: $showBookmarks) {
+            if let cache = viewModel.pageCache {
+                BookmarkListSheet(
+                    comicPath: pdfURL.path,
+                    totalPages: viewModel.comic?.pageCount ?? 1,
+                    cache: cache,
+                    onSelectPage: { page in
+                        withAnimation { viewModel.currentPageIndex = page }
+                    }
+                )
+            }
+        }
+        .sheet(isPresented: $showCompletionModal) {
+            if let comic = viewModel.comic, let cache = viewModel.pageCache {
+                ComicCompletionSheet(
+                    comic: comic,
+                    pdfURL: pdfURL,
+                    coverImage: cache.getImage(for: 0) ?? UIImage(),
+                    suggestions: suggestions,
+                    onDismiss: {
+                        showCompletionModal = false
+                    },
+                    onSelectSuggestion: { suggestion in
+                        showCompletionModal = false
+                    }
+                )
+            }
         }
     }
     
+    // MARK: - Lifecycle
+    
+    private func onViewAppear() {
+        viewModel.loadComic(from: pdfURL)
+        
+        // Load preferences
+        readingMode = prefs.readingMode
+        nightMode = prefs.nightMode
+        filterIntensity = prefs.filterIntensity
+        readingLanguage = prefs.readingLanguage
+        balloonFontSize = prefs.balloonFontSize
+        
+        let lastPage = prefs.lastReadPage(for: pdfURL.path)
+        if lastPage > 0 {
+            viewModel.currentPageIndex = lastPage
+        }
+        updateBookmarkState()
+    }
+    
     private func updateBookmarkState() {
-        isCurrentPageBookmarked = UserPreferences.shared.isPageBookmarked(
+        isCurrentPageBookmarked = prefs.isPageBookmarked(
             viewModel.currentPageIndex,
             for: pdfURL.path
         )
     }
     
     private func toggleBookmark() {
-        if isCurrentPageBookmarked {
-            UserPreferences.shared.setBookmark(page: nil, for: pdfURL.path)
-        } else {
-            UserPreferences.shared.setBookmark(page: viewModel.currentPageIndex, for: pdfURL.path)
-        }
+        prefs.toggleBookmark(
+            page: viewModel.currentPageIndex,
+            for: pdfURL.path
+        )
         isCurrentPageBookmarked.toggle()
         
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(isCurrentPageBookmarked ? .success : .warning)
     }
     
+    private func checkCompletion(_ page: Int) {
+        guard let comic = viewModel.comic else { return }
+        
+        // Check if reached last page and hasn't rated yet
+        let lastPageIndex = comic.pageCount - 1
+        if page == lastPageIndex && prefs.comicRating(for: pdfURL.path) == 0 {
+            // Load suggestions (unread comics)
+            loadSuggestions()
+            
+            // Show modal with small delay for better UX
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                showCompletionModal = true
+            }
+        }
+    }
+    
+    private func loadSuggestions() {
+        let library = LibraryService.shared
+        let allComics = library.loadComics()
+        
+        // Filter to unread comics (no progress saved)
+        suggestions = allComics.filter { comic in
+            comic.url.path != pdfURL.path && // Not current comic
+            prefs.lastReadPage(for: comic.url.path) == 0 // Not started
+        }
+    }
+    
     // MARK: - Reader Content
     
     @ViewBuilder
     private func readerContent(comic: Comic, cache: PageCache) -> some View {
-        ZStack(alignment: .bottom) {
-            // Page content
+        ZStack {
             pageContent(comic: comic, cache: cache)
                 .onTapGesture {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -95,13 +176,15 @@ struct ReaderView: View {
                     }
                 }
             
-            // Controls overlay
+            if showProgressBar && readingMode == .vertical {
+                verticalProgressOverlay(totalPages: comic.pageCount)
+            }
+            
             if showControls {
                 controlsOverlay(totalPages: comic.pageCount)
                     .transition(.opacity)
             }
             
-            // Night mode filter
             NightModeOverlay(mode: nightMode, intensity: filterIntensity)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
@@ -138,6 +221,7 @@ struct ReaderView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: viewModel.currentPageIndex)
         .ignoresSafeArea()
     }
     
@@ -145,6 +229,9 @@ struct ReaderView: View {
         GeometryReader { outerGeometry in
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(spacing: 0) {
+                    Color.clear
+                        .frame(height: max(0, (outerGeometry.size.height - outerGeometry.size.width * 1.4) / 2))
+                    
                     ForEach(0..<comic.pageCount, id: \.self) { index in
                         VerticalPageView(pageIndex: index, cache: cache)
                             .background(
@@ -161,6 +248,9 @@ struct ReaderView: View {
                                 }
                             )
                     }
+                    
+                    Color.clear
+                        .frame(height: max(0, (outerGeometry.size.height - outerGeometry.size.width * 1.4) / 2))
                 }
             }
             .onPreferenceChange(VisiblePagePreferenceKey.self) { visiblePage in
@@ -177,101 +267,82 @@ struct ReaderView: View {
         let midY = containerHeight / 2
         let pageMidY = frame.midY
         let distance = abs(pageMidY - midY)
-        
-        if distance < containerHeight / 2 {
-            return pageIndex
-        }
-        return -1
+        return distance < containerHeight / 2 ? pageIndex : -1
     }
     
-    // MARK: - Controls
+    // MARK: - Overlays
+    
+    private func verticalProgressOverlay(totalPages: Int) -> some View {
+        HStack {
+            Spacer()
+            VerticalProgressBar(
+                progress: Double(viewModel.currentPageIndex + 1) / Double(totalPages)
+            )
+            .frame(width: 4)
+            .padding(.trailing, 8)
+            .padding(.vertical, 100)
+        }
+    }
     
     private func controlsOverlay(totalPages: Int) -> some View {
         VStack(spacing: 0) {
-            // Top bar
-            HStack {
-                GlassButton(icon: "xmark") {
-                    dismiss()
-                }
-                
-                // Bookmark indicator (tap to go to bookmark)
-                if let bookmarkedPage = UserPreferences.shared.bookmarkedPage(for: pdfURL.path),
-                   bookmarkedPage != viewModel.currentPageIndex {
-                    Button {
-                        withAnimation {
-                            viewModel.currentPageIndex = bookmarkedPage
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "bookmark.fill")
-                                .font(.system(size: 12))
-                            Text("p.\(bookmarkedPage + 1)")
-                                .font(.system(size: 12, weight: .medium, design: .rounded))
-                        }
-                        .foregroundColor(.orange)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
-                                .fill(.ultraThinMaterial)
-                        )
-                    }
-                }
-                
-                Spacer()
-                
-                GlassButton(
-                    icon: "arrow.right",
-                    action: {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                            readingMode = readingMode.next
-                        }
-                    },
-                    rotation: readingMode.arrowRotation
-                )
-                
-                NightModeButton(mode: $nightMode)
-                
-                // Bookmark button
-                GlassButton(
-                    icon: isCurrentPageBookmarked ? "bookmark.fill" : "bookmark",
-                    action: toggleBookmark
-                )
-            }
-            .padding(.horizontal)
-            .padding(.top, 8)
-            
+            topBar
             Spacer()
-            
-            // Bottom bar with progress
-            VStack(spacing: 12) {
-                // Intensity slider (when filter is active)
-                if nightMode.hasIntensity {
-                    IntensitySlider(intensity: $filterIntensity, mode: nightMode)
-                        .onChange(of: filterIntensity) { _, newValue in
-                            UserPreferences.shared.filterIntensity = newValue
-                        }
-                }
-                
-                // Progress bar
-                ProgressBar(
-                    progress: Double(viewModel.currentPageIndex + 1) / Double(totalPages)
-                )
-                .frame(height: 3)
-                .padding(.horizontal)
-                
-                PageIndicator(text: viewModel.pageDisplayText)
-            }
-            .padding(.bottom, 40)
+            bottomBar(totalPages: totalPages)
         }
     }
+    
+    private var topBar: some View {
+        HStack {
+            GlassButton(icon: "xmark") { dismiss() }
+            bookmarkCountButton
+            Spacer()
+            GlassButton(icon: isCurrentPageBookmarked ? "bookmark.fill" : "bookmark", action: toggleBookmark)
+            GlassButton(icon: "gearshape") { showSettings = true }
+        }
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+    
+    @ViewBuilder
+    private var bookmarkCountButton: some View {
+        let bookmarkCount = prefs.bookmarkedPages(for: pdfURL.path).count
+        if bookmarkCount > 0 {
+            Button { showBookmarks = true } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "bookmark.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                    Text("\(bookmarkCount)")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                }
+                .foregroundColor(.orange)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Capsule().fill(.ultraThinMaterial))
+            }
+        }
+    }
+    
+    private func bottomBar(totalPages: Int) -> some View {
+        VStack(spacing: 12) {
+            if showProgressBar && readingMode != .vertical {
+                ProgressBar(progress: Double(viewModel.currentPageIndex + 1) / Double(totalPages))
+                    .frame(height: 3)
+                    .padding(.horizontal)
+            }
+            PageIndicator(text: viewModel.pageDisplayText)
+        }
+        .padding(.bottom, 40)
+    }
+    
+    // MARK: - States
     
     private var loadingView: some View {
         VStack(spacing: 20) {
             ProgressView()
                 .scaleEffect(1.5)
                 .tint(.white)
-            Text("Carregando quadrinho...")
+            Text(loc.loadingLibrary)
                 .font(.headline)
                 .foregroundColor(.white.opacity(0.8))
         }
@@ -285,109 +356,8 @@ struct ReaderView: View {
                 .foregroundColor(.orange)
             Text(message)
                 .foregroundColor(.white)
-            Button("Fechar") { dismiss() }
+            Button(loc.close) { dismiss() }
                 .foregroundColor(.purple)
-        }
-    }
-}
-
-// MARK: - Progress Bar
-
-private struct ProgressBar: View {
-    let progress: Double
-    
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                // Background
-                Capsule()
-                    .fill(Color.white.opacity(0.2))
-                
-                // Progress
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [.purple, .blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(width: geometry.size.width * progress)
-                    .animation(.easeInOut(duration: 0.2), value: progress)
-            }
-        }
-    }
-}
-
-// MARK: - Preference Key for tracking visible page
-
-private struct VisiblePagePreferenceKey: PreferenceKey {
-    static var defaultValue: Int = -1
-    
-    static func reduce(value: inout Int, nextValue: () -> Int) {
-        let next = nextValue()
-        if next >= 0 {
-            value = next
-        }
-    }
-}
-
-// MARK: - Vertical Page View (seamless)
-
-private struct VerticalPageView: View {
-    let pageIndex: Int
-    @ObservedObject var cache: PageCache
-    
-    @State private var displayImage: UIImage?
-    @State private var aspectRatio: CGFloat = 0.7
-    
-    var body: some View {
-        ZStack {
-            if let image = displayImage ?? cache.getImage(for: pageIndex) {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: .infinity)
-                    .onAppear {
-                        aspectRatio = image.size.width / image.size.height
-                    }
-            } else {
-                Rectangle()
-                    .fill(Color.black)
-                    .aspectRatio(aspectRatio, contentMode: .fit)
-                    .frame(maxWidth: .infinity)
-                    .overlay(
-                        ProgressView()
-                            .tint(.white)
-                    )
-            }
-        }
-        .onAppear {
-            cache.onPageAppear(pageIndex)
-            loadImage()
-        }
-        .onReceive(cache.objectWillChange) { _ in
-            updateImage()
-        }
-    }
-    
-    private func loadImage() {
-        updateImage()
-        if displayImage == nil {
-            Task {
-                for _ in 0..<20 {
-                    try? await Task.sleep(nanoseconds: 50_000_000)
-                    await MainActor.run { updateImage() }
-                    if displayImage != nil { break }
-                }
-            }
-        }
-    }
-    
-    private func updateImage() {
-        if let cached = cache.getImage(for: pageIndex) {
-            displayImage = cached
-            aspectRatio = cached.size.width / cached.size.height
         }
     }
 }

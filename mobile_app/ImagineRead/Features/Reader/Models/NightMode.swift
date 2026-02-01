@@ -58,11 +58,13 @@ struct NightModeOverlay: View {
         case .off:
             Color.clear
         case .sepia:
-            Color.orange.opacity(0.05 + (intensity * 0.25))
+            // Stronger sepia: base 15% + up to 35% more (total 15-50%)
+            Color.orange.opacity(0.15 + (intensity * 0.35))
                 .blendMode(.multiply)
         case .dark:
-            Color.black.opacity(0.1 + (intensity * 0.5))
-                .blendMode(.multiply)
+            // Stronger dark: base 20% + up to 50% more (total 20-70%)
+            Color.black.opacity(0.20 + (intensity * 0.50))
+                .blendMode(.normal)
         }
     }
 }

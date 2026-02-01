@@ -10,6 +10,7 @@ import SwiftUI
 /// Main library view showing all available comics
 struct LibraryView: View {
     @StateObject private var viewModel = LibraryViewModel()
+    @EnvironmentObject private var loc: LocalizationService
     
     private let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -30,7 +31,7 @@ struct LibraryView: View {
             viewModel.loadLibrary()
         }
         .fullScreenCover(item: $viewModel.selectedComic) { comic in
-            ReaderView(pdfURL: comic.url, useSample: false)
+            ReaderView(pdfURL: comic.url)
         }
     }
     
@@ -53,7 +54,7 @@ struct LibraryView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .tint(.white)
-            Text("Carregando biblioteca...")
+            Text(loc.loadingLibrary)
                 .foregroundColor(.gray)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -66,12 +67,12 @@ struct LibraryView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.gray.opacity(0.5))
             
-            Text("Nenhum quadrinho")
+            Text(loc.noComics)
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
             
-            Text("Adicione PDFs na pasta\nComics/ do projeto")
+            Text(loc.addPDFs)
                 .font(.subheadline)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)

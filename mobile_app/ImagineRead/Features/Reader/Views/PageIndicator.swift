@@ -2,7 +2,7 @@
 //  PageIndicator.swift
 //  ImagineRead
 //
-//  View for showing current page position
+//  View for showing current page position and progress bars
 //
 
 import SwiftUI
@@ -25,11 +25,73 @@ struct PageIndicator: View {
     }
 }
 
+// MARK: - Progress Bar (Horizontal)
+
+struct ProgressBar: View {
+    let progress: Double
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Background track
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.white.opacity(0.2))
+                
+                // Progress fill with gradient
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(
+                        LinearGradient(
+                            colors: [.purple, .blue],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: geometry.size.width * min(max(progress, 0), 1))
+                    .animation(.easeOut(duration: 0.2), value: progress)
+            }
+        }
+    }
+}
+
+// MARK: - Vertical Progress Bar
+
+struct VerticalProgressBar: View {
+    let progress: Double
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .bottom) {
+                // Background track
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.white.opacity(0.2))
+                
+                // Progress fill with gradient (bottom to top)
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(
+                        LinearGradient(
+                            colors: [.blue, .purple],
+                            startPoint: .bottom,
+                            endPoint: .top
+                        )
+                    )
+                    .frame(height: geometry.size.height * min(max(progress, 0), 1))
+                    .animation(.easeOut(duration: 0.2), value: progress)
+            }
+        }
+    }
+}
+
 // MARK: - Preview
 
 #Preview {
     ZStack {
         Color.gray
-        PageIndicator(text: "3 / 10")
+        VStack {
+            PageIndicator(text: "3 / 10")
+            ProgressBar(progress: 0.3)
+                .frame(height: 4)
+                .padding()
+        }
     }
 }
+

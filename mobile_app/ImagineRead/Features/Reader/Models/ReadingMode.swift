@@ -31,6 +31,15 @@ enum ReadingMode: String, CaseIterable {
         }
     }
     
+    /// Icon for settings
+    var icon: String {
+        switch self {
+        case .horizontal: return "arrow.left.and.right"
+        case .vertical:   return "arrow.up.and.down"
+        case .oriental:   return "arrow.left.to.line"
+        }
+    }
+    
     /// Next mode in cycle
     var next: ReadingMode {
         switch self {

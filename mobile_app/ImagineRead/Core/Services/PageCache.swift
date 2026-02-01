@@ -20,7 +20,7 @@ final class PageCache: ObservableObject {
     private let lock = NSLock()
     
     /// How many pages to prefetch ahead and behind
-    private let prefetchRadius = 3
+    private let prefetchRadius = 5
     
     // MARK: - Init
     
@@ -36,6 +36,30 @@ final class PageCache: ObservableObject {
         lock.lock()
         defer { lock.unlock() }
         return cache[index]
+    }
+    
+    /// Render a small thumbnail for a page (for bookmark list, etc.)
+    func renderThumbnail(for index: Int, size: CGSize = CGSize(width: 120, height: 170)) -> UIImage? {
+        guard let page = pdfDocument.page(at: index) else { return nil }
+        
+        let bounds = page.bounds(for: .mediaBox)
+        let scale = min(size.width / bounds.width, size.height / bounds.height)
+        
+        let scaledSize = CGSize(
+            width: bounds.width * scale,
+            height: bounds.height * scale
+        )
+        
+        let renderer = UIGraphicsImageRenderer(size: scaledSize)
+        return renderer.image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(origin: .zero, size: scaledSize))
+            
+            context.cgContext.translateBy(x: 0, y: scaledSize.height)
+            context.cgContext.scaleBy(x: scale, y: -scale)
+            
+            page.draw(with: .mediaBox, to: context.cgContext)
+        }
     }
     
     /// Called when viewing a page - triggers prefetching

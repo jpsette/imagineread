@@ -17,7 +17,7 @@ struct PageView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            ZoomableView {
+            ZoomableView(resetID: pageIndex) {
                 ZStack {
                     if let image = displayImage ?? cache.getImage(for: pageIndex) {
                         Image(uiImage: image)

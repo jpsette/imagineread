@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var showSettings = false
+    @State private var showAddComic = false
     
     var body: some View {
         ZStack {
@@ -17,6 +19,39 @@ struct ContentView: View {
                 headerSection
                 LibraryView()
             }
+            
+            // Floating Add Button
+            VStack {
+                Spacer()
+                
+                Button {
+                    showAddComic = true
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.purple, .blue],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 64, height: 64)
+                            .shadow(color: .purple.opacity(0.5), radius: 10, x: 0, y: 5)
+                        
+                        Image(systemName: "plus")
+                            .font(.system(size: 28, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                }
+                .padding(.bottom, 24)
+            }
+        }
+        .sheet(isPresented: $showSettings) {
+            AppSettingsSheet()
+        }
+        .sheet(isPresented: $showAddComic) {
+            AddComicSheet()
         }
     }
     
@@ -53,6 +88,15 @@ struct ContentView: View {
                     .foregroundColor(.white)
                 
                 Spacer()
+                
+                // Settings Button
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .font(.title2)
+                        .foregroundColor(.white.opacity(0.8))
+                }
             }
             .padding(.horizontal, 20)
             .padding(.top, 60)

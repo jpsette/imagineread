@@ -16,7 +16,6 @@
 		B1000004 /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000004 /* ReaderView.swift */; };
 		B1000005 /* PageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000005 /* PageView.swift */; };
 		B1000006 /* PageIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000006 /* PageIndicator.swift */; };
-		B1000008 /* DocumentPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000008 /* DocumentPicker.swift */; };
 		B1000009 /* LibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000009 /* LibraryService.swift */; };
 		B1000010 /* LibraryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000010 /* LibraryViewModel.swift */; };
 		B1000011 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000011 /* LibraryView.swift */; };
@@ -24,11 +23,30 @@
 		B1000013 /* Comics in Resources */ = {isa = PBXBuildFile; fileRef = B2000013 /* Comics */; };
 		B1000014 /* PageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000014 /* PageCache.swift */; };
 		B1000015 /* ReadingMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000015 /* ReadingMode.swift */; };
-		B1000016 /* ReadingModeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000016 /* ReadingModeButton.swift */; };
 		B1000017 /* GlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000017 /* GlassButton.swift */; };
 		B1000018 /* ZoomableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000018 /* ZoomableView.swift */; };
-		B1000019 /* UserPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000019 /* UserPreferences.swift */; };
 		B1000020 /* NightMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000020 /* NightMode.swift */; };
+		B1000021 /* ReaderSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000021 /* ReaderSettings.swift */; };
+		B1000022 /* BookmarkListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000022 /* BookmarkListSheet.swift */; };
+		B1000023 /* ReadingLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000023 /* ReadingLanguage.swift */; };
+		B1000024 /* AppSettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000024 /* AppSettingsSheet.swift */; };
+		B1000026 /* AddComicSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000026 /* AddComicSheet.swift */; };
+		B1000027 /* QRCodeScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000027 /* QRCodeScanner.swift */; };
+		B1000028 /* ReaderOverlays.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000028 /* ReaderOverlays.swift */; };
+		B1000029 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000029 /* AppContainer.swift */; };
+		B1000030 /* LoggerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000030 /* LoggerService.swift */; };
+		B1000031 /* AnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000031 /* AnalyticsService.swift */; };
+		B1000032 /* PreferencesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000032 /* PreferencesService.swift */; };
+		B1000033 /* LocalizationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000033 /* LocalizationService.swift */; };
+		B1000034 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000034 /* APIClient.swift */; };
+		B1000035 /* ComicRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000035 /* ComicRepository.swift */; };
+		B1000036 /* UserRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000036 /* UserRepository.swift */; };
+		B1000037 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000037 /* AppLanguage.swift */; };
+		B1000038 /* OfflineService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000038 /* OfflineService.swift */; };
+		B1000039 /* OfflineLibrarySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000039 /* OfflineLibrarySheet.swift */; };
+		B1000040 /* StarRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000040 /* StarRatingView.swift */; };
+		B1000041 /* ComicSuggestionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000041 /* ComicSuggestionCard.swift */; };
+		B1000042 /* ComicCompletionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000042 /* ComicCompletionSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,7 +60,6 @@
 		B2000004 /* ReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderView.swift; sourceTree = "<group>"; };
 		B2000005 /* PageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageView.swift; sourceTree = "<group>"; };
 		B2000006 /* PageIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageIndicator.swift; sourceTree = "<group>"; };
-		B2000008 /* DocumentPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPicker.swift; sourceTree = "<group>"; };
 		B2000009 /* LibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryService.swift; sourceTree = "<group>"; };
 		B2000010 /* LibraryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryViewModel.swift; sourceTree = "<group>"; };
 		B2000011 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
@@ -50,11 +67,30 @@
 		B2000013 /* Comics */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Comics; sourceTree = "<group>"; };
 		B2000014 /* PageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageCache.swift; sourceTree = "<group>"; };
 		B2000015 /* ReadingMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingMode.swift; sourceTree = "<group>"; };
-		B2000016 /* ReadingModeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingModeButton.swift; sourceTree = "<group>"; };
 		B2000017 /* GlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassButton.swift; sourceTree = "<group>"; };
 		B2000018 /* ZoomableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomableView.swift; sourceTree = "<group>"; };
-		B2000019 /* UserPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferences.swift; sourceTree = "<group>"; };
 		B2000020 /* NightMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightMode.swift; sourceTree = "<group>"; };
+		B2000021 /* ReaderSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSettings.swift; sourceTree = "<group>"; };
+		B2000022 /* BookmarkListSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkListSheet.swift; sourceTree = "<group>"; };
+		B2000023 /* ReadingLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingLanguage.swift; sourceTree = "<group>"; };
+		B2000024 /* AppSettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsSheet.swift; sourceTree = "<group>"; };
+		B2000026 /* AddComicSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddComicSheet.swift; sourceTree = "<group>"; };
+		B2000027 /* QRCodeScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeScanner.swift; sourceTree = "<group>"; };
+		B2000028 /* ReaderOverlays.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderOverlays.swift; sourceTree = "<group>"; };
+		B2000029 /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
+		B2000030 /* LoggerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerService.swift; sourceTree = "<group>"; };
+		B2000031 /* AnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsService.swift; sourceTree = "<group>"; };
+		B2000032 /* PreferencesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesService.swift; sourceTree = "<group>"; };
+		B2000033 /* LocalizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationService.swift; sourceTree = "<group>"; };
+		B2000034 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		B2000035 /* ComicRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComicRepository.swift; sourceTree = "<group>"; };
+		B2000036 /* UserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserRepository.swift; sourceTree = "<group>"; };
+		B2000037 /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
+		B2000038 /* OfflineService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineService.swift; sourceTree = "<group>"; };
+		B2000039 /* OfflineLibrarySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineLibrarySheet.swift; sourceTree = "<group>"; };
+		B2000040 /* StarRatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarRatingView.swift; sourceTree = "<group>"; };
+		B2000041 /* ComicSuggestionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComicSuggestionCard.swift; sourceTree = "<group>"; };
+		B2000042 /* ComicCompletionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComicCompletionSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +138,10 @@
 			isa = PBXGroup;
 			children = (
 				G0000003 /* Services */,
+				G0000040 /* DI */,
+				G0000041 /* Network */,
+				G0000042 /* Data */,
+				G0000044 /* Models */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -111,8 +151,18 @@
 			children = (
 				G0000004 /* Reader */,
 				G0000010 /* Library */,
+				G0000030 /* Settings */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		G0000030 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				B2000024 /* AppSettingsSheet.swift */,
+				B2000039 /* OfflineLibrarySheet.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 		G0000003 /* Services */ = {
@@ -121,9 +171,54 @@
 				B2000002 /* PDFService.swift */,
 				B2000009 /* LibraryService.swift */,
 				B2000014 /* PageCache.swift */,
-				B2000019 /* UserPreferences.swift */,
+				B2000030 /* LoggerService.swift */,
+				B2000031 /* AnalyticsService.swift */,
+				B2000032 /* PreferencesService.swift */,
+				B2000033 /* LocalizationService.swift */,
+				B2000038 /* OfflineService.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		G0000040 /* DI */ = {
+			isa = PBXGroup;
+			children = (
+				B2000029 /* AppContainer.swift */,
+			);
+			path = DI;
+			sourceTree = "<group>";
+		};
+		G0000041 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				B2000034 /* APIClient.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		G0000042 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				G0000043 /* Repositories */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		G0000043 /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+				B2000035 /* ComicRepository.swift */,
+				B2000036 /* UserRepository.swift */,
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		G0000044 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B2000037 /* AppLanguage.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 		G0000004 /* Reader */ = {
@@ -142,6 +237,7 @@
 				B2000001 /* Comic.swift */,
 				B2000015 /* ReadingMode.swift */,
 				B2000020 /* NightMode.swift */,
+				B2000023 /* ReadingLanguage.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -160,6 +256,12 @@
 				B2000004 /* ReaderView.swift */,
 				B2000005 /* PageView.swift */,
 				B2000006 /* PageIndicator.swift */,
+				B2000021 /* ReaderSettings.swift */,
+				B2000022 /* BookmarkListSheet.swift */,
+				B2000028 /* ReaderOverlays.swift */,
+				B2000040 /* StarRatingView.swift */,
+				B2000041 /* ComicSuggestionCard.swift */,
+				B2000042 /* ComicCompletionSheet.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -175,10 +277,9 @@
 		G0000009 /* Components */ = {
 			isa = PBXGroup;
 			children = (
-				B2000008 /* DocumentPicker.swift */,
-				B2000016 /* ReadingModeButton.swift */,
 				B2000017 /* GlassButton.swift */,
 				B2000018 /* ZoomableView.swift */,
+				B2000027 /* QRCodeScanner.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -205,6 +306,7 @@
 			children = (
 				B2000011 /* LibraryView.swift */,
 				B2000012 /* ComicCard.swift */,
+				B2000026 /* AddComicSheet.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -298,8 +400,28 @@
 				B1000016 /* ReadingModeButton.swift in Sources */,
 				B1000017 /* GlassButton.swift in Sources */,
 				B1000018 /* ZoomableView.swift in Sources */,
-				B1000019 /* UserPreferences.swift in Sources */,
 				B1000020 /* NightMode.swift in Sources */,
+				B1000021 /* ReaderSettings.swift in Sources */,
+				B1000022 /* BookmarkListSheet.swift in Sources */,
+				B1000023 /* ReadingLanguage.swift in Sources */,
+				B1000024 /* AppSettingsSheet.swift in Sources */,
+				B1000026 /* AddComicSheet.swift in Sources */,
+				B1000027 /* QRCodeScanner.swift in Sources */,
+				B1000028 /* ReaderOverlays.swift in Sources */,
+				B1000029 /* AppContainer.swift in Sources */,
+				B1000030 /* LoggerService.swift in Sources */,
+				B1000031 /* AnalyticsService.swift in Sources */,
+				B1000032 /* PreferencesService.swift in Sources */,
+				B1000033 /* LocalizationService.swift in Sources */,
+				B1000034 /* APIClient.swift in Sources */,
+				B1000035 /* ComicRepository.swift in Sources */,
+				B1000036 /* UserRepository.swift in Sources */,
+				B1000037 /* AppLanguage.swift in Sources */,
+				B1000038 /* OfflineService.swift in Sources */,
+				B1000039 /* OfflineLibrarySheet.swift in Sources */,
+				B1000040 /* StarRatingView.swift in Sources */,
+				B1000041 /* ComicSuggestionCard.swift in Sources */,
+				B1000042 /* ComicCompletionSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
