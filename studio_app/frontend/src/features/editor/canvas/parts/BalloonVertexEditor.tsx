@@ -1,6 +1,7 @@
 import React from 'react';
 import { Circle, Path } from 'react-konva';
 import { Balloon } from '@shared/types';
+import { generatePathData, findClosestEdge } from './pathUtils';
 
 interface BalloonVertexEditorProps {
     balloon: Balloon;
@@ -63,29 +64,7 @@ export const BalloonVertexEditor: React.FC<BalloonVertexEditorProps> = ({
         currentControlPointsRef.current = curveControlPoints;
     }, [points, curveControlPoints]);
 
-    // Generate SVG path data with quadratic bezier curves
-    const generatePathData = (pts: { x: number, y: number }[], cps: ({ x: number, y: number } | null)[]) => {
-        if (pts.length < 2) return '';
-
-        let d = `M ${pts[0].x} ${pts[0].y}`;
-
-        for (let i = 0; i < pts.length; i++) {
-            const nextI = (i + 1) % pts.length;
-            const p2 = pts[nextI];
-            const cp = cps[i];
-
-            if (cp) {
-                // Quadratic bezier curve
-                d += ` Q ${cp.x} ${cp.y} ${p2.x} ${p2.y}`;
-            } else {
-                // Straight line
-                d += ` L ${p2.x} ${p2.y}`;
-            }
-        }
-
-        d += ' Z';
-        return d;
-    };
+    // generatePathData is now imported from pathUtils
 
     // HANDLER: Dragging a Vertex
     const handlePointDragMove = (index: number, e: any) => {
@@ -125,30 +104,8 @@ export const BalloonVertexEditor: React.FC<BalloonVertexEditorProps> = ({
         const pos = e.target.getRelativePointerPosition();
         if (!pos) return;
 
-        // Find closest edge
-        let minDist = Infinity;
-        let closestEdge = -1;
-        const pts = currentPointsRef.current;
-
-        for (let i = 0; i < pts.length; i++) {
-            const p1 = pts[i];
-            const p2 = pts[(i + 1) % pts.length];
-
-            const l2 = (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2;
-            if (l2 === 0) continue;
-
-            let t = ((pos.x - p1.x) * (p2.x - p1.x) + (pos.y - p1.y) * (p2.y - p1.y)) / l2;
-            t = Math.max(0, Math.min(1, t));
-
-            const projX = p1.x + t * (p2.x - p1.x);
-            const projY = p1.y + t * (p2.y - p1.y);
-            const dist = Math.sqrt((pos.x - projX) ** 2 + (pos.y - projY) ** 2);
-
-            if (dist < minDist) {
-                minDist = dist;
-                closestEdge = i;
-            }
-        }
+        // Find closest edge using utility function
+        const { index: closestEdge, distance: minDist } = findClosestEdge(currentPointsRef.current, pos);
 
         if (closestEdge !== -1 && minDist < 15) {
             isDraggingLineRef.current = true;
@@ -207,32 +164,11 @@ export const BalloonVertexEditor: React.FC<BalloonVertexEditorProps> = ({
         const pos = e.target.getRelativePointerPosition();
         if (!pos) return;
 
-        const currentPts = currentPointsRef.current;
-        let minIndex = -1;
-        let minDist = Infinity;
-
-        for (let i = 0; i < currentPts.length; i++) {
-            const p1 = currentPts[i];
-            const p2 = currentPts[(i + 1) % currentPts.length];
-
-            const l2 = (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2;
-            if (l2 === 0) continue;
-
-            let t = ((pos.x - p1.x) * (p2.x - p1.x) + (pos.y - p1.y) * (p2.y - p1.y)) / l2;
-            t = Math.max(0, Math.min(1, t));
-
-            const projX = p1.x + t * (p2.x - p1.x);
-            const projY = p1.y + t * (p2.y - p1.y);
-            const dist = Math.sqrt((pos.x - projX) ** 2 + (pos.y - projY) ** 2);
-
-            if (dist < minDist) {
-                minDist = dist;
-                minIndex = i;
-            }
-        }
+        // Find closest edge using utility function
+        const { index: minIndex, distance: minDist } = findClosestEdge(currentPointsRef.current, pos);
 
         if (minIndex !== -1 && minDist < 20) {
-            const newRelPoints = [...currentPts];
+            const newRelPoints = [...currentPointsRef.current];
             newRelPoints.splice(minIndex + 1, 0, { x: pos.x, y: pos.y });
 
             const newAbsPoints = newRelPoints.map(p => ({
