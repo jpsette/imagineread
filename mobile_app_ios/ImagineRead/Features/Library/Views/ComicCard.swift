@@ -13,8 +13,11 @@ struct ComicCard: View {
     let onTap: () -> Void
     @EnvironmentObject private var loc: LocalizationService
     @EnvironmentObject private var prefs: PreferencesService
+    @Environment(\.container) private var container
+    @ObservedObject private var collections = AppContainer.shared.collections
     
     @State private var isDownloading: Bool = false
+    @State private var showCollectionSheet: Bool = false
     
     private var readingProgress: String? {
         prefs.readingProgressText(for: comic.url.path)
@@ -29,6 +32,11 @@ struct ComicCard: View {
     /// Get user's rating for this comic
     private var comicRating: Int {
         prefs.comicRating(for: comic.url.path)
+    }
+    
+    /// Check if comic is favorited
+    private var isFavorite: Bool {
+        collections.isFavorite(comic.url.path)
     }
     
     var body: some View {
@@ -89,6 +97,22 @@ struct ComicCard: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                         }
                     }
+                    
+                    // Favorite button overlay
+                    Button {
+                        toggleFavorite()
+                    } label: {
+                        Image(systemName: isFavorite ? "heart.fill" : "heart")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(isFavorite ? .pink : .white.opacity(0.8))
+                            .padding(8)
+                            .background(
+                                Circle()
+                                    .fill(.black.opacity(0.5))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .padding(8)
                 }
                 
                 // Title
@@ -98,46 +122,15 @@ struct ComicCard: View {
                     .foregroundColor(.white)
                     .lineLimit(2)
                 
-                // Page count, download button or offline badge, and share
+                // Page count, download button or offline badge
                 HStack(spacing: 6) {
                     Text("\(comic.pageCount) \(loc.pages)")
                         .font(.caption)
                         .foregroundColor(.gray)
+                        .lineLimit(1)
+                        .layoutPriority(1)
                     
                     Spacer()
-                    
-                    // Share button
-                    Button {
-                        shareComic()
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.purple, .pink],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(
-                                Capsule()
-                                    .fill(Color.purple.opacity(0.15))
-                                    .overlay(
-                                        Capsule()
-                                            .strokeBorder(
-                                                LinearGradient(
-                                                    colors: [.purple.opacity(0.5), .pink.opacity(0.3)],
-                                                    startPoint: .leading,
-                                                    endPoint: .trailing
-                                                ),
-                                                lineWidth: 1
-                                            )
-                                    )
-                            )
-                    }
-                    .buttonStyle(.plain)
                     
                     if isOffline {
                         // Offline badge
@@ -263,5 +256,13 @@ struct ComicCard: View {
         }
         
         rootViewController.present(activityVC, animated: true)
+    }
+    
+    private func toggleFavorite() {
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        
+        container.collections.toggleFavorite(comic.url.path)
     }
 }

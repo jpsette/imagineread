@@ -18,6 +18,7 @@ struct ComicCompletionSheet: View {
     
     @EnvironmentObject private var loc: LocalizationService
     @EnvironmentObject private var prefs: PreferencesService
+    @Environment(\.container) private var container
     
     @State private var rating: Int = 0
     @State private var comment: String = ""
@@ -201,6 +202,9 @@ struct ComicCompletionSheet: View {
     // MARK: - Actions
     
     private func saveAndDismiss() {
+        // Mark comic as completed for stats
+        container.readingStats.markComicCompleted(pdfURL.path)
+        
         if rating > 0 {
             prefs.saveComicRating(rating, for: pdfURL.path)
         }

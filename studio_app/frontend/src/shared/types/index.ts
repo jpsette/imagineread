@@ -11,7 +11,7 @@ export interface Project {
 
 // Editor Types
 export type EditorMode = 'vectorize' | 'edit' | 'translate' | 'animate';
-export type EditorTool = 'select' | 'text' | 'delete' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout';
+export type EditorTool = 'select' | 'text' | 'delete' | 'pen' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout';
 
 export interface Balloon {
     id: string;
@@ -41,7 +41,13 @@ export interface Balloon {
     tailControl?: { x: number, y: number } | null;
     tailCurve?: string | null;
     points?: { x: number, y: number }[]; // For freeform vertex editing
-    curveControlPoints?: ({ x: number, y: number } | null)[]; // Control points for bezier curves (one per edge)
+    curveControlPoints?: ({ x: number, y: number } | null)[]; // Legacy: Control points for bezier curves (one per edge)
+
+    // Bézier handles for cubic curves - each vertex has optional in/out handles
+    vertexHandles?: {
+        handleIn?: { x: number, y: number };  // Controls curve coming INTO this vertex
+        handleOut?: { x: number, y: number }; // Controls curve going OUT of this vertex
+    }[];
 
     // Style Props
     color?: string; // Fill color

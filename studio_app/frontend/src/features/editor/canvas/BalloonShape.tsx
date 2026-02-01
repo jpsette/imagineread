@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Group, Transformer, Rect } from 'react-konva';
+import { Group, Transformer } from 'react-konva';
 import { Balloon } from '@shared/types';
 import { BalloonVector } from './parts/BalloonVector';
 import { BalloonText } from './parts/BalloonText';
 import { BalloonVertexEditor } from './parts/BalloonVertexEditor';
+import { TextBoxHandles } from './parts/TextBoxHandles';
 
 interface BalloonShapeProps {
     balloon: Balloon;
@@ -256,87 +257,15 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
                 </Group>
             )}
 
-            {/* TEXT BOX RESIZE HANDLES - Hidden when vertex editing is active */}
+            {/* TEXT BOX HANDLES - Hidden when vertex editing is active */}
             {isSelected && !isEditing && showText && !showMaskOverlay && (
-                <>
-                    {/* Dashed border showing text box bounds */}
-                    <Rect
-                        x={x + Number(balloon.textOffsetX || 0)}
-                        y={y + Number(balloon.textOffsetY || 0)}
-                        width={balloon.textWidth || width}
-                        height={balloon.textHeight || height}
-                        stroke="#a855f7"
-                        strokeWidth={1}
-                        dash={[4, 4]}
-                        listening={false}
-                    />
-
-                    {/* Resize handle (bottom-right corner) */}
-                    <Rect
-                        x={x + Number(balloon.textOffsetX || 0) + (balloon.textWidth || width) - 6}
-                        y={y + Number(balloon.textOffsetY || 0) + (balloon.textHeight || height) - 6}
-                        width={12}
-                        height={12}
-                        fill="#a855f7"
-                        stroke="#fff"
-                        strokeWidth={1}
-                        cornerRadius={2}
-                        draggable
-                        onDragMove={(e) => {
-                            e.cancelBubble = true;
-                            const textX = x + Number(balloon.textOffsetX || 0);
-                            const textY = y + Number(balloon.textOffsetY || 0);
-                            const newWidth = Math.max(30, e.target.x() - textX + 6);
-                            const newHeight = Math.max(20, e.target.y() - textY + 6);
-                            onChange({
-                                textWidth: newWidth,
-                                textHeight: newHeight
-                            });
-                        }}
-                        onMouseEnter={(e) => {
-                            const stage = e.target.getStage();
-                            if (stage) stage.container().style.cursor = 'se-resize';
-                        }}
-                        onMouseLeave={(e) => {
-                            const stage = e.target.getStage();
-                            if (stage) stage.container().style.cursor = 'default';
-                        }}
-                    />
-                </>
-            )}
-
-            {/* TEXT POSITION HANDLE - Hidden when vertex editing is active */}
-            {isSelected && !isEditing && showText && !showMaskOverlay && (
-                <Rect
-                    x={x + (balloon.textOffsetX || 0) - 18}
-                    y={y + (balloon.textOffsetY || 0) - 18}
-                    width={12}
-                    height={12}
-                    fill="#10b981"
-                    stroke="#fff"
-                    strokeWidth={1}
-                    cornerRadius={2}
-                    draggable
-                    shadowColor="black"
-                    shadowBlur={4}
-                    shadowOpacity={0.3}
-                    onDragMove={(e: any) => {
-                        e.cancelBubble = true;
-                        const newX = e.target.x() - x + 18;
-                        const newY = e.target.y() - y + 18;
-                        onChange({
-                            textOffsetX: newX,
-                            textOffsetY: newY
-                        });
-                    }}
-                    onMouseEnter={(e: any) => {
-                        const stage = e.target.getStage();
-                        if (stage) stage.container().style.cursor = 'move';
-                    }}
-                    onMouseLeave={(e: any) => {
-                        const stage = e.target.getStage();
-                        if (stage) stage.container().style.cursor = 'default';
-                    }}
+                <TextBoxHandles
+                    balloon={balloon}
+                    x={x}
+                    y={y}
+                    width={width}
+                    height={height}
+                    onChange={onChange}
                 />
             )}
 

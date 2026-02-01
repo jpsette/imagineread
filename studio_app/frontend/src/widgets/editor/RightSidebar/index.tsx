@@ -32,7 +32,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = () => {
             <div className={`space-y-3 transition-opacity duration-200 ${hasSelectedBalloon ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
                 <ShapeFormatSection selectedBalloon={selectedBalloon} hasSelectedBalloon={hasSelectedBalloon} />
                 <LineStyleSection selectedBalloon={selectedBalloon} hasSelectedBalloon={hasSelectedBalloon} />
-                <VertexEditSection />
+                <VertexEditSection selectedBalloon={selectedBalloon} hasSelectedBalloon={hasSelectedBalloon} />
             </div>
         </div>
     );

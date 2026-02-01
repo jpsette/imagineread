@@ -72,7 +72,6 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         showText,
         showMasks,
         vertexEditingEnabled,
-        curveEditingEnabled,
         activeTool,
         setActiveTool,
         selectedId,
@@ -241,8 +240,8 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                     showMasks={showMasks}
                     showBalloons={showBalloons}
                     showText={showText}
-                    vertexEditingEnabled={vertexEditingEnabled}
-                    curveEditingEnabled={curveEditingEnabled}
+                    vertexEditingEnabled={vertexEditingEnabled || activeTool === 'pen'}
+                    curveEditingEnabled={activeTool === 'pen'}
                     onSelect={handleSelect}
                     onUpdate={onUpdate}
                     onEditRequest={handleEditRequestInternal}

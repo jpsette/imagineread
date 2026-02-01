@@ -20,6 +20,12 @@ final class AppContainer: ObservableObject {
     @Published private(set) var analytics: AnalyticsService
     @Published private(set) var logger: LoggerService
     
+    // MARK: - User Profile Services
+    @Published private(set) var collections: CollectionsService
+    @Published private(set) var readingStats: ReadingStatsService
+    @Published private(set) var annotations: AnnotationsService
+    @Published private(set) var notifications: NotificationService
+    
     // MARK: - Repositories
     private(set) var comicRepository: ComicRepository
     private(set) var userRepository: UserRepository
@@ -40,6 +46,12 @@ final class AppContainer: ObservableObject {
         self.analytics = AnalyticsService(logger: loggerService)
         self.localization = LocalizationService(preferences: preferencesService)
         
+        // Initialize user profile services
+        self.collections = CollectionsService()
+        self.readingStats = ReadingStatsService(preferences: preferencesService)
+        self.annotations = AnnotationsService()
+        self.notifications = NotificationService()
+        
         // Initialize network
         let apiClientInstance = APIClient(logger: loggerService)
         self.apiClient = apiClientInstance
@@ -59,6 +71,10 @@ final class AppContainer: ObservableObject {
         preferences: PreferencesService,
         analytics: AnalyticsService,
         logger: LoggerService,
+        collections: CollectionsService,
+        readingStats: ReadingStatsService,
+        annotations: AnnotationsService,
+        notifications: NotificationService,
         comicRepository: ComicRepository,
         userRepository: UserRepository,
         apiClient: APIClient
@@ -67,6 +83,10 @@ final class AppContainer: ObservableObject {
         self.preferences = preferences
         self.analytics = analytics
         self.logger = logger
+        self.collections = collections
+        self.readingStats = readingStats
+        self.annotations = annotations
+        self.notifications = notifications
         self.comicRepository = comicRepository
         self.userRepository = userRepository
         self.apiClient = apiClient

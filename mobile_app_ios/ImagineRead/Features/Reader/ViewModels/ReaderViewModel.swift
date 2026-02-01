@@ -20,10 +20,21 @@ final class ReaderViewModel: ObservableObject {
         didSet {
             // Trigger prefetch when page changes
             pageCache?.onPageAppear(currentPageIndex)
+            
+            // Track page read for stats - only count actual navigation (not initial load)
+            if oldValue != currentPageIndex && comic != nil {
+                pagesReadInSession += 1
+            }
         }
     }
     @Published private(set) var isLoading: Bool = true
     @Published private(set) var errorMessage: String?
+    
+    // MARK: - Private Properties
+    
+    private var comicURL: URL?
+    private var readingStats: ReadingStatsService?
+    private var pagesReadInSession: Int = 0
     
     // MARK: - Computed Properties
     
@@ -44,12 +55,29 @@ final class ReaderViewModel: ObservableObject {
         return "\(currentPageIndex + 1) / \(totalPages)"
     }
     
+    // MARK: - Init / Deinit
+    
+    init() {
+        readingStats = AppContainer.shared.readingStats
+    }
+    
+    deinit {
+        // End reading session when leaving
+        Task { @MainActor [weak self] in
+            self?.endReadingSession()
+        }
+    }
+    
     // MARK: - Public Methods
     
     /// Load a comic from a PDF URL
     func loadComic(from url: URL) {
         isLoading = true
         errorMessage = nil
+        comicURL = url
+        
+        // Start reading session
+        startReadingSession()
         
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let document = PDFDocument(url: url) else {
@@ -90,4 +118,24 @@ final class ReaderViewModel: ObservableObject {
         guard hasPreviousPage else { return }
         currentPageIndex -= 1
     }
+    
+    /// Call this when the reader is being dismissed
+    func onDisappear() {
+        endReadingSession()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func startReadingSession() {
+        guard let url = comicURL else { return }
+        pagesReadInSession = 1 // Count first page as read
+        readingStats?.startSession(for: url.path)
+    }
+    
+    private func endReadingSession() {
+        guard comicURL != nil else { return }
+        readingStats?.endCurrentSession(pagesRead: pagesReadInSession)
+        pagesReadInSession = 0
+    }
 }
+

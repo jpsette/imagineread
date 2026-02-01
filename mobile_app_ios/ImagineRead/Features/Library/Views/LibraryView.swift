@@ -11,6 +11,7 @@ import SwiftUI
 struct LibraryView: View {
     @StateObject private var viewModel = LibraryViewModel()
     @EnvironmentObject private var loc: LocalizationService
+    @Environment(\.container) private var container
     
     private let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -24,7 +25,15 @@ struct LibraryView: View {
             } else if viewModel.isEmpty {
                 emptyView
             } else {
-                comicsGrid
+                VStack(alignment: .leading, spacing: 24) {
+                    // Recently Read Section
+                    if !recentlyReadComics.isEmpty {
+                        recentlyReadSection
+                    }
+                    
+                    // All Comics Grid
+                    allComicsSection
+                }
             }
         }
         .onAppear {
@@ -35,20 +44,70 @@ struct LibraryView: View {
         }
     }
     
-    // MARK: - Subviews
+    // MARK: - Recently Read
     
-    private var comicsGrid: some View {
-        LazyVGrid(columns: columns, spacing: 24) {
-            ForEach(viewModel.comics) { comic in
-                ComicCard(comic: comic) {
-                    viewModel.selectComic(comic)
+    private var recentlyReadComics: [LibraryService.ComicItem] {
+        let recentPaths = container.readingStats.recentlyReadPaths(limit: 5)
+        return recentPaths.compactMap { path in
+            viewModel.comics.first { $0.url.path == path }
+        }
+    }
+    
+    private var recentlyReadSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "clock.arrow.circlepath")
+                    .foregroundStyle(
+                        LinearGradient(colors: [.purple, .blue], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+                Text("Últimos Lidos")
+                    .font(.headline)
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 20)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    ForEach(recentlyReadComics) { comic in
+                        RecentComicCard(comic: comic) {
+                            viewModel.selectComic(comic)
+                        }
+                    }
                 }
+                .padding(.horizontal, 20)
             }
         }
-        .padding(.horizontal, 20)
         .padding(.top, 16)
-        .padding(.bottom, 40)
     }
+    
+    // MARK: - All Comics
+    
+    private var allComicsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "books.vertical")
+                    .foregroundStyle(
+                        LinearGradient(colors: [.orange, .pink], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+                Text("Biblioteca")
+                    .font(.headline)
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 20)
+            
+            LazyVGrid(columns: columns, spacing: 24) {
+                ForEach(viewModel.comics) { comic in
+                    ComicCard(comic: comic) {
+                        viewModel.selectComic(comic)
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 40)
+        }
+    }
+    
+    // MARK: - Loading & Empty States
     
     private var loadingView: some View {
         VStack(spacing: 16) {
@@ -81,3 +140,34 @@ struct LibraryView: View {
         .padding(.top, 100)
     }
 }
+
+// MARK: - Recent Comic Card
+
+struct RecentComicCard: View {
+    let comic: LibraryService.ComicItem
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 8) {
+                // Cover
+                Image(uiImage: comic.cover)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 100, height: 140)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                
+                // Title
+                Text(comic.title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .frame(width: 100, alignment: .leading)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+

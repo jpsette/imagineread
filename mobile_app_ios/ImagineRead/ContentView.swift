@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var showSettings = false
     @State private var showAddComic = false
+    @State private var showProfile = false
+    @State private var showSearch = false
     
     var body: some View {
         ZStack {
@@ -47,11 +48,14 @@ struct ContentView: View {
                 .padding(.bottom, 24)
             }
         }
-        .sheet(isPresented: $showSettings) {
-            AppSettingsSheet()
-        }
         .sheet(isPresented: $showAddComic) {
             AddComicSheet()
+        }
+        .sheet(isPresented: $showProfile) {
+            ProfileView()
+        }
+        .sheet(isPresented: $showSearch) {
+            SearchView()
         }
     }
     
@@ -89,11 +93,20 @@ struct ContentView: View {
                 
                 Spacer()
                 
-                // Settings Button
+                // Search Button
                 Button {
-                    showSettings = true
+                    showSearch = true
                 } label: {
-                    Image(systemName: "gearshape.fill")
+                    Image(systemName: "magnifyingglass")
+                        .font(.title2)
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                
+                // Profile Button
+                Button {
+                    showProfile = true
+                } label: {
+                    Image(systemName: "person.circle.fill")
                         .font(.title2)
                         .foregroundColor(.white.opacity(0.8))
                 }

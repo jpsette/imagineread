@@ -26,6 +26,7 @@ struct ReaderView: View {
     @State private var isCurrentPageBookmarked: Bool = false
     @State private var showCompletionModal: Bool = false
     @State private var suggestions: [LibraryService.ComicItem] = []
+    @State private var showShareSheet: Bool = false
     
     @EnvironmentObject private var loc: LocalizationService
     @EnvironmentObject private var prefs: PreferencesService
@@ -56,6 +57,9 @@ struct ReaderView: View {
             prefs.saveLastReadPage(newPage, for: pdfURL.path)
             updateBookmarkState()
             checkCompletion(newPage)
+        }
+        .onDisappear {
+            viewModel.onDisappear()
         }
         .onChange(of: nightMode) { _, newMode in
             prefs.saveNightMode(newMode)
@@ -297,11 +301,17 @@ struct ReaderView: View {
             GlassButton(icon: "xmark") { dismiss() }
             bookmarkCountButton
             Spacer()
+            GlassButton(icon: "square.and.arrow.up") { showShareSheet = true }
             GlassButton(icon: isCurrentPageBookmarked ? "bookmark.fill" : "bookmark", action: toggleBookmark)
             GlassButton(icon: "gearshape") { showSettings = true }
         }
         .padding(.horizontal)
         .padding(.top, 8)
+        .sheet(isPresented: $showShareSheet) {
+            if let _ = viewModel.comic {
+                ShareComicSheet(pdfURL: pdfURL)
+            }
+        }
     }
     
     @ViewBuilder
