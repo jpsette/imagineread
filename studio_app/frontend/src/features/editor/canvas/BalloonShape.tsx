@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { Group, Transformer, Circle } from 'react-konva';
+import React, { useRef, useEffect, useState } from 'react';
+import { Group, Transformer, Rect } from 'react-konva';
 import { Balloon } from '@shared/types';
 import { BalloonVector } from './parts/BalloonVector';
 import { BalloonText } from './parts/BalloonText';
@@ -12,7 +12,8 @@ interface BalloonShapeProps {
     // Decoupled Visibility Props
     showBalloon?: boolean;
     showText?: boolean;
-    showMaskOverlay?: boolean; // NEW: Controls Vertex Editor visibility
+    showMaskOverlay?: boolean; // Controls Vertex Editor visibility
+    curveEditingEnabled?: boolean; // Controls Curve Editor visibility
 
     onSelect: () => void;
     onChange: (newAttrs: Partial<Balloon>) => void;
@@ -27,6 +28,7 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
     showBalloon = true,
     showText = true,
     showMaskOverlay = false,
+    curveEditingEnabled = false,
     onSelect,
     onChange,
     onEditRequest,
@@ -37,10 +39,17 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
     const isDragging = useRef(false); // Transient state flag
 
     // Calculate dimensions from box_2d [top, left, bottom, right]
-    const y = balloon.box_2d[0];
-    const x = balloon.box_2d[1];
+    const baseY = balloon.box_2d[0];
+    const baseX = balloon.box_2d[1];
     const height = balloon.box_2d[2] - balloon.box_2d[0];
     const width = balloon.box_2d[3] - balloon.box_2d[1];
+
+    // Local position state for smooth dragging (text follows balloon)
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+    // Computed position (base + drag offset)
+    const x = baseX + dragOffset.x;
+    const y = baseY + dragOffset.y;
 
     // Attach Transformer
     useEffect(() => {
@@ -59,6 +68,17 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
     const handleDragStart = (e: any) => {
         if (e.target !== shapeRef.current) return;
         isDragging.current = true;
+        setDragOffset({ x: 0, y: 0 }); // Reset offset at start
+    };
+
+    const handleDragMove = (e: any) => {
+        if (e.target !== shapeRef.current) return;
+        const node = e.target;
+        // Update offset for text to follow
+        setDragOffset({
+            x: node.x() - baseX,
+            y: node.y() - baseY
+        });
     };
 
     const handleDragEnd = (e: any) => {
@@ -71,9 +91,9 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
         const newY = node.y();
         const newX = node.x();
 
-        // Calculate Delta to shift points
-        const dy = newY - y;
-        const dx = newX - x;
+        // Calculate Delta to shift points (use baseX/baseY, not the offset-adjusted x/y)
+        const dy = newY - baseY;
+        const dx = newX - baseX;
 
         const newBox = [
             newY,
@@ -96,6 +116,9 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
             points: newPoints
         });
         node.scaleX(1); node.scaleY(1);
+
+        // Reset drag offset after commit
+        setDragOffset({ x: 0, y: 0 });
     };
 
     const handleTransformEnd = () => {
@@ -187,8 +210,9 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
                 draggable={isSelected && !isEditing}
                 onClick={(e) => { e.cancelBubble = true; onSelect(); }}
                 onTap={(e) => { e.cancelBubble = true; onSelect(); }}
-                onDblClick={(e) => { e.cancelBubble = true; onEditRequest(); }}
+                onDblClick={(e) => { e.cancelBubble = true; if (!showMaskOverlay) onEditRequest(); }}
                 onDragStart={handleDragStart}
+                onDragMove={handleDragMove}
                 onDragEnd={handleDragEnd}
                 onTransform={handleTransform} // Added Handler
                 onTransformEnd={handleTransformEnd}
@@ -201,72 +225,126 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
                     isSelected={isSelected}
                     visible={showBalloon}
                 />
-
-                {/* 2. TEXT CONTENT (Controlled by showText) */}
-                <Group
-                    x={balloon.textOffsetX || 0}
-                    y={balloon.textOffsetY || 0}
-                >
-                    <BalloonText
-                        balloon={balloon}
-                        width={width}
-                        height={height}
-                        isEditing={!!isEditing}
-                        visible={showText}
-                        onChange={handleTextChange}
-                        onBlur={() => onEditingBlur && onEditingBlur()}
-                    />
-                </Group>
-
                 {/* 3. VERTEX EDITOR (Mask Mode) */}
                 {isSelected && showMaskOverlay && (
                     <BalloonVertexEditor
                         balloon={balloon}
                         width={width}
                         height={height}
+                        curveEditingEnabled={curveEditingEnabled}
                         onChange={onChange}
                     />
                 )}
             </Group>
 
-            {/* 4. TEXT POSITION HANDLE - OUTSIDE the main Group so Transformer doesn't include it */}
-            {isSelected && !isEditing && showText && (
-                <Circle
-                    x={x + (balloon.textOffsetX || 0) - 15}
-                    y={y + (balloon.textOffsetY || 0) - 15}
-                    radius={8}
+            {/* 2. TEXT CONTENT - OUTSIDE main Group to not affect Transformer bounds */}
+            {showText && (
+                <Group
+                    x={x + Number(balloon.textOffsetX || 0)}
+                    y={y + Number(balloon.textOffsetY || 0)}
+                    listening={!!isEditing}
+                >
+                    <BalloonText
+                        balloon={balloon}
+                        width={balloon.textWidth || width}
+                        height={balloon.textHeight || height}
+                        isEditing={!!isEditing}
+                        visible={true}
+                        onChange={handleTextChange}
+                        onBlur={() => onEditingBlur && onEditingBlur()}
+                    />
+                </Group>
+            )}
+
+            {/* TEXT BOX RESIZE HANDLES - Hidden when vertex editing is active */}
+            {isSelected && !isEditing && showText && !showMaskOverlay && (
+                <>
+                    {/* Dashed border showing text box bounds */}
+                    <Rect
+                        x={x + Number(balloon.textOffsetX || 0)}
+                        y={y + Number(balloon.textOffsetY || 0)}
+                        width={balloon.textWidth || width}
+                        height={balloon.textHeight || height}
+                        stroke="#a855f7"
+                        strokeWidth={1}
+                        dash={[4, 4]}
+                        listening={false}
+                    />
+
+                    {/* Resize handle (bottom-right corner) */}
+                    <Rect
+                        x={x + Number(balloon.textOffsetX || 0) + (balloon.textWidth || width) - 6}
+                        y={y + Number(balloon.textOffsetY || 0) + (balloon.textHeight || height) - 6}
+                        width={12}
+                        height={12}
+                        fill="#a855f7"
+                        stroke="#fff"
+                        strokeWidth={1}
+                        cornerRadius={2}
+                        draggable
+                        onDragMove={(e) => {
+                            e.cancelBubble = true;
+                            const textX = x + Number(balloon.textOffsetX || 0);
+                            const textY = y + Number(balloon.textOffsetY || 0);
+                            const newWidth = Math.max(30, e.target.x() - textX + 6);
+                            const newHeight = Math.max(20, e.target.y() - textY + 6);
+                            onChange({
+                                textWidth: newWidth,
+                                textHeight: newHeight
+                            });
+                        }}
+                        onMouseEnter={(e) => {
+                            const stage = e.target.getStage();
+                            if (stage) stage.container().style.cursor = 'se-resize';
+                        }}
+                        onMouseLeave={(e) => {
+                            const stage = e.target.getStage();
+                            if (stage) stage.container().style.cursor = 'default';
+                        }}
+                    />
+                </>
+            )}
+
+            {/* TEXT POSITION HANDLE - Hidden when vertex editing is active */}
+            {isSelected && !isEditing && showText && !showMaskOverlay && (
+                <Rect
+                    x={x + (balloon.textOffsetX || 0) - 18}
+                    y={y + (balloon.textOffsetY || 0) - 18}
+                    width={12}
+                    height={12}
                     fill="#10b981"
                     stroke="#fff"
-                    strokeWidth={2}
+                    strokeWidth={1}
+                    cornerRadius={2}
                     draggable
                     shadowColor="black"
                     shadowBlur={4}
                     shadowOpacity={0.3}
-                    onDragMove={(e) => {
+                    onDragMove={(e: any) => {
                         e.cancelBubble = true;
-                        // Update in real-time - calculate offset from balloon position
-                        const newX = e.target.x() - x + 15;
-                        const newY = e.target.y() - y + 15;
+                        const newX = e.target.x() - x + 18;
+                        const newY = e.target.y() - y + 18;
                         onChange({
                             textOffsetX: newX,
                             textOffsetY: newY
                         });
                     }}
-                    onMouseEnter={(e) => {
+                    onMouseEnter={(e: any) => {
                         const stage = e.target.getStage();
-                        if (stage) stage.container().style.cursor = 'grab';
+                        if (stage) stage.container().style.cursor = 'move';
                     }}
-                    onMouseLeave={(e) => {
+                    onMouseLeave={(e: any) => {
                         const stage = e.target.getStage();
                         if (stage) stage.container().style.cursor = 'default';
                     }}
                 />
             )}
 
-            {isSelected && !isEditing && (
+            {/* Hide Transformer when vertex editing is active */}
+            {isSelected && !isEditing && !showMaskOverlay && (
                 <Transformer
                     ref={trRef}
-                    padding={-10}
+                    padding={0}
                     anchorSize={8}
                     anchorCornerRadius={2}
                     borderStrokeWidth={2}

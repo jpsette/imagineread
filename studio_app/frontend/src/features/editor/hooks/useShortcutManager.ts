@@ -5,7 +5,7 @@ import { ToolRegistry } from '../tools/ToolRegistry';
 
 export const useShortcutManager = (editor?: any) => {
     const { setActiveTool } = useEditorUIStore();
-    const { removeBalloon, removePanel } = useEditorStore();
+    const { removeBalloonUndoable, removePanelUndoable } = useEditorStore();
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -24,10 +24,10 @@ export const useShortcutManager = (editor?: any) => {
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 if (editor && editor.selectedBubbleId) {
                     if (editor.selectedBubbleId.startsWith('panel')) {
-                        removePanel(editor.selectedBubbleId);
+                        removePanelUndoable(editor.selectedBubbleId);
                         editor.setSelectedBubbleId(null);
                     } else {
-                        removeBalloon(editor.selectedBubbleId);
+                        removeBalloonUndoable(editor.selectedBubbleId);
                         editor.setSelectedBubbleId(null);
                     }
                 }
@@ -53,5 +53,5 @@ export const useShortcutManager = (editor?: any) => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [setActiveTool, editor, removeBalloon, removePanel]);
+    }, [setActiveTool, editor, removeBalloonUndoable, removePanelUndoable]);
 };

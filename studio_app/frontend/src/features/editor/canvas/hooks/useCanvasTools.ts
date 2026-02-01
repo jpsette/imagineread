@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
+import { useRef, useCallback, useState } from 'react';
 import Konva from 'konva';
-import { Balloon, EditorTool } from '@shared/types'; // Imports from src/types
+import { Balloon, EditorTool } from '@shared/types';
 
 interface UseCanvasToolsProps {
     activeTool: EditorTool;
@@ -9,6 +10,19 @@ interface UseCanvasToolsProps {
     onBalloonAdd: (balloon: Balloon) => void;
     setEditingId: (id: string | null) => void;
     imgOriginal: HTMLImageElement | undefined;
+}
+
+interface DragState {
+    isDragging: boolean;
+    startPos: { x: number; y: number } | null;
+    startTime: number;
+}
+
+export interface DragPreviewBounds {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
 }
 
 export const useCanvasTools = ({
@@ -20,41 +34,116 @@ export const useCanvasTools = ({
     imgOriginal
 }: UseCanvasToolsProps) => {
 
-    const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const dragStateRef = useRef<DragState>({
+        isDragging: false,
+        startPos: null,
+        startTime: 0
+    });
+
+    // State for drag preview rectangle
+    const [dragPreview, setDragPreview] = useState<DragPreviewBounds | null>(null);
+
+    // Helper to get canvas position from mouse event
+    const getCanvasPos = (stage: Konva.Stage) => {
+        const transform = stage.getAbsoluteTransform().copy();
+        transform.invert();
+        return transform.point(stage.getPointerPosition() || { x: 0, y: 0 });
+    };
+
+    const handleStageMouseDown = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
         const stage = e.target.getStage();
         if (!stage) return;
 
-        // If clicking on an empty area
         const clickedOnEmpty = e.target === stage;
 
-        // 1. Deselect if just clicking background
-        if (clickedOnEmpty && activeTool === 'select') {
-            onSelect(null);
-            setEditingId(null); // Exit editing mode to restore Stage dragging
-            return;
+        // Only track drag for text/balloon tools on empty canvas
+        if ((activeTool === 'text' || activeTool.startsWith('balloon-')) && clickedOnEmpty && imgOriginal) {
+            const pos = getCanvasPos(stage);
+            dragStateRef.current = {
+                isDragging: true,
+                startPos: pos,
+                startTime: Date.now()
+            };
+            return; // Don't process click yet, wait for mouseup
         }
 
-        // Guard: Need image loaded to place things relative to it
-        // Also guard: Only proceed if we clicked on empty space (not on another balloon)
-        if (!imgOriginal || !clickedOnEmpty) return;
+        // Default behavior for select tool
+        if (clickedOnEmpty && activeTool === 'select') {
+            onSelect(null);
+            setEditingId(null);
+        }
+    }, [activeTool, imgOriginal, onSelect, setEditingId]);
 
-        const transform = stage.getAbsoluteTransform().copy();
-        transform.invert();
-        const pos = transform.point(stage.getPointerPosition() || { x: 0, y: 0 });
+    const handleStageMouseUp = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
+        const stage = e.target.getStage();
+        if (!stage) return;
 
-        // 2. Create Text
+        const dragState = dragStateRef.current;
+
+        // ALWAYS clear preview immediately
+        setDragPreview(null);
+
+        // Reset drag state
+        dragStateRef.current = { isDragging: false, startPos: null, startTime: 0 };
+
+        // Only process if we were dragging with a creation tool
+        if (!dragState.startPos || !imgOriginal) return;
+        if (activeTool !== 'text' && !activeTool.startsWith('balloon-')) return;
+
+        const endPos = getCanvasPos(stage);
+        const startPos = dragState.startPos;
+
+        // Calculate drag distance and duration
+        const dragDistance = Math.sqrt(
+            Math.pow(endPos.x - startPos.x, 2) + Math.pow(endPos.y - startPos.y, 2)
+        );
+        const dragDuration = Date.now() - dragState.startTime;
+
+        // Determine if it's a click (small movement, short duration) or drag
+        const isClick = dragDistance < 10 && dragDuration < 300;
+
         if (activeTool === 'text') {
+            let box_2d: [number, number, number, number];
+
+            if (isClick) {
+                // Click: Create small isolated text at position - cursor at click point
+                box_2d = [
+                    Math.round(startPos.y),
+                    Math.round(startPos.x),
+                    Math.round(startPos.y + 30),
+                    Math.round(startPos.x + 200)
+                ];
+            } else {
+                // Drag: Create text box with dragged dimensions
+                const minX = Math.min(startPos.x, endPos.x);
+                const maxX = Math.max(startPos.x, endPos.x);
+                const minY = Math.min(startPos.y, endPos.y);
+                const maxY = Math.max(startPos.y, endPos.y);
+
+                box_2d = [
+                    Math.round(minY),
+                    Math.round(minX),
+                    Math.round(maxY),
+                    Math.round(maxX)
+                ];
+            }
+
             const newBalloon: Balloon = {
                 id: uuidv4(),
                 type: 'text',
                 shape: 'rectangle',
-                text: 'Novo Texto',
-                fontSize: 20,
+                text: '',
+                fontSize: isClick ? 16 : 14,
                 direction: 'UP',
                 tail_box_2d: [0, 0, 0, 0],
-                box_2d: [Math.round(pos.y), Math.round(pos.x), Math.round(pos.y + 50), Math.round(pos.x + 150)],
-                color: undefined
+                box_2d,
+                color: undefined,
+                textColor: '#000000',
+                // Always left/top aligned so cursor appears consistently at start
+                textAlign: 'left',
+                verticalAlign: 'top'
             };
+
             onBalloonAdd(newBalloon);
             onSelect(newBalloon.id);
             setActiveTool('select');
@@ -62,10 +151,31 @@ export const useCanvasTools = ({
             return;
         }
 
-        // 3. Create Balloon Shapes
+        // Balloon shapes (always centered on click position or use drag bounds)
         if (activeTool.startsWith('balloon-')) {
-            const w = 150;
-            const h = 100;
+            let box_2d: [number, number, number, number];
+
+            if (isClick) {
+                const w = 150;
+                const h = 100;
+                box_2d = [
+                    Math.round(startPos.y - h / 2),
+                    Math.round(startPos.x - w / 2),
+                    Math.round(startPos.y + h / 2),
+                    Math.round(startPos.x + w / 2)
+                ];
+            } else {
+                const minX = Math.min(startPos.x, endPos.x);
+                const maxX = Math.max(startPos.x, endPos.x);
+                const minY = Math.min(startPos.y, endPos.y);
+                const maxY = Math.max(startPos.y, endPos.y);
+                box_2d = [
+                    Math.round(minY),
+                    Math.round(minX),
+                    Math.round(maxY),
+                    Math.round(maxX)
+                ];
+            }
 
             const newBalloon: Balloon = {
                 id: uuidv4(),
@@ -76,12 +186,7 @@ export const useCanvasTools = ({
                 borderColor: '#000000',
                 borderWidth: activeTool === 'balloon-shout' ? 3 : 1,
                 fontSize: 14,
-                box_2d: [
-                    Math.round(pos.y - h / 2),
-                    Math.round(pos.x - w / 2),
-                    Math.round(pos.y + h / 2),
-                    Math.round(pos.x + w / 2)
-                ],
+                box_2d,
                 direction: 'UP',
                 tail_box_2d: [0, 0, 0, 0]
             };
@@ -90,7 +195,41 @@ export const useCanvasTools = ({
             onSelect(newBalloon.id);
             setActiveTool('select');
         }
-    };
+    }, [activeTool, imgOriginal, onBalloonAdd, onSelect, setActiveTool, setEditingId]);
 
-    return { handleStageClick };
+    // Track mouse movement to show preview rectangle
+    const handleStageMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
+        const stage = e.target.getStage();
+        if (!stage) return;
+
+        const dragState = dragStateRef.current;
+
+        // Only show preview if actively dragging with a creation tool
+        if (!dragState.isDragging || !dragState.startPos) {
+            return;
+        }
+
+        const currentPos = getCanvasPos(stage);
+        const startPos = dragState.startPos;
+
+        // Calculate bounds
+        const minX = Math.min(startPos.x, currentPos.x);
+        const maxX = Math.max(startPos.x, currentPos.x);
+        const minY = Math.min(startPos.y, currentPos.y);
+        const maxY = Math.max(startPos.y, currentPos.y);
+
+        setDragPreview({
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY
+        });
+    }, []);
+
+    return {
+        handleStageMouseDown,
+        handleStageMouseUp,
+        handleStageMouseMove,
+        dragPreview
+    };
 };

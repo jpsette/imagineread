@@ -6,13 +6,48 @@ import { EditorTool, Balloon } from '@shared/types';
 import { useEditorUIStore } from '@features/editor/uiStore';
 import { useEditorStore } from '@features/editor/store';
 import { parseSvgFileComplete } from '@features/editor/utils/svgParser';
+import { ColorPicker } from '@features/editor/components/ui/ColorPicker';
 
 interface RightSidebarProps {
 }
 
+// Toggle button for vertex editing mode
+const VertexToggleButton: React.FC = () => {
+    const { vertexEditingEnabled, toggleVertexEditing } = useEditorUIStore();
+
+    return (
+        <button
+            onClick={toggleVertexEditing}
+            className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${vertexEditingEnabled
+                ? 'bg-red-500/30 text-red-300 border border-red-500/50'
+                : 'bg-white/10 text-zinc-400 border border-white/10 hover:bg-white/20'
+                }`}
+        >
+            {vertexEditingEnabled ? 'ON' : 'OFF'}
+        </button>
+    );
+};
+
+// Toggle button for curve editing mode
+const CurveToggleButton: React.FC = () => {
+    const { curveEditingEnabled, toggleCurveEditing } = useEditorUIStore();
+
+    return (
+        <button
+            onClick={toggleCurveEditing}
+            className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${curveEditingEnabled
+                ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50'
+                : 'bg-white/10 text-zinc-400 border border-white/10 hover:bg-white/20'
+                }`}
+        >
+            {curveEditingEnabled ? 'ON' : 'OFF'}
+        </button>
+    );
+};
+
 export const RightSidebar: React.FC<RightSidebarProps> = () => {
     const { activeTool, setActiveTool, selectedId, setSelectedIds } = useEditorUIStore();
-    const { balloons, updateBalloon, addBalloon } = useEditorStore();
+    const { balloons, updateBalloonUndoable, addBalloonUndoable } = useEditorStore();
 
     // Find selected balloon
     const selectedBalloon = balloons.find(b => b.id === selectedId);
@@ -24,14 +59,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = () => {
         setSelectedIds(allBalloonIds);
     };
 
-    // Check if all balloons are selected
-    const { selectedIds } = useEditorUIStore();
-    const allSelected = balloons.length > 0 && selectedIds.length === balloons.length;
-
     // Handle shape change for selected balloon
     const handleShapeChange = (type: Balloon['type']) => {
         if (selectedBalloon) {
-            updateBalloon(selectedBalloon.id, { type });
+            updateBalloonUndoable(selectedBalloon.id, { type });
         }
     };
 
@@ -65,7 +96,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = () => {
             };
 
             // Add the new element
-            addBalloon(newBalloon);
+            addBalloonUndoable(newBalloon);
 
             // Select the new element
             setSelectedIds([newBalloon.id]);
@@ -172,6 +203,141 @@ export const RightSidebar: React.FC<RightSidebarProps> = () => {
                         title="Grito"
                         disabled={!hasSelectedBalloon}
                     ><MessageCircle size={13} /></button>
+                </div>
+
+                {/* Balloon & Line Colors (Side by Side) */}
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                    <ColorPicker
+                        label="Cor do Balão"
+                        value={selectedBalloon?.color || '#FFFFFF'}
+                        onChange={(color) => selectedBalloon && updateBalloonUndoable(selectedBalloon.id, { color: color || '#FFFFFF' })}
+                        disabled={!hasSelectedBalloon}
+                    />
+                    <ColorPicker
+                        label="Cor da Linha"
+                        value={selectedBalloon?.borderColor || '#000000'}
+                        onChange={(color) => selectedBalloon && updateBalloonUndoable(selectedBalloon.id, { borderColor: color || '#000000' })}
+                        disabled={!hasSelectedBalloon}
+                    />
+                </div>
+
+                {/* Line Style Control */}
+                <div className="mt-2 flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl px-2.5 py-1.5">
+                    <span className="text-[10px] text-zinc-400 font-medium flex-1">Estilo da Linha</span>
+                    <div className="flex gap-1">
+                        {[
+                            { value: 'solid', label: '━━━', title: 'Lisa' },
+                            { value: 'dashed', label: '╍╍╍', title: 'Tracejada' },
+                            { value: 'dotted', label: '•••', title: 'Pontilhada' }
+                        ].map((style) => (
+                            <button
+                                key={style.value}
+                                onClick={() => selectedBalloon && updateBalloonUndoable(selectedBalloon.id, {
+                                    borderStyle: style.value as any,
+                                    // Reset dash values when changing style so each style uses its defaults
+                                    dashSize: undefined,
+                                    dashGap: undefined
+                                })}
+                                disabled={!hasSelectedBalloon}
+                                title={style.title}
+                                className={`px-2 py-0.5 rounded text-[10px] font-mono transition-all ${(selectedBalloon?.borderStyle || 'solid') === style.value
+                                    ? 'bg-neon-blue/30 text-white border border-neon-blue/50'
+                                    : 'bg-white/5 text-zinc-400 border border-transparent hover:bg-white/10'
+                                    } disabled:opacity-40 disabled:cursor-not-allowed`}
+                            >
+                                {style.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Line Customization Sliders - Always visible */}
+                <div className="mt-2 space-y-2 bg-white/5 border border-white/5 rounded-xl px-2.5 py-2">
+                    {/* Line Width */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-zinc-400 font-medium flex-1">Espessura</span>
+                        <input
+                            type="range"
+                            min="0" max="20" step="1"
+                            value={selectedBalloon?.borderWidth ?? 1}
+                            onChange={(e) => selectedBalloon && updateBalloonUndoable(selectedBalloon.id, { borderWidth: Number(e.target.value) })}
+                            className="w-24 h-1 accent-neon-blue"
+                            disabled={!hasSelectedBalloon}
+                        />
+                        <span className="text-[10px] text-white font-bold w-6 text-center">
+                            {selectedBalloon?.borderWidth ?? 1}
+                        </span>
+                    </div>
+                    {/* Dash Size */}
+                    <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-medium flex-1 ${selectedBalloon?.borderStyle && selectedBalloon.borderStyle !== 'solid' ? 'text-zinc-400' : 'text-zinc-600'}`}>Tamanho</span>
+                        <input
+                            type="range"
+                            min="0" max="20" step="1"
+                            value={selectedBalloon?.dashSize ?? (selectedBalloon?.borderStyle === 'dotted' ? 2 : 8)}
+                            onChange={(e) => selectedBalloon && updateBalloonUndoable(selectedBalloon.id, { dashSize: Number(e.target.value) })}
+                            className="w-24 h-1 accent-neon-blue disabled:opacity-30"
+                            disabled={!hasSelectedBalloon || !selectedBalloon?.borderStyle || selectedBalloon.borderStyle === 'solid'}
+                        />
+                        <span className={`text-[10px] font-bold w-6 text-center ${selectedBalloon?.borderStyle && selectedBalloon.borderStyle !== 'solid' ? 'text-white' : 'text-zinc-600'}`}>
+                            {selectedBalloon?.dashSize ?? (selectedBalloon?.borderStyle === 'dotted' ? 2 : 8)}
+                        </span>
+                    </div>
+                    {/* Dash Gap */}
+                    <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-medium flex-1 ${selectedBalloon?.borderStyle && selectedBalloon.borderStyle !== 'solid' ? 'text-zinc-400' : 'text-zinc-600'}`}>Espaçamento</span>
+                        <input
+                            type="range"
+                            min="0" max="20" step="1"
+                            value={selectedBalloon?.dashGap ?? (selectedBalloon?.borderStyle === 'dotted' ? 4 : 4)}
+                            onChange={(e) => selectedBalloon && updateBalloonUndoable(selectedBalloon.id, { dashGap: Number(e.target.value) })}
+                            className="w-24 h-1 accent-neon-blue disabled:opacity-30"
+                            disabled={!hasSelectedBalloon || !selectedBalloon?.borderStyle || selectedBalloon.borderStyle === 'solid'}
+                        />
+                        <span className={`text-[10px] font-bold w-6 text-center ${selectedBalloon?.borderStyle && selectedBalloon.borderStyle !== 'solid' ? 'text-white' : 'text-zinc-600'}`}>
+                            {selectedBalloon?.dashGap ?? (selectedBalloon?.borderStyle === 'dotted' ? 4 : 4)}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Stroke Alignment Control */}
+                <div className="mt-2 flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl px-2.5 py-1.5">
+                    <span className="text-[10px] text-zinc-400 font-medium flex-1">Expansão da Linha</span>
+                    <div className="flex gap-1">
+                        {[
+                            { value: 'inner', label: 'Int', title: 'Interno - Linha expande para dentro' },
+                            { value: 'center', label: 'Cen', title: 'Central - Linha expande para dentro e fora' },
+                            { value: 'outer', label: 'Ext', title: 'Externo - Linha expande para fora' }
+                        ].map((align) => (
+                            <button
+                                key={align.value}
+                                onClick={() => selectedBalloon && updateBalloonUndoable(selectedBalloon.id, { strokeAlign: align.value as any })}
+                                disabled={!hasSelectedBalloon}
+                                title={align.title}
+                                className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${(selectedBalloon?.strokeAlign || 'center') === align.value
+                                    ? 'bg-neon-blue/30 text-white border border-neon-blue/50'
+                                    : 'bg-white/5 text-zinc-400 border border-transparent hover:bg-white/10'
+                                    } disabled:opacity-40 disabled:cursor-not-allowed`}
+                            >
+                                {align.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Vertex Editing Section */}
+                <div className="mt-4 pt-3 border-t border-white/10">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] text-zinc-300 font-semibold uppercase tracking-wide">Vértices</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl px-2.5 py-2">
+                        <span className="text-[10px] text-zinc-400 font-medium flex-1">Editar Vértices</span>
+                        <VertexToggleButton />
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl px-2.5 py-2">
+                        <span className="text-[10px] text-zinc-400 font-medium flex-1">Curvar Arestas</span>
+                        <CurveToggleButton />
+                    </div>
                 </div>
             </div>
         </div>

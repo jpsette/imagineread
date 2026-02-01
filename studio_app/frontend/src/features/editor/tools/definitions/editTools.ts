@@ -1,4 +1,4 @@
-import { MousePointer2, Type, Square, Circle, Cloud, Zap } from 'lucide-react';
+import { MousePointer2, Square, Circle, Cloud, Zap, Trash2 } from 'lucide-react';
 import { ToolDefinition } from '../ToolRegistry';
 
 export const coreTools: ToolDefinition[] = [
@@ -10,10 +10,10 @@ export const coreTools: ToolDefinition[] = [
         category: 'core'
     },
     {
-        id: 'text',
-        label: 'Texto',
-        icon: Type,
-        shortcut: 'T',
+        id: 'delete',
+        label: 'Excluir',
+        icon: Trash2,
+        shortcut: 'Del',
         category: 'core'
     }
 ];

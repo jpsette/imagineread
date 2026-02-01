@@ -1,4 +1,4 @@
-import { Trash2, Square, Type, ImageIcon, Layout, Images } from 'lucide-react';
+import { Maximize, Square, Type, ImageIcon, Layout, Images } from 'lucide-react';
 
 import { useEditorUIStore } from '@features/editor/uiStore';
 import { ToolRegistry } from '@features/editor/tools/ToolRegistry';
@@ -9,16 +9,26 @@ import { useEditorStore } from '@features/editor/store';
 
 interface EditorSidebarProps {
     onOpenPanelGallery: () => void;
+    onCenterPage?: () => void;
 }
 
-export const LeftSidebar: React.FC<EditorSidebarProps> = ({ onOpenPanelGallery }) => {
+export const LeftSidebar: React.FC<EditorSidebarProps> = ({ onOpenPanelGallery, onCenterPage }) => {
     const { activeTool, setActiveTool, selectedId } = useEditorUIStore();
-    const { removeBalloon, removePanel } = useEditorStore();
+    const { removeBalloonUndoable, removePanelUndoable } = useEditorStore();
 
     const handleDelete = () => {
         if (!selectedId) return;
-        if (selectedId.startsWith('panel')) removePanel(selectedId);
-        else removeBalloon(selectedId);
+        if (selectedId.startsWith('panel')) removePanelUndoable(selectedId);
+        else removeBalloonUndoable(selectedId);
+    };
+
+    const handleToolClick = (toolId: string) => {
+        if (toolId === 'delete') {
+            // Execute delete action
+            handleDelete();
+        } else {
+            setActiveTool(toolId as any);
+        }
     };
 
     const coreTools = ToolRegistry.getByCategory('core');
@@ -36,22 +46,21 @@ export const LeftSidebar: React.FC<EditorSidebarProps> = ({ onOpenPanelGallery }
                             key={tool.id}
                             tool={tool}
                             isActive={activeTool === tool.id}
-                            onClick={() => setActiveTool(tool.id)}
+                            onClick={() => handleToolClick(tool.id)}
+                            disabled={tool.id === 'delete' && !selectedId}
                         />
                     ))}
                 </div>
 
-                {/* EXTRA ACTIONS (Delete) */}
+                {/* CENTER PAGE BUTTON (full width) */}
                 <button
-                    onClick={handleDelete}
-                    disabled={!selectedId}
+                    onClick={onCenterPage}
                     className="w-full h-9 rounded-xl flex items-center justify-center gap-2 transition-all border text-[10px] font-bold uppercase tracking-wider
-                        bg-red-500/5 hover:bg-red-500/20 text-red-500 border-red-500/10 hover:border-red-500/30 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)]
-                        disabled:border-transparent disabled:bg-white/5 disabled:text-zinc-600 disabled:cursor-not-allowed disabled:shadow-none"
-                    title="Excluir Selecionado (Del)"
+                        bg-blue-500/5 hover:bg-blue-500/20 text-blue-400 border-blue-500/10 hover:border-blue-500/30 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+                    title="Centralizar Página (F)"
                 >
-                    <Trash2 size={14} />
-                    <span>Excluir</span>
+                    <Maximize size={14} />
+                    <span>Centralizar Página</span>
                 </button>
             </div>
 

@@ -13,6 +13,7 @@ import { FloatingPanel } from '@shared/components/FloatingPanel';
 interface EditorLeftPanelProps {
     vectorization: any; // The return type of useVectorization hook
     onOpenPanelGallery: () => void;
+    onCenterPage?: () => void;
     cleanUrl?: string | null;
     isCleaned?: boolean;
     isLoading?: boolean;
@@ -22,6 +23,7 @@ interface EditorLeftPanelProps {
 export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
     vectorization,
     onOpenPanelGallery,
+    onCenterPage,
     cleanUrl,
     isCleaned,
     isLoading
@@ -36,7 +38,7 @@ export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
             maxWidth={350}
             minHeight={250}
         >
-            <div className="w-full h-full bg-black/60 backdrop-blur-md rounded-2xl border border-glass-border shadow-glow-sm flex flex-col items-center overflow-hidden pointer-events-auto">
+            <div className="w-full h-full bg-zinc-950 rounded-2xl border border-zinc-800 shadow-xl flex flex-col items-center overflow-hidden pointer-events-auto">
                 <div className="w-full h-full bg-transparent px-4 pt-2 overflow-y-auto custom-scrollbar">
                     {activeMode === 'vectorize' && (
                         <VectorizeMenu
@@ -83,7 +85,7 @@ export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
                     )}
 
                     {activeMode === 'edit' && (
-                        <LeftSidebar onOpenPanelGallery={onOpenPanelGallery} />
+                        <LeftSidebar onOpenPanelGallery={onOpenPanelGallery} onCenterPage={onCenterPage} />
                     )}
 
                     {activeMode === 'translate' && <TranslateMenu />}

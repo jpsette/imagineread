@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Stage } from 'react-konva';
+import { Stage, Layer, Rect } from 'react-konva';
 import useImage from 'use-image';
 import Konva from 'konva';
 import { Balloon, Panel, EditorTool } from '@shared/types';
@@ -71,6 +71,8 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         showBalloons,
         showText,
         showMasks,
+        vertexEditingEnabled,
+        curveEditingEnabled,
         activeTool,
         setActiveTool,
         selectedId,
@@ -134,10 +136,10 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         fileId // PASSED FOR SAVE STABILITY
     });
 
-    const { handleStageClick } = useCanvasTools({
+    const { handleStageMouseDown, handleStageMouseUp, handleStageMouseMove, dragPreview } = useCanvasTools({
         activeTool,
         setActiveTool,
-        onSelect: handleSelect, // FIXED: Use stable wrapper instead of optional prop
+        onSelect: handleSelect,
         onBalloonAdd,
         setEditingId,
         imgOriginal
@@ -162,8 +164,19 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         ? cleanFilePath
         : (fileId || imageUrl.replace('media://', '/'));
 
+    // Cursor styling based on active tool
+    const getCursorClass = () => {
+        if (activeTool === 'text') {
+            return 'cursor-text'; // I-beam cursor for text
+        }
+        if (activeTool.startsWith('balloon-')) {
+            return 'cursor-crosshair'; // Crosshair for balloons
+        }
+        return 'cursor-default';
+    };
+
     return (
-        <div ref={containerRef} className="w-full h-full bg-[#1e1e1e] overflow-hidden relative">
+        <div ref={containerRef} className={`w-full h-full bg-[#1e1e1e] overflow-hidden relative ${getCursorClass()}`}>
             {/* LOCAL LOADER: Prevents "Black Screen" Flick during navigation */}
             {/* Fix: Z-Index reduced to 10 to sit BEHIND floating panels (z-40) but ABOVE canvas */}
             {statusOriginal === 'loading' && (
@@ -184,13 +197,15 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                 width={Math.max(1, dimensions.width)}
                 height={Math.max(1, dimensions.height)}
                 onWheel={handleWheel}
-                onDragEnd={handleDragEnd} // FIXED: Sync state after drag
+                onDragEnd={handleDragEnd}
                 scaleX={scale}
                 scaleY={scale}
                 x={position.x}
                 y={position.y}
                 draggable={activeTool === 'select' && !editingId}
-                onMouseDown={handleStageClick}
+                onMouseDown={handleStageMouseDown}
+                onMouseUp={handleStageMouseUp}
+                onMouseMove={handleStageMouseMove}
             >
                 <BackgroundLayer
                     isCleanVisible={isCleanVisible}
@@ -226,11 +241,30 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                     showMasks={showMasks}
                     showBalloons={showBalloons}
                     showText={showText}
+                    vertexEditingEnabled={vertexEditingEnabled}
+                    curveEditingEnabled={curveEditingEnabled}
                     onSelect={handleSelect}
                     onUpdate={onUpdate}
                     onEditRequest={handleEditRequestInternal}
                     setEditingId={setEditingId}
                 />
+
+                {/* Drag Preview Layer - Show rectangle while dragging */}
+                {dragPreview && dragPreview.width > 5 && dragPreview.height > 5 && (
+                    <Layer>
+                        <Rect
+                            x={dragPreview.x}
+                            y={dragPreview.y}
+                            width={dragPreview.width}
+                            height={dragPreview.height}
+                            stroke={activeTool === 'text' ? '#06b6d4' : '#3b82f6'}
+                            strokeWidth={2 / scale}
+                            dash={[6 / scale, 4 / scale]}
+                            fill={activeTool === 'text' ? 'rgba(6, 182, 212, 0.1)' : 'rgba(59, 130, 246, 0.1)'}
+                            listening={false}
+                        />
+                    </Layer>
+                )}
             </Stage>
         </div>
     );

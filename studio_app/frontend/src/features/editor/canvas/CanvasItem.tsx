@@ -93,52 +93,64 @@ export const CanvasItem: React.FC<CanvasItemProps> = ({ item, isSelected, onSele
                 {/* BACKGROUND SHAPE */}
                 {/* NO SHADOWS for performance */}
 
-                {/* 1. HAS_MASK Logic */}
-                {item.type === 'mask' ? (
-                    <Rect
-                        width={width}
-                        height={height}
-                        fill="rgba(255, 0, 0, 0.3)"
-                        stroke="red"
-                        strokeWidth={2}
-                        dash={[5, 5]}
-                        cornerRadius={4}
-                        listening={false} // Optimization? No, masks need to be clickable to select? 
-                    // But masks are draggable. So listening=true (default)
-                    />
-                ) : (
-                    // 2. BALLOON/TEXT Logic
-                    item.type !== 'text' ? (
-                        item.shape === 'ellipse' ? (
-                            <Ellipse
-                                radiusX={width / 2}
-                                radiusY={height / 2}
-                                offsetX={-width / 2} // Ellipse center is at (0,0), so offset logic depends on Group placement
-                                offsetY={-height / 2} // If Group x/y is TopLeft, and Ellipse is at 0,0, then Ellipse center is at TopLeft. 
-                                // We need center to be at Width/2, Height/2.
-                                // Instead of offset, let's just set x/y for ellipse relative to group.
-                                x={width / 2}
-                                y={height / 2}
-                                fill={item.color || 'white'}
-                                stroke={item.borderColor || 'black'}
-                                strokeWidth={item.borderWidth ?? 2}
-                                opacity={item.opacity ?? 1}
-                            // Shadows removed
-                            />
-                        ) : (
-                            <Rect
-                                width={width}
-                                height={height}
-                                fill={item.color || '#ffffff'}
-                                stroke={item.borderColor || '#000000'}
-                                strokeWidth={item.borderWidth ?? 2}
-                                opacity={item.opacity ?? 1}
-                                cornerRadius={item.borderRadius || 10}
-                            // Shadows removed
-                            />
-                        )
-                    ) : null
-                )}
+                {/* Helper: Get dash array from borderStyle */}
+                {(() => {
+                    const getDash = () => {
+                        const style = item.borderStyle;
+                        if (!style || style === 'solid') return undefined;
+
+                        const sw = item.borderWidth ?? 2;
+                        const size = item.dashSize ?? (style === 'dashed' ? sw * 4 : sw);
+                        const gap = item.dashGap ?? (style === 'dashed' ? sw * 2 : sw);
+
+                        return [size, gap];
+                    };
+
+                    return (
+                        <>
+                            {/* 1. HAS_MASK Logic */}
+                            {item.type === 'mask' ? (
+                                <Rect
+                                    width={width}
+                                    height={height}
+                                    fill="rgba(255, 0, 0, 0.3)"
+                                    stroke="red"
+                                    strokeWidth={2}
+                                    dash={[5, 5]}
+                                    cornerRadius={4}
+                                />
+                            ) : (
+                                // 2. BALLOON/TEXT Logic
+                                item.type !== 'text' ? (
+                                    item.shape === 'ellipse' ? (
+                                        <Ellipse
+                                            radiusX={width / 2}
+                                            radiusY={height / 2}
+                                            x={width / 2}
+                                            y={height / 2}
+                                            fill={item.color || 'white'}
+                                            stroke={item.borderColor || 'black'}
+                                            strokeWidth={item.borderWidth ?? 2}
+                                            dash={getDash()}
+                                            opacity={item.opacity ?? 1}
+                                        />
+                                    ) : (
+                                        <Rect
+                                            width={width}
+                                            height={height}
+                                            fill={item.color || '#ffffff'}
+                                            stroke={item.borderColor || '#000000'}
+                                            strokeWidth={item.borderWidth ?? 2}
+                                            dash={getDash()}
+                                            opacity={item.opacity ?? 1}
+                                            cornerRadius={item.borderRadius || 10}
+                                        />
+                                    )
+                                ) : null
+                            )}
+                        </>
+                    );
+                })()}
 
                 {/* TEXT CONTENT */}
                 <Text

@@ -21,7 +21,7 @@ const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerP
     onImageDimensionsLoaded
 }, ref) => {
     // Stores
-    const { balloons, addBalloon, panels } = useEditorStore();
+    const { balloons, addBalloonUndoable, panels } = useEditorStore();
 
     // Optimizing Selectors
     const showMasks = useEditorUIStore(s => s.showMasks);
@@ -65,7 +65,7 @@ const EditorCanvasContainerBase = forwardRef<Konva.Stage, EditorCanvasContainerP
                     }
                 }}
                 onImageLoad={handleImageLoad}
-                onBalloonAdd={addBalloon}
+                onBalloonAdd={addBalloonUndoable}
                 editingId={editingId}
                 setEditingId={setEditingId}
                 onCanvasReady={onCanvasReady}

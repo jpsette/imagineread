@@ -11,7 +11,7 @@ export interface Project {
 
 // Editor Types
 export type EditorMode = 'vectorize' | 'edit' | 'translate' | 'animate';
-export type EditorTool = 'select' | 'text' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout';
+export type EditorTool = 'select' | 'text' | 'delete' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout';
 
 export interface Balloon {
     id: string;
@@ -31,12 +31,17 @@ export interface Balloon {
     fontSize?: number;
     borderRadius?: number;
     borderWidth?: number;
+    borderStyle?: 'solid' | 'dashed' | 'dotted'; // Line style
+    dashSize?: number; // Size of dashes/dots (default: auto based on stroke width)
+    dashGap?: number;  // Gap between dashes/dots (default: auto based on stroke width)
+    strokeAlign?: 'inner' | 'center' | 'outer'; // Stroke alignment
     tailWidth?: number;
     roughness?: number;
     tailTip?: { x: number, y: number } | null;
     tailControl?: { x: number, y: number } | null;
     tailCurve?: string | null;
     points?: { x: number, y: number }[]; // For freeform vertex editing
+    curveControlPoints?: ({ x: number, y: number } | null)[]; // Control points for bezier curves (one per edge)
 
     // Style Props
     color?: string; // Fill color
@@ -46,9 +51,13 @@ export interface Balloon {
     lineHeight?: number; // Line spacing
     textOffsetX?: number; // Independent text X offset
     textOffsetY?: number; // Independent text Y offset
+    textWidth?: number; // Independent text box width (defaults to balloon width)
+    textHeight?: number; // Independent text box height (defaults to balloon height)
     fontFamily?: string;
     fontStyle?: string;   // 'bold', 'italic', 'italic bold', 'normal'
     textDecoration?: string; // 'underline', 'line-through', ''
+    textAlign?: 'left' | 'center' | 'right' | 'justify'; // Text alignment
+    verticalAlign?: 'top' | 'middle' | 'bottom'; // Vertical alignment
     opacity?: number;
     html?: string; // For rich text content
     rotation?: number;

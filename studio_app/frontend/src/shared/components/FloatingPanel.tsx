@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface FloatingPanelProps {
     children: React.ReactNode;
@@ -14,6 +14,8 @@ interface FloatingPanelProps {
  * A floating panel that can be dragged and resized.
  * - Drag by clicking anywhere on the panel header (top 32px)
  * - Resize by dragging the bottom-right corner handle
+ * 
+ * OPTIMIZED: Uses refs for position/size during drag to avoid re-renders
  */
 export const FloatingPanel: React.FC<FloatingPanelProps> = ({
     children,
@@ -24,20 +26,34 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
     minHeight = 250,
     className = ''
 }) => {
-    // State
-    const [position, setPosition] = useState(defaultPosition);
-    const [size, setSize] = useState(defaultSize);
-    const [isDragging, setIsDragging] = useState(false);
-    const [isResizing, setIsResizing] = useState(false);
-
-    // Refs for tracking drag/resize start points
-    const dragStartRef = useRef({ mouseX: 0, mouseY: 0, panelX: 0, panelY: 0 });
-    const resizeStartRef = useRef({ mouseX: 0, mouseY: 0, width: 0, height: 0 });
+    // Refs for position and size to avoid re-renders during drag/resize
+    const positionRef = useRef(defaultPosition);
+    const sizeRef = useRef(defaultSize);
     const panelRef = useRef<HTMLDivElement>(null);
 
+    // Track if we're dragging/resizing
+    const isDraggingRef = useRef(false);
+    const isResizingRef = useRef(false);
+
+    // Start points for drag/resize
+    const dragStartRef = useRef({ mouseX: 0, mouseY: 0, panelX: 0, panelY: 0 });
+    const resizeStartRef = useRef({ mouseX: 0, mouseY: 0, width: 0, height: 0 });
+
+    // State only for cursor changes (minimal re-renders)
+    const [cursor, setCursor] = useState<'default' | 'grabbing'>('default');
+
+    // Apply transform directly to DOM for smooth performance
+    const applyTransform = () => {
+        if (panelRef.current) {
+            panelRef.current.style.left = `${positionRef.current.x}px`;
+            panelRef.current.style.top = `${positionRef.current.y}px`;
+            panelRef.current.style.width = `${sizeRef.current.width}px`;
+            panelRef.current.style.height = `${sizeRef.current.height}px`;
+        }
+    };
+
     // --- DRAG HANDLERS ---
-    const handleDragStart = useCallback((e: React.MouseEvent) => {
-        // Only start drag if clicking on the header area (first 32px)
+    const handleDragStart = (e: React.MouseEvent) => {
         const rect = panelRef.current?.getBoundingClientRect();
         if (!rect) return;
 
@@ -45,17 +61,23 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
         if (relativeY > 32) return; // Not in header area
 
         e.preventDefault();
-        setIsDragging(true);
+        isDraggingRef.current = true;
+        setCursor('grabbing');
+
         dragStartRef.current = {
             mouseX: e.clientX,
             mouseY: e.clientY,
-            panelX: position.x,
-            panelY: position.y
+            panelX: positionRef.current.x,
+            panelY: positionRef.current.y
         };
-    }, [position]);
 
-    const handleDragMove = useCallback((e: MouseEvent) => {
-        if (!isDragging) return;
+        // Add listeners
+        window.addEventListener('mousemove', handleDragMove);
+        window.addEventListener('mouseup', handleDragEnd);
+    };
+
+    const handleDragMove = (e: MouseEvent) => {
+        if (!isDraggingRef.current) return;
 
         const deltaX = e.clientX - dragStartRef.current.mouseX;
         const deltaY = e.clientY - dragStartRef.current.mouseY;
@@ -64,33 +86,41 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
         let newY = dragStartRef.current.panelY + deltaY;
 
         // Clamp to viewport bounds
-        const maxX = window.innerWidth - size.width;
-        const maxY = window.innerHeight - size.height;
+        const maxX = window.innerWidth - sizeRef.current.width;
+        const maxY = window.innerHeight - sizeRef.current.height;
         newX = Math.max(0, Math.min(newX, maxX));
         newY = Math.max(0, Math.min(newY, maxY));
 
-        setPosition({ x: newX, y: newY });
-    }, [isDragging, size]);
+        positionRef.current = { x: newX, y: newY };
+        applyTransform();
+    };
 
-    const handleDragEnd = useCallback(() => {
-        setIsDragging(false);
-    }, []);
+    const handleDragEnd = () => {
+        isDraggingRef.current = false;
+        setCursor('default');
+        window.removeEventListener('mousemove', handleDragMove);
+        window.removeEventListener('mouseup', handleDragEnd);
+    };
 
     // --- RESIZE HANDLERS ---
-    const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    const handleResizeStart = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        setIsResizing(true);
+        isResizingRef.current = true;
+
         resizeStartRef.current = {
             mouseX: e.clientX,
             mouseY: e.clientY,
-            width: size.width,
-            height: size.height
+            width: sizeRef.current.width,
+            height: sizeRef.current.height
         };
-    }, [size]);
 
-    const handleResizeMove = useCallback((e: MouseEvent) => {
-        if (!isResizing) return;
+        window.addEventListener('mousemove', handleResizeMove);
+        window.addEventListener('mouseup', handleResizeEnd);
+    };
+
+    const handleResizeMove = (e: MouseEvent) => {
+        if (!isResizingRef.current) return;
 
         const deltaX = e.clientX - resizeStartRef.current.mouseX;
         const deltaY = e.clientY - resizeStartRef.current.mouseY;
@@ -100,55 +130,41 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
 
         // Clamp to constraints
         newWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
-        newHeight = Math.max(minHeight, Math.min(newHeight, window.innerHeight - 48)); // 48px margin
+        newHeight = Math.max(minHeight, Math.min(newHeight, window.innerHeight - 48));
 
-        setSize({ width: newWidth, height: newHeight });
-    }, [isResizing, minWidth, maxWidth, minHeight]);
+        sizeRef.current = { width: newWidth, height: newHeight };
+        applyTransform();
+    };
 
-    const handleResizeEnd = useCallback(() => {
-        setIsResizing(false);
+    const handleResizeEnd = () => {
+        isResizingRef.current = false;
+        window.removeEventListener('mousemove', handleResizeMove);
+        window.removeEventListener('mouseup', handleResizeEnd);
+    };
+
+    // Initial position apply
+    useEffect(() => {
+        applyTransform();
     }, []);
-
-    // --- GLOBAL EVENT LISTENERS ---
-    useEffect(() => {
-        if (isDragging) {
-            window.addEventListener('mousemove', handleDragMove);
-            window.addEventListener('mouseup', handleDragEnd);
-            return () => {
-                window.removeEventListener('mousemove', handleDragMove);
-                window.removeEventListener('mouseup', handleDragEnd);
-            };
-        }
-    }, [isDragging, handleDragMove, handleDragEnd]);
-
-    useEffect(() => {
-        if (isResizing) {
-            window.addEventListener('mousemove', handleResizeMove);
-            window.addEventListener('mouseup', handleResizeEnd);
-            return () => {
-                window.removeEventListener('mousemove', handleResizeMove);
-                window.removeEventListener('mouseup', handleResizeEnd);
-            };
-        }
-    }, [isResizing, handleResizeMove, handleResizeEnd]);
 
     return (
         <div
             ref={panelRef}
             className={`fixed z-40 ${className}`}
             style={{
-                left: position.x,
-                top: position.y,
-                width: size.width,
-                height: size.height,
-                cursor: isDragging ? 'grabbing' : 'default'
+                left: defaultPosition.x,
+                top: defaultPosition.y,
+                width: defaultSize.width,
+                height: defaultSize.height,
+                cursor: cursor,
+                willChange: 'left, top, width, height'
             }}
             onMouseDown={handleDragStart}
         >
             {/* Drag Handle Indicator (Visual feedback at top) */}
             <div
                 className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center cursor-grab hover:bg-white/5 rounded-t-2xl transition-colors"
-                style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                style={{ cursor: cursor === 'grabbing' ? 'grabbing' : 'grab' }}
             >
                 <div className="w-10 h-1 bg-white/20 rounded-full" />
             </div>
@@ -163,7 +179,6 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
                 className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize group"
                 onMouseDown={handleResizeStart}
             >
-                {/* Visual indicator */}
                 <svg
                     className="w-full h-full text-white/30 group-hover:text-white/60 transition-colors"
                     viewBox="0 0 16 16"

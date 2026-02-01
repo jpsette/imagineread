@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { Balloon, Panel } from '@shared/types';
 import { commandManager } from './commands/CommandManager';
+import { UpdateBalloonCommand, RemoveBalloonCommand, AddBalloonCommand } from './commands/balloonCommands';
+import { RemovePanelCommand } from './commands/panelCommands';
 
 interface EditorState {
     balloons: Balloon[];
@@ -8,6 +10,12 @@ interface EditorState {
     addBalloon: (balloon: Balloon) => void;
     updateBalloon: (id: string, updates: Partial<Balloon>) => void;
     removeBalloon: (id: string) => void;
+
+    // Undoable versions (use these for user actions)
+    addBalloonUndoable: (balloon: Balloon) => void;
+    updateBalloonUndoable: (id: string, updates: Partial<Balloon>) => void;
+    removeBalloonUndoable: (id: string) => void;
+    removePanelUndoable: (id: string) => void;
 
     panels: Panel[];
     setPanels: (panels: Panel[] | ((prev: Panel[]) => Panel[])) => void;
@@ -60,6 +68,23 @@ export const useEditorStore = create<EditorState>((set) => ({
         isSaved: false
     })),
 
+    // --- UNDOABLE ACTIONS (Use these for user actions) ---
+    addBalloonUndoable: (balloon) => {
+        commandManager.execute(new AddBalloonCommand(balloon));
+    },
+
+    updateBalloonUndoable: (id, updates) => {
+        commandManager.execute(new UpdateBalloonCommand(id, updates));
+    },
+
+    removeBalloonUndoable: (id) => {
+        commandManager.execute(new RemoveBalloonCommand(id));
+    },
+
+    removePanelUndoable: (id) => {
+        commandManager.execute(new RemovePanelCommand(id));
+    },
+
     // PANELS
     panels: [],
     setPanels: (input) => set((state) => ({
@@ -77,9 +102,3 @@ export const useEditorStore = create<EditorState>((set) => ({
     undo: () => commandManager.undo(),
     redo: () => commandManager.redo(),
 }));
-
-// Subscribe Store to CommandManager to trigger re-renders if needed?
-// Actually, Store doesn't store history state anymore. 
-// If components need to know "canUndo", they should subscribe to commandManager or we sync it here.
-// For now, simple proxy is enough.
-

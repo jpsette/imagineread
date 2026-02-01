@@ -191,6 +191,32 @@ export const EditorScreen: React.FC = () => {
         panels
     });
 
+    // Center page / fit-to-view function
+    const handleCenterPage = React.useCallback(() => {
+        if (!stageRef.current || !editor.imgNaturalSize) return;
+
+        const stage = stageRef.current;
+        const container = stage.container();
+        const containerWidth = container.offsetWidth;
+        const containerHeight = container.offsetHeight;
+
+        const { w: imgWidth, h: imgHeight } = editor.imgNaturalSize;
+
+        // Calculate scale to fit image in view with some padding
+        const padding = 40;
+        const scaleX = (containerWidth - padding * 2) / imgWidth;
+        const scaleY = (containerHeight - padding * 2) / imgHeight;
+        const newScale = Math.min(scaleX, scaleY, 1); // Don't zoom in more than 100%
+
+        // Center the image
+        const newX = (containerWidth - imgWidth * newScale) / 2;
+        const newY = (containerHeight - imgHeight * newScale) / 2;
+
+        stage.scale({ x: newScale, y: newScale });
+        stage.position({ x: newX, y: newY });
+        stage.batchDraw();
+    }, [editor.imgNaturalSize]);
+
     // --- NAVIGATION PROTECTION ---
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -258,6 +284,7 @@ export const EditorScreen: React.FC = () => {
                     <EditorLeftPanel
                         vectorization={vectorization}
                         onOpenPanelGallery={handleOpenGallery}
+                        onCenterPage={handleCenterPage}
                         cleanUrl={safeCleanUrl}
                         isCleaned={activeFile ? activeFile.isCleaned : false}
                         isLoading={effectiveIsLoading && !hasData} // Optional: Dim sidebar if truly loading

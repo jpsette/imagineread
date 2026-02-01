@@ -44,25 +44,36 @@ export const BalloonText: React.FC<BalloonTextProps> = ({
 
     // Helper to build style object for HTML (Editing/View)
     const getStyle = (): React.CSSProperties => {
+        // Map verticalAlign to CSS alignItems
+        const getAlignItems = () => {
+            if (balloon.verticalAlign === 'top') return 'flex-start';
+            if (balloon.verticalAlign === 'bottom') return 'flex-end';
+            return 'center'; // default: middle
+        };
+
         return {
             width: '100%',
             height: '100%',
-            display: 'table-cell', // Allows vertical centering without flex
-            verticalAlign: 'middle',
+            display: 'flex',
+            alignItems: getAlignItems(),
+            justifyContent: balloon.textAlign === 'left' ? 'flex-start' :
+                balloon.textAlign === 'right' ? 'flex-end' : 'center',
             fontFamily: balloon.fontFamily || 'Comic Neue',
             fontSize: `${balloon.fontSize || 11}px`,
             color: balloon.textColor || '#000000',
             fontWeight: (balloon.fontStyle || '').includes('bold') ? 'bold' : 'normal',
             fontStyle: (balloon.fontStyle || '').includes('italic') ? 'italic' : 'normal',
             textDecoration: (balloon.textDecoration || '').includes('underline') ? 'underline' : 'none',
-            textAlign: 'center',
+            textAlign: balloon.textAlign || 'center',
             lineHeight: balloon.lineHeight || 1.4,
             outline: 'none',
             userSelect: 'text',
             cursor: isEditing ? 'text' : 'move',
             overflow: 'hidden',
             pointerEvents: isEditing ? 'auto' : 'none',
-            padding: balloon.type === 'balloon-thought' ? '15%' : '5%'
+            padding: balloon.type === 'balloon-thought' ? '15%' : '5%',
+            boxSizing: 'border-box',
+            wordBreak: 'break-word',
         };
     };
 
@@ -135,8 +146,8 @@ export const BalloonText: React.FC<BalloonTextProps> = ({
                 fill={balloon.textColor || '#000000'}
                 fontStyle={balloon.fontStyle || 'normal'}
                 textDecoration={balloon.textDecoration || ''}
-                align="center"
-                verticalAlign="middle"
+                align={balloon.textAlign || 'center'}
+                verticalAlign={balloon.verticalAlign || 'middle'}
                 visible={false} // Hidden by default, shown by panelUtils
                 listening={false} // No interactions
             />

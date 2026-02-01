@@ -11,6 +11,8 @@ interface EditorUIState {
     showBalloons: boolean;
     showText: boolean;
     showPanelsLayer: boolean;
+    vertexEditingEnabled: boolean; // Controls vertex editing mode for balloons
+    curveEditingEnabled: boolean; // Controls curve editing mode for balloons
 
     // Preview Modal
     showPreview: boolean;
@@ -26,6 +28,10 @@ interface EditorUIState {
     toggleText: () => void;
     toggleMasks: () => void;
     setShowPanelsLayer: (show: boolean) => void;
+    setVertexEditingEnabled: (enabled: boolean) => void;
+    toggleVertexEditing: () => void;
+    setCurveEditingEnabled: (enabled: boolean) => void;
+    toggleCurveEditing: () => void;
     setShowPreview: (show: boolean) => void;
     setPreviewImages: (images: string[]) => void;
 
@@ -62,6 +68,8 @@ export const useEditorUIStore = create<EditorUIState>((set) => ({
     showBalloons: true,
     showText: true,
     showPanelsLayer: true,
+    vertexEditingEnabled: false,
+    curveEditingEnabled: false,
     showPreview: false,
     previewImages: [],
 
@@ -83,6 +91,10 @@ export const useEditorUIStore = create<EditorUIState>((set) => ({
     toggleText: () => set((state) => ({ showText: !state.showText })),
     toggleMasks: () => set((state) => ({ showMasks: !state.showMasks })),
     setShowPanelsLayer: (show) => set({ showPanelsLayer: show }),
+    setVertexEditingEnabled: (enabled) => set({ vertexEditingEnabled: enabled }),
+    toggleVertexEditing: () => set((state) => ({ vertexEditingEnabled: !state.vertexEditingEnabled })),
+    setCurveEditingEnabled: (enabled) => set({ curveEditingEnabled: enabled }),
+    toggleCurveEditing: () => set((state) => ({ curveEditingEnabled: !state.curveEditingEnabled })),
     setShowPreview: (show) => set({ showPreview: show }),
     setPreviewImages: (images) => set({ previewImages: images }),
 
