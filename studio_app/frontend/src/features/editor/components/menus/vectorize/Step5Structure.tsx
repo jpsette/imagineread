@@ -93,7 +93,7 @@ export const Step5Structure: React.FC<Step5StructureProps> = ({
                     disabled={!hasPanels} // Enabled if panels exist (even if previews need regen)
                     className={`${!hasPanels ? BTN_DISABLED : BTN_SECONDARY}`}
                 >
-                    <Images className="w-4 h-4" /> Ver Quadros
+                    <Images className="w-4 h-4" /> Gerenciar Quadros
                 </button>
             </div>
         </div>

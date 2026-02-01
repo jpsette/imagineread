@@ -25,6 +25,7 @@ export interface Balloon {
     // Custom SVG Payload
     customSvg?: string; // Path data (d attribute)
     svgViewBox?: { width: number, height: number }; // Original dimensions for scaling
+    svgDataUrl?: string; // Complete SVG as data URL for complex imports
 
     customFontSize?: number;
     fontSize?: number;
@@ -41,6 +42,10 @@ export interface Balloon {
     color?: string; // Fill color
     borderColor?: string; // Stroke color
     textColor?: string;
+    textBackgroundColor?: string; // Highlight/marker color for text
+    lineHeight?: number; // Line spacing
+    textOffsetX?: number; // Independent text X offset
+    textOffsetY?: number; // Independent text Y offset
     fontFamily?: string;
     fontStyle?: string;   // 'bold', 'italic', 'italic bold', 'normal'
     textDecoration?: string; // 'underline', 'line-through', ''

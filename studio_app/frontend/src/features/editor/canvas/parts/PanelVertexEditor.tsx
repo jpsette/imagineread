@@ -7,13 +7,15 @@ interface PanelVertexEditorProps {
     width: number;
     height: number;
     onChange: (newAttrs: Partial<Panel>) => void;
+    onVertexDragMove?: (relPoints: number[]) => void; // Real-time update callback
 }
 
 export const PanelVertexEditor: React.FC<PanelVertexEditorProps> = ({
     panel,
     width,
     height,
-    onChange
+    onChange,
+    onVertexDragMove
 }) => {
     const lineRef = React.useRef<any>(null);
 
@@ -66,9 +68,17 @@ export const PanelVertexEditor: React.FC<PanelVertexEditorProps> = ({
         newPoints[index] = { x: newRelX, y: newRelY };
         currentPointsRef.current = newPoints;
 
+        const flatPoints = newPoints.flatMap(p => [p.x, p.y]);
+
+        // Update the internal dashed line
         if (lineRef.current) {
-            lineRef.current.points(newPoints.flatMap(p => [p.x, p.y]));
+            lineRef.current.points(flatPoints);
             lineRef.current.getLayer()?.batchDraw();
+        }
+
+        // Update the parent's main polygon (fill follows vertices in real-time)
+        if (onVertexDragMove) {
+            onVertexDragMove(flatPoints);
         }
     };
 

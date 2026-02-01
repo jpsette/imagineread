@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Group, Transformer } from 'react-konva';
+import { Group, Transformer, Circle } from 'react-konva';
 import { Balloon } from '@shared/types';
 import { BalloonVector } from './parts/BalloonVector';
 import { BalloonText } from './parts/BalloonText';
@@ -203,15 +203,20 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
                 />
 
                 {/* 2. TEXT CONTENT (Controlled by showText) */}
-                <BalloonText
-                    balloon={balloon}
-                    width={width}
-                    height={height}
-                    isEditing={!!isEditing}
-                    visible={showText}
-                    onChange={handleTextChange}
-                    onBlur={() => onEditingBlur && onEditingBlur()}
-                />
+                <Group
+                    x={balloon.textOffsetX || 0}
+                    y={balloon.textOffsetY || 0}
+                >
+                    <BalloonText
+                        balloon={balloon}
+                        width={width}
+                        height={height}
+                        isEditing={!!isEditing}
+                        visible={showText}
+                        onChange={handleTextChange}
+                        onBlur={() => onEditingBlur && onEditingBlur()}
+                    />
+                </Group>
 
                 {/* 3. VERTEX EDITOR (Mask Mode) */}
                 {isSelected && showMaskOverlay && (
@@ -224,9 +229,48 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
                 )}
             </Group>
 
+            {/* 4. TEXT POSITION HANDLE - OUTSIDE the main Group so Transformer doesn't include it */}
+            {isSelected && !isEditing && showText && (
+                <Circle
+                    x={x + (balloon.textOffsetX || 0) - 15}
+                    y={y + (balloon.textOffsetY || 0) - 15}
+                    radius={8}
+                    fill="#10b981"
+                    stroke="#fff"
+                    strokeWidth={2}
+                    draggable
+                    shadowColor="black"
+                    shadowBlur={4}
+                    shadowOpacity={0.3}
+                    onDragMove={(e) => {
+                        e.cancelBubble = true;
+                        // Update in real-time - calculate offset from balloon position
+                        const newX = e.target.x() - x + 15;
+                        const newY = e.target.y() - y + 15;
+                        onChange({
+                            textOffsetX: newX,
+                            textOffsetY: newY
+                        });
+                    }}
+                    onMouseEnter={(e) => {
+                        const stage = e.target.getStage();
+                        if (stage) stage.container().style.cursor = 'grab';
+                    }}
+                    onMouseLeave={(e) => {
+                        const stage = e.target.getStage();
+                        if (stage) stage.container().style.cursor = 'default';
+                    }}
+                />
+            )}
+
             {isSelected && !isEditing && (
                 <Transformer
                     ref={trRef}
+                    padding={-10}
+                    anchorSize={8}
+                    anchorCornerRadius={2}
+                    borderStrokeWidth={2}
+                    rotateEnabled={false}
                     boundBoxFunc={(oldBox, newBox) => {
                         if (newBox.width < 20 || newBox.height < 20) return oldBox;
                         return newBox;

@@ -47,8 +47,10 @@ interface EditorUIState {
 
     // --- UNIFIED STATE ---
     selectedId: string | null;
+    selectedIds: string[];
     zoom: number;
     setSelectedId: (id: string | null) => void;
+    setSelectedIds: (ids: string[]) => void;
     setZoom: (zoom: number) => void;
 }
 
@@ -103,7 +105,9 @@ export const useEditorUIStore = create<EditorUIState>((set) => ({
 
     // --- NEW: UNIFIED STATE (Migrated from Logic Hook) ---
     selectedId: null,
+    selectedIds: [],
     zoom: 1,
-    setSelectedId: (id) => set({ selectedId: id }),
+    setSelectedId: (id) => set({ selectedId: id, selectedIds: id ? [id] : [] }),
+    setSelectedIds: (ids) => set({ selectedIds: ids, selectedId: ids.length === 1 ? ids[0] : null }),
     setZoom: (zoom) => set({ zoom: zoom }),
 }));

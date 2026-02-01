@@ -47,9 +47,8 @@ export const BalloonText: React.FC<BalloonTextProps> = ({
         return {
             width: '100%',
             height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: 'table-cell', // Allows vertical centering without flex
+            verticalAlign: 'middle',
             fontFamily: balloon.fontFamily || 'Comic Neue',
             fontSize: `${balloon.fontSize || 11}px`,
             color: balloon.textColor || '#000000',
@@ -57,7 +56,7 @@ export const BalloonText: React.FC<BalloonTextProps> = ({
             fontStyle: (balloon.fontStyle || '').includes('italic') ? 'italic' : 'normal',
             textDecoration: (balloon.textDecoration || '').includes('underline') ? 'underline' : 'none',
             textAlign: 'center',
-            lineHeight: 1.2,
+            lineHeight: balloon.lineHeight || 1.4,
             outline: 'none',
             userSelect: 'text',
             cursor: isEditing ? 'text' : 'move',
@@ -101,11 +100,24 @@ export const BalloonText: React.FC<BalloonTextProps> = ({
                     contentEditable={isEditing}
                     suppressContentEditableWarning={true}
                     onBlur={handleBlur}
-                    dangerouslySetInnerHTML={{ __html: content }}
                     onKeyDown={(e) => {
                         e.stopPropagation(); // Prevent Konva from catching backspace/delete
                     }}
-                />
+                >
+                    <span
+                        style={{
+                            ...(balloon.textBackgroundColor ? {
+                                backgroundColor: balloon.textBackgroundColor,
+                                padding: '2px 6px',
+                                borderRadius: '3px',
+                                boxDecorationBreak: 'clone',
+                                WebkitBoxDecorationBreak: 'clone',
+                                lineHeight: (balloon.lineHeight || 1.4) + 0.4
+                            } : {})
+                        } as React.CSSProperties}
+                        dangerouslySetInnerHTML={{ __html: content }}
+                    />
+                </div>
             </Html>
 
             {/* 2. CANVAS TEXT (Export/Preview Only) */}

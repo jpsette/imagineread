@@ -6,6 +6,7 @@ import { BalloonShape } from '../BalloonShape';
 interface BalloonsLayerProps {
     balloons: Balloon[];
     selectedId: string | null;
+    selectedIds: string[];
     editingId?: string | null;
     showMasks: boolean;
     showBalloons: boolean;
@@ -19,6 +20,7 @@ interface BalloonsLayerProps {
 export const BalloonsLayer: React.FC<BalloonsLayerProps> = ({
     balloons,
     selectedId,
+    selectedIds,
     editingId,
     showMasks,
     showBalloons,
@@ -39,7 +41,7 @@ export const BalloonsLayer: React.FC<BalloonsLayerProps> = ({
                     <BalloonShape
                         key={balloon.id}
                         balloon={balloon}
-                        isSelected={balloon.id === selectedId}
+                        isSelected={selectedIds.includes(balloon.id) || balloon.id === selectedId}
                         // @ts-ignore
                         isEditing={editingId === balloon.id}
                         // VISIBILITY PROPS

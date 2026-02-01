@@ -70,3 +70,68 @@ export const parseSvgFile = async (file: File): Promise<{ path: string, viewBox:
         reader.readAsText(file);
     });
 };
+
+/**
+ * Parse SVG file and return the COMPLETE SVG content as a data URL
+ * This preserves all paths, groups, styles, gradients, etc.
+ */
+export const parseSvgFileComplete = async (file: File): Promise<{
+    svgContent: string,
+    dataUrl: string,
+    viewBox: { width: number, height: number }
+}> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const text = e.target?.result as string;
+                if (!text) throw new Error("Empty file");
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, "image/svg+xml");
+                const svg = doc.querySelector("svg");
+
+                if (!svg) throw new Error("No SVG element found");
+
+                // Extract Dimensions (ViewBox or Width/Height)
+                let width = 200;
+                let height = 200;
+                const viewBox = svg.getAttribute("viewBox");
+
+                if (viewBox) {
+                    const parts = viewBox.split(/[\s,]+/).map(Number);
+                    if (parts.length === 4) {
+                        width = parts[2];
+                        height = parts[3];
+                    }
+                } else {
+                    const w = parseFloat(svg.getAttribute("width") || "200");
+                    const h = parseFloat(svg.getAttribute("height") || "200");
+                    width = isNaN(w) ? 200 : w;
+                    height = isNaN(h) ? 200 : h;
+                }
+
+                // Clean and serialize the SVG
+                // Remove any invalid characters and ensure proper encoding
+                const serializer = new XMLSerializer();
+                const svgString = serializer.serializeToString(svg);
+
+                // Create data URL for use in Konva Image
+                const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
+
+                resolve({
+                    svgContent: svgString,
+                    dataUrl,
+                    viewBox: { width, height }
+                });
+
+            } catch (err) {
+                reject(err);
+            }
+        };
+
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsText(file);
+    });
+};

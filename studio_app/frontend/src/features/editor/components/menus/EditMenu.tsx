@@ -1,10 +1,10 @@
 import React from 'react';
-import { Type, Bold, Italic, Underline, Baseline, Square, Circle, Cloud, MessageCircle, Upload, Shapes } from 'lucide-react';
+import { Type, Bold, Italic, Underline, Baseline, AlignVerticalSpaceAround } from 'lucide-react';
 import { Balloon } from '@shared/types';
-import { parseSvgFile } from '../../utils/svgParser';
 
 import { useEditorStore } from '../../store';
 import { useEditorUIStore } from '@features/editor/uiStore';
+import { ColorPicker } from '../ui/ColorPicker';
 
 export const EditMenu: React.FC = () => {
     // Stores
@@ -28,31 +28,7 @@ export const EditMenu: React.FC = () => {
         if (selectedBalloon) onUpdate(selectedBalloon.id, attr);
     };
 
-    // Helper for Shape Change
-    const handleShapeChange = (type: Balloon['type']) => {
-        handleUpdate({ type });
-    };
 
-    // Helper for SVG Import
-    const handleSvgImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        try {
-            const { path, viewBox } = await parseSvgFile(file);
-            handleUpdate({
-                type: 'balloon-custom',
-                customSvg: path,
-                svgViewBox: viewBox
-            });
-        } catch (err) {
-            console.error("Failed to parse SVG:", err);
-            alert("Erro ao importar SVG. Verifique se é um arquivo válido.");
-        }
-
-        // Reset input
-        e.target.value = '';
-    };
 
     // Helper to toggle Konva font styles
     const toggleStyle = (style: 'bold' | 'italic') => {
@@ -146,45 +122,6 @@ export const EditMenu: React.FC = () => {
 
     return (
         <div className={`flex flex-col gap-3 p-1 transition-opacity duration-200 ${isDisabled ? 'opacity-40 pointer-events-none select-none' : 'opacity-100'}`}>
-
-            {/* 0. SHAPE SELECTION (New) */}
-            <div className="space-y-1.5 pt-1">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase flex items-center gap-1.5">
-                    <Shapes size={12} /> Formato
-                </label>
-                <div className="grid grid-cols-5 gap-1">
-                    <button
-                        onClick={() => handleShapeChange('balloon-square')}
-                        className={`h-7 rounded bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 flex items-center justify-center transition-colors ${selectedBalloon?.type === 'balloon-square' ? 'border-cyan-500 text-cyan-500' : 'text-zinc-400'}`}
-                        title="Quadrado"
-                        disabled={isDisabled}
-                    ><Square size={13} /></button>
-                    <button
-                        onClick={() => handleShapeChange('balloon-circle')}
-                        className={`h-7 rounded bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 flex items-center justify-center transition-colors ${selectedBalloon?.type === 'balloon-circle' ? 'border-cyan-500 text-cyan-500' : 'text-zinc-400'}`}
-                        title="Redondo"
-                        disabled={isDisabled}
-                    ><Circle size={13} /></button>
-                    <button
-                        onClick={() => handleShapeChange('balloon-thought')}
-                        className={`h-7 rounded bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 flex items-center justify-center transition-colors ${selectedBalloon?.type === 'balloon-thought' ? 'border-cyan-500 text-cyan-500' : 'text-zinc-400'}`}
-                        title="Pensamento"
-                        disabled={isDisabled}
-                    ><Cloud size={13} /></button>
-                    <button
-                        onClick={() => handleShapeChange('balloon-shout')}
-                        className={`h-7 rounded bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 flex items-center justify-center transition-colors ${selectedBalloon?.type === 'balloon-shout' ? 'border-cyan-500 text-cyan-500' : 'text-zinc-400'}`}
-                        title="Grito"
-                        disabled={isDisabled}
-                    ><MessageCircle size={13} /></button>
-
-                    {/* SVG Import Button */}
-                    <label className={`h-7 rounded bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 flex items-center justify-center transition-colors cursor-pointer ${selectedBalloon?.type === 'balloon-custom' ? 'border-cyan-500 text-cyan-500' : 'text-zinc-400'}`} title="Importar SVG">
-                        <input type="file" accept=".svg" className="hidden" onChange={handleSvgImport} disabled={isDisabled} />
-                        <Upload size={13} />
-                    </label>
-                </div>
-            </div>
 
             {/* 1. TEXT CONTENT */}
             <div className="space-y-1.5 pt-1">
@@ -282,39 +219,41 @@ export const EditMenu: React.FC = () => {
                         ><Underline size={14} /></button>
                     </div>
                 </div>
+
+                {/* Line Height Control */}
+                <div className="flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl px-2.5 h-8">
+                    <AlignVerticalSpaceAround size={14} className="text-zinc-400" />
+                    <span className="text-[10px] text-zinc-400 font-medium">Espaçamento</span>
+                    <input
+                        type="number"
+                        min="0.8" max="3" step="0.1"
+                        value={selectedBalloon?.lineHeight || 1.4}
+                        onChange={(e) => handleUpdate({ lineHeight: Number(e.target.value) })}
+                        className="w-12 bg-transparent border-none text-center text-[11px] text-white font-bold outline-none"
+                        disabled={isDisabled}
+                        title="Espaçamento entre linhas"
+                    />
+                </div>
             </div>
 
             {/* 3. COLORS (Side by Side) */}
             <div className="grid grid-cols-2 gap-2 mt-1">
                 {/* Text Color */}
-                <div className="flex items-center justify-between bg-white/5 border-white/5 px-2.5 py-1 rounded-xl border h-8 transition-colors hover:bg-white/10">
-                    <span className="text-[10px] text-zinc-400 font-medium">Texto</span>
-                    <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded border border-zinc-600 shadow-sm" style={{ backgroundColor: selectedBalloon?.textColor || '#000000' }} />
-                        <input
-                            type="color"
-                            value={selectedBalloon?.textColor || '#000000'}
-                            onChange={(e) => handleUpdate({ textColor: e.target.value })}
-                            className="w-6 h-6 opacity-0 absolute cursor-pointer"
-                            disabled={isDisabled}
-                        />
-                    </div>
-                </div>
+                <ColorPicker
+                    label="Cor do Texto"
+                    value={selectedBalloon?.textColor || '#000000'}
+                    onChange={(color) => handleUpdate({ textColor: color || '#000000' })}
+                    disabled={isDisabled}
+                />
 
-                {/* Bg Color */}
-                <div className="flex items-center justify-between bg-white/5 border-white/5 px-2.5 py-1 rounded-xl border h-8 transition-colors hover:bg-white/10">
-                    <span className="text-[10px] text-zinc-400 font-medium">Fundo</span>
-                    <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded border border-zinc-600 shadow-sm" style={{ backgroundColor: selectedBalloon?.color || '#ffffff' }} />
-                        <input
-                            type="color"
-                            value={selectedBalloon?.color || '#ffffff'}
-                            onChange={(e) => handleUpdate({ color: e.target.value })}
-                            className="w-6 h-6 opacity-0 absolute cursor-pointer"
-                            disabled={isDisabled}
-                        />
-                    </div>
-                </div>
+                {/* Text Highlight/Marker Color */}
+                <ColorPicker
+                    label="Marcador"
+                    value={selectedBalloon?.textBackgroundColor || ''}
+                    onChange={(color) => handleUpdate({ textBackgroundColor: color })}
+                    disabled={isDisabled}
+                    allowClear
+                />
             </div>
 
         </div>

@@ -1,17 +1,30 @@
 import React from 'react';
 import { useEditorUIStore } from '@features/editor/uiStore';
 import { RightSidebar } from './RightSidebar';
+import { FloatingPanel } from '@shared/components/FloatingPanel';
 
 export const EditorRightPanel: React.FC = () => {
     const { activeMode } = useEditorUIStore();
 
+    // Calculate default X position (right side of screen, with 16px margin)
+    // We use a reasonable default that works for most screens
+    const defaultX = typeof window !== 'undefined' ? window.innerWidth - 316 : 1000;
+
+    if (activeMode !== 'edit') return null;
+
     return (
-        <aside className="absolute right-4 top-24 bottom-24 w-fit z-40 bg-transparent flex flex-col pointer-events-none">
-            {activeMode === 'edit' && (
-                <div className="w-72 h-full bg-black/60 backdrop-blur-md rounded-2xl border border-glass-border shadow-glow-sm overflow-hidden pointer-events-auto flex flex-col">
+        <FloatingPanel
+            defaultPosition={{ x: defaultX, y: 96 }}
+            defaultSize={{ width: 300, height: 800 }}
+            minWidth={250}
+            maxWidth={350}
+            minHeight={250}
+        >
+            <div className="w-full h-full bg-black/60 backdrop-blur-md rounded-2xl border border-glass-border shadow-glow-sm overflow-hidden pointer-events-auto flex flex-col">
+                <div className="w-full h-full px-4 pt-2 overflow-y-auto custom-scrollbar">
                     <RightSidebar />
                 </div>
-            )}
-        </aside>
+            </div>
+        </FloatingPanel>
     );
 };

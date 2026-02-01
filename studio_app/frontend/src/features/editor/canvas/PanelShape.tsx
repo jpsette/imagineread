@@ -21,6 +21,7 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
 }) => {
     const shapeRef = useRef<Konva.Group>(null);
     const trRef = useRef<Konva.Transformer>(null);
+    const mainLineRef = useRef<Konva.Line>(null);
 
     // Calculate Box (Geometry)
     // We trust panel.box_2d or recompute? Better recompute from points to be safe or use box_2d if synced.
@@ -171,6 +172,7 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
             >
                 {/* The Polygon Panel (Relative Points) */}
                 <Line
+                    ref={mainLineRef}
                     points={relPoints}
                     closed={true}
                     stroke={isSelected ? "#0033CC" : "#0047FF"}
@@ -218,6 +220,13 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
                         width={width}
                         height={height}
                         onChange={(attrs) => onUpdate(panel.id, attrs)}
+                        onVertexDragMove={(newRelPoints: number[]) => {
+                            // Update the main polygon fill in real-time during drag
+                            if (mainLineRef.current) {
+                                mainLineRef.current.points(newRelPoints);
+                                mainLineRef.current.getLayer()?.batchDraw();
+                            }
+                        }}
                     />
                 )}
             </Group>

@@ -1,5 +1,0 @@
-fastapi
-uvicorn
-python-multipart
-pdf2image
-google-cloud-aiplatform>=1.38.0

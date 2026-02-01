@@ -1,5 +1,6 @@
 import React from 'react';
-import { Rect, Path, Line } from 'react-konva';
+import { Rect, Path, Line, Image } from 'react-konva';
+import useImage from 'use-image';
 import { Balloon } from '@shared/types';
 import { BALLOON_PATHS } from '../utils/balloonPaths';
 
@@ -10,6 +11,38 @@ interface BalloonVectorProps {
     isSelected: boolean;
     visible: boolean;
 }
+
+// Sub-component to handle SVG image loading
+const SvgImage: React.FC<{
+    dataUrl: string;
+    width: number;
+    height: number;
+    isSelected: boolean;
+}> = ({ dataUrl, width, height, isSelected }) => {
+    const [image] = useImage(dataUrl);
+
+    return (
+        <>
+            <Image
+                image={image}
+                width={width}
+                height={height}
+                perfectDrawEnabled={false}
+            />
+            {/* Selection border */}
+            {isSelected && (
+                <Rect
+                    width={width}
+                    height={height}
+                    stroke="#007AFF"
+                    strokeWidth={2}
+                    fill="transparent"
+                    listening={false}
+                />
+            )}
+        </>
+    );
+};
 
 export const BalloonVector: React.FC<BalloonVectorProps> = ({
     balloon,
@@ -95,7 +128,19 @@ export const BalloonVector: React.FC<BalloonVectorProps> = ({
         );
     }
 
-    // 6. CUSTOM SVG (NEW)
+    // 6. CUSTOM SVG - Complete SVG as Data URL (NEW - for complex SVGs)
+    if (balloon.type === 'balloon-custom' && balloon.svgDataUrl) {
+        return (
+            <SvgImage
+                dataUrl={balloon.svgDataUrl}
+                width={width}
+                height={height}
+                isSelected={isSelected}
+            />
+        );
+    }
+
+    // 7. CUSTOM SVG - Path only (legacy)
     if (balloon.type === 'balloon-custom' && balloon.customSvg) {
         // Default viewBox if missing is 100x100
         const vw = balloon.svgViewBox?.width || 100;

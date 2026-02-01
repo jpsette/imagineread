@@ -73,7 +73,8 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         showMasks,
         activeTool,
         setActiveTool,
-        selectedId
+        selectedId,
+        selectedIds
     } = useEditorUIStore();
 
     // --- IMAGES (CORS ENABLED) ---
@@ -153,11 +154,13 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
     const isCleanVisible = !isOriginalVisible;
 
     // Logic: Active Tile ID (Original vs Clean)
-    // If showing clean image: pass filename (Backend Strategy 2)
+    // If showing clean image: pass the full LOCAL path (for /tiles/local/ endpoint)
     // If showing original: pass fileId (Backend Strategy 1 - DB Lookup)
-    const activeTileId = isCleanVisible && cleanImageUrl
-        ? cleanImageUrl.split('/').pop() || 'unknown'
-        : (fileId || imageUrl.split('/').pop() || 'unknown');
+    // Note: cleanImageUrl is a media:// URL, we need to extract the actual file path
+    const cleanFilePath = cleanImageUrl?.replace('media://', '/') || null;
+    const activeTileId = isCleanVisible && cleanFilePath
+        ? cleanFilePath
+        : (fileId || imageUrl.replace('media://', '/'));
 
     return (
         <div ref={containerRef} className="w-full h-full bg-[#1e1e1e] overflow-hidden relative">
@@ -218,6 +221,7 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                 <BalloonsLayer
                     balloons={balloons}
                     selectedId={selectedId}
+                    selectedIds={selectedIds}
                     editingId={editingId}
                     showMasks={showMasks}
                     showBalloons={showBalloons}

@@ -7,8 +7,8 @@ import { VectorizeMenu } from '@features/editor/components/menus/VectorizeMenu';
 import { LeftSidebar } from './LeftSidebar';
 import { TranslateMenu } from '@features/editor/components/menus/TranslateMenu';
 import { AnimateMenu } from '@features/editor/components/menus/AnimateMenu';
+import { FloatingPanel } from '@shared/components/FloatingPanel';
 
-// Types passed down from Logic Hooks to avoid re-initializing them here
 // Types passed down from Logic Hooks to avoid re-initializing them here
 interface EditorLeftPanelProps {
     vectorization: any; // The return type of useVectorization hook
@@ -29,28 +29,15 @@ export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
     const { activeMode } = useEditorUIStore();
 
     return (
-        <aside className="absolute left-4 top-24 bottom-24 w-fit z-40 bg-transparent flex flex-col pointer-events-none">
-            {/* DOCK CONTAINER */}
-            <div className="w-[300px] bg-black/60 backdrop-blur-md rounded-2xl border border-glass-border shadow-glow-sm flex flex-col items-center py-4 overflow-hidden pointer-events-auto h-full">
-
-                {/* Content Area - Logic to switch between icons mode (collapsed) and full mode (expanded) is handled via CSS/Group hover for now 
-                    or we keep it simple: The panel IS the dock. 
-                    
-                    However, `VectorizeMenu` and `EditorSidebar` are complex components. 
-                    If we squeeze them into a dock, they might break.
-                    
-                    Strategy:
-                    The "Dock" should likely be a container that expands on hover or click.
-                    Given the complexity of `EditorSidebar` (tool grid), a 64px width won't suffice unless we redesign `EditorSidebar` completely.
-                    
-                    Alternative Plan for "Floating Dock":
-                    Keep the panel width (e.g. 280px) but make it floating and separated from the edge.
-                    Glass background, rounded corners.
-                    
-                    Let's go with "Floating Panel" rather than "Tiny Icon Dock" to preserve the `EditorSidebar` layout without deep rewrites.
-                */}
-
-                <div className="w-full h-full bg-transparent px-4">
+        <FloatingPanel
+            defaultPosition={{ x: 16, y: 96 }}
+            defaultSize={{ width: 300, height: 800 }}
+            minWidth={250}
+            maxWidth={350}
+            minHeight={250}
+        >
+            <div className="w-full h-full bg-black/60 backdrop-blur-md rounded-2xl border border-glass-border shadow-glow-sm flex flex-col items-center overflow-hidden pointer-events-auto">
+                <div className="w-full h-full bg-transparent px-4 pt-2 overflow-y-auto custom-scrollbar">
                     {activeMode === 'vectorize' && (
                         <VectorizeMenu
                             workflowStep={vectorization.workflowStep}
@@ -103,6 +90,6 @@ export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
                     {activeMode === 'animate' && <AnimateMenu />}
                 </div>
             </div>
-        </aside>
+        </FloatingPanel>
     );
 });

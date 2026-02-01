@@ -3,6 +3,7 @@ import { Trash2, Square, Type, ImageIcon, Layout, Images } from 'lucide-react';
 import { useEditorUIStore } from '@features/editor/uiStore';
 import { ToolRegistry } from '@features/editor/tools/ToolRegistry';
 import { SidebarToolButton } from '@features/editor/components/parts/SidebarToolButton';
+import { EditMenu } from '@features/editor/components/menus/EditMenu';
 
 import { useEditorStore } from '@features/editor/store';
 
@@ -24,11 +25,11 @@ export const LeftSidebar: React.FC<EditorSidebarProps> = ({ onOpenPanelGallery }
 
 
     return (
-        <div className="flex flex-col gap-6 w-full h-full overflow-y-auto custom-scrollbar pt-2 pb-6">
+        <div className="flex flex-col gap-3 w-full h-full overflow-y-auto custom-scrollbar p-1">
 
             {/* 1. CORE TOOLS */}
             <div className="space-y-3">
-                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Ferramentas</label>
+                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Essenciais</label>
                 <div className="grid grid-cols-2 gap-3">
                     {coreTools.map(tool => (
                         <SidebarToolButton
@@ -36,19 +37,11 @@ export const LeftSidebar: React.FC<EditorSidebarProps> = ({ onOpenPanelGallery }
                             tool={tool}
                             isActive={activeTool === tool.id}
                             onClick={() => setActiveTool(tool.id)}
-                        // We might need to update SidebarToolButton component if it has hardcoded styles. 
-                        // Assuming it accepts className or we wrap it. 
-                        // Actually, looking at the file list, SidebarToolButton is in parts/. 
-                        // I should probably check if I need to refactor that too. 
-                        // For now, I'll rely on global class overrides or assume it passes props down well.
-                        // But to be safe, I'm wrapping it or expecting it to use standard classes.
-                        // Let's refector the styles passed here if possible, or just the container.
                         />
                     ))}
                 </div>
 
-                {/* EXTRA ACTIONS (Delete) - Styled as a danger zone item */}
-                {/* EXTRA ACTIONS (Delete) - Styled as a danger zone item */}
+                {/* EXTRA ACTIONS (Delete) */}
                 <button
                     onClick={handleDelete}
                     disabled={!selectedId}
@@ -64,9 +57,7 @@ export const LeftSidebar: React.FC<EditorSidebarProps> = ({ onOpenPanelGallery }
 
             <div className="h-px bg-white/5 mx-2" />
 
-
-
-            {/* 3. VISUALIZATION MENU (NEW) */}
+            {/* 2. VISUALIZATION MENU */}
             <div className="space-y-3">
                 <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Visualização</label>
                 <div className="bg-white/5 border border-white/5 rounded-xl p-2 space-y-2">
@@ -111,7 +102,7 @@ export const LeftSidebar: React.FC<EditorSidebarProps> = ({ onOpenPanelGallery }
                         onClick={onOpenPanelGallery}
                         className="w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all text-zinc-500 hover:bg-white/5 hover:text-zinc-300"
                     >
-                        <span className="flex items-center gap-2"><Images size={14} /> Ver Quadros</span>
+                        <span className="flex items-center gap-2"><Images size={14} /> Gerenciar Quadros</span>
                         <div className="w-2 h-2" /> {/* Spacer */}
                     </button>
                 </div>
@@ -119,6 +110,8 @@ export const LeftSidebar: React.FC<EditorSidebarProps> = ({ onOpenPanelGallery }
 
             <div className="h-px bg-white/5 mx-2" />
 
+            {/* 3. EDIT MENU - Text Controls (moved from RightSidebar) */}
+            <EditMenu />
 
         </div>
     );
