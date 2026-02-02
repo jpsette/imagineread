@@ -205,10 +205,28 @@ def perform_ocr(image_path_or_url: str, balloons: List[dict], client, model_id: 
     
     text_map = {item.get('index'): item.get('text', '') for item in json_data}
 
+    # Collect extracted texts for language detection
+    extracted_texts = []
+    
     for original_idx in valid_indices:
         extracted_text = text_map.get(original_idx, "")
         extracted_text = str(extracted_text).strip()
         balloons[original_idx]['text'] = extracted_text
+        if extracted_text:
+            extracted_texts.append(extracted_text)
         logger.info(f"✅ Blob {original_idx} -> Text: {extracted_text[:30]}...")
 
-    return balloons
+    # --- LANGUAGE DETECTION ---
+    detected_language = None
+    if extracted_texts:
+        try:
+            from app.services.language_detection_service import detect_language_from_texts
+            detected_language = detect_language_from_texts(extracted_texts, client, model_id)
+        except Exception as e:
+            logger.warning(f"⚠️ Language detection failed: {e}")
+
+    # Return both balloons and detected language
+    return {
+        "balloons": balloons,
+        "detected_language": detected_language
+    }

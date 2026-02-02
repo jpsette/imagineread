@@ -53,16 +53,12 @@ struct AddComicSheet: View {
     private var headerIcon: some View {
         ZStack {
             Circle()
-                .fill(LinearGradient(
-                    colors: [.purple, .blue],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
+                .fill(IRGradients.primary)
                 .frame(width: 80, height: 80)
             
             Image(systemName: "plus.rectangle.on.folder.fill")
                 .font(.system(size: 36))
-                .foregroundColor(.white)
+                .foregroundColor(IRColors.textPrimary)
         }
         .padding(.top, 20)
     }
@@ -97,7 +93,7 @@ struct AddComicSheet: View {
                 } label: {
                     Image(systemName: "arrow.right.circle.fill")
                         .font(.title2)
-                        .foregroundColor(.purple)
+                        .foregroundColor(IRColors.accentPrimary)
                 }
                 .disabled(code.count < 6)
             }
@@ -137,13 +133,7 @@ struct AddComicSheet: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(
-                LinearGradient(
-                    colors: [.purple, .blue],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
+            .background(IRGradients.primaryHorizontal)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .padding(.horizontal, 24)

@@ -10,6 +10,7 @@ import SwiftUI
 struct CreateCollectionSheet: View {
     @Environment(\.container) private var container
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var loc: LocalizationService
     
     @State private var name: String = ""
     @State private var selectedIcon: String = "folder.fill"
@@ -29,34 +30,31 @@ struct CreateCollectionSheet: View {
     
     var body: some View {
         NavigationView {
-            ZStack {
-                backgroundGradient
-                
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Preview
-                        previewSection
-                        
-                        // Name Input
-                        nameSection
-                        
-                        // Icon Selection
-                        iconSection
-                        
-                        // Color Selection
-                        colorSection
-                    }
-                    .padding(20)
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Preview
+                    previewSection
+                    
+                    // Name Input
+                    nameSection
+                    
+                    // Icon Selection
+                    iconSection
+                    
+                    // Color Selection
+                    colorSection
                 }
+                .padding(20)
             }
-            .navigationTitle("Nova Coleção")
+            .appBackground()
+            .navigationTitle(loc.newCollection)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancelar") {
+                    Button(loc.cancel) {
                         dismiss()
                     }
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(IRColors.textSecondary)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -64,9 +62,7 @@ struct CreateCollectionSheet: View {
                         createCollection()
                     }
                     .fontWeight(.semibold)
-                    .foregroundStyle(
-                        LinearGradient(colors: [.purple, .blue], startPoint: .leading, endPoint: .trailing)
-                    )
+                    .foregroundStyle(IRGradients.primaryHorizontal)
                     .disabled(name.isEmpty)
                 }
             }
@@ -92,14 +88,14 @@ struct CreateCollectionSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Nome")
                 .font(.headline)
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(IRColors.textSecondary)
             
             TextField("", text: $name, prompt: Text("Ex: Para Ler Depois").foregroundColor(.white.opacity(0.3)))
                 .foregroundColor(.white)
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(.white.opacity(0.08))
+                        .fill(IRColors.surface)
                 )
         }
     }
@@ -108,7 +104,7 @@ struct CreateCollectionSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Ícone")
                 .font(.headline)
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(IRColors.textSecondary)
             
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 12) {
                 ForEach(availableIcons, id: \.self) { icon in
@@ -134,7 +130,7 @@ struct CreateCollectionSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Cor")
                 .font(.headline)
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(IRColors.textSecondary)
             
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 12) {
                 ForEach(availableColors, id: \.self) { hex in
@@ -158,17 +154,7 @@ struct CreateCollectionSheet: View {
         }
     }
     
-    private var backgroundGradient: some View {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                Color(red: 0.1, green: 0.1, blue: 0.2),
-                Color(red: 0.05, green: 0.05, blue: 0.15)
-            ]),
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
-    }
+
     
     // MARK: - Actions
     

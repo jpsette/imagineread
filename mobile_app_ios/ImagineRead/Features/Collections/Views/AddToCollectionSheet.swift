@@ -10,6 +10,8 @@ import SwiftUI
 struct AddToCollectionSheet: View {
     @Environment(\.container) private var container
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var loc: LocalizationService
+    @ObservedObject private var collectionsService = AppContainer.shared.collections
     
     let comicPath: String
     let comicTitle: String
@@ -23,18 +25,18 @@ struct AddToCollectionSheet: View {
                 
                 ScrollView {
                     VStack(spacing: 12) {
-                        ForEach(container.collections.allCollections()) { collection in
+                        ForEach(collectionsService.allCollections()) { collection in
                             collectionToggleRow(collection)
                         }
                     }
                     .padding(20)
                 }
             }
-            .navigationTitle("Adicionar à Coleção")
+            .navigationTitle(loc.addToCollection)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Fechar") {
+                    Button(loc.close) {
                         dismiss()
                     }
                     .foregroundColor(.white.opacity(0.7))
@@ -50,6 +52,25 @@ struct AddToCollectionSheet: View {
                             )
                     }
                 }
+            }
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    dismiss()
+                } label: {
+                    Text(loc.done)
+                        .font(.body.weight(.semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(
+                                    LinearGradient(colors: [.purple, .blue], startPoint: .leading, endPoint: .trailing)
+                                )
+                        )
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
             }
             .sheet(isPresented: $showCreateSheet) {
                 CreateCollectionSheet()

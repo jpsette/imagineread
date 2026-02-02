@@ -11,7 +11,7 @@ interface Step5StructureProps {
     onDetectPanels?: () => void; // Made optional in interface to match usage safety, but logic requires it
     onConfirmPanels?: () => void;
     onOpenPanelGallery?: () => void;
-    onAddPanel?: () => void;
+    // onAddPanel removed - now using setActiveTool directly
 }
 
 export const Step5Structure: React.FC<Step5StructureProps> = ({
@@ -21,10 +21,9 @@ export const Step5Structure: React.FC<Step5StructureProps> = ({
     isProcessingPanels, // FIX: Restored this prop
     onDetectPanels, // FIX: Restored this prop
     onConfirmPanels,
-    onOpenPanelGallery,
-    onAddPanel
+    onOpenPanelGallery
 }) => {
-    const { showPanelsLayer, setShowPanelsLayer } = useEditorUIStore();
+    const { showPanelsLayer, setShowPanelsLayer, activeTool, setActiveTool } = useEditorUIStore();
 
     // Safety wrapper if onDetectPanels is needed but undefined in props (though it shouldn't be)
     const handleDetect = () => onDetectPanels && onDetectPanels();
@@ -80,12 +79,15 @@ export const Step5Structure: React.FC<Step5StructureProps> = ({
             <div className="flex flex-col mt-2 gap-2">
                 {/* MANUAL ADD PANEL (For complex cases where detection fails) - Added as requested */}
                 <button
-                    onClick={onAddPanel}
-                    className={BTN_SECONDARY}
-                    title="Adicionar Quadro Manualmente"
+                    onClick={() => setActiveTool(activeTool === 'panel' ? 'select' : 'panel')}
+                    className={`${activeTool === 'panel'
+                        ? 'bg-blue-500/20 text-blue-400 border-blue-500/50'
+                        : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600'
+                        } w-full h-[32px] px-3 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-2 select-none border active:scale-[0.98]`}
+                    title="Adicionar Quadro - Clique e arraste no canvas"
                 >
                     <div className="w-4 h-4 flex items-center justify-center border border-current rounded text-[10px]">+</div>
-                    <span>Adicionar Quadro</span>
+                    <span>{activeTool === 'panel' ? 'Desenhar Quadro...' : 'Adicionar Quadro'}</span>
                 </button>
 
                 <button

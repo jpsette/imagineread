@@ -14,40 +14,18 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            backgroundGradient
-            
             VStack(spacing: 0) {
                 headerSection
                 LibraryView()
             }
             
             // Floating Add Button
-            VStack {
-                Spacer()
-                
-                Button {
-                    showAddComic = true
-                } label: {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [.purple, .blue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 64, height: 64)
-                            .shadow(color: .purple.opacity(0.5), radius: 10, x: 0, y: 5)
-                        
-                        Image(systemName: "plus")
-                            .font(.system(size: 28, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
-                }
-                .padding(.bottom, 24)
+            IRFloatingButton(icon: "plus") {
+                showAddComic = true
             }
+            .floatingPosition()
         }
+        .appBackground()
         .sheet(isPresented: $showAddComic) {
             AddComicSheet()
         }
@@ -61,35 +39,17 @@ struct ContentView: View {
     
     // MARK: - Subviews
     
-    private var backgroundGradient: some View {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                Color(red: 0.1, green: 0.1, blue: 0.2),
-                Color(red: 0.05, green: 0.05, blue: 0.15)
-            ]),
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
-    }
-    
     private var headerSection: some View {
         VStack(spacing: 8) {
             HStack {
                 Image(systemName: "book.pages.fill")
                     .font(.title)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.purple, .blue],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .foregroundStyle(IRGradients.primary)
                 
                 Text("ImagineRead")
                     .font(.title)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(IRColors.textPrimary)
                 
                 Spacer()
                 
@@ -99,7 +59,7 @@ struct ContentView: View {
                 } label: {
                     Image(systemName: "magnifyingglass")
                         .font(.title2)
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(IRColors.textSecondary)
                 }
                 
                 // Profile Button
@@ -108,7 +68,7 @@ struct ContentView: View {
                 } label: {
                     Image(systemName: "person.circle.fill")
                         .font(.title2)
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(IRColors.textSecondary)
                 }
             }
             .padding(.horizontal, 20)
@@ -121,3 +81,4 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
+

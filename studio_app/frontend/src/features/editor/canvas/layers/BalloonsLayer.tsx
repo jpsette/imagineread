@@ -41,7 +41,8 @@ export const BalloonsLayer: React.FC<BalloonsLayerProps> = ({
                 const isMask = balloon.type === 'mask';
                 const shouldShowShape = isMask ? showMasks : showBalloons;
 
-                // Show vertex overlay: for masks use showMasks, for balloons use vertexEditingEnabled
+                // Show vertex overlay: for masks ALWAYS show when showMasks is true,
+                // for balloons use vertexEditingEnabled
                 const shouldShowVertexOverlay = isMask ? showMasks : vertexEditingEnabled;
 
                 return (

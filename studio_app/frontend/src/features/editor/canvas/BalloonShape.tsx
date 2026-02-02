@@ -269,8 +269,10 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
                 />
             )}
 
-            {/* Hide Transformer when vertex editing is active */}
-            {isSelected && !isEditing && !showMaskOverlay && (
+            {/* Show Transformer: 
+                - For MASKS: ALWAYS show (allows resize handles alongside vertex editing)
+                - For BALLOONS: Hide when vertex editing is active */}
+            {isSelected && !isEditing && (balloon.type === 'mask' || !showMaskOverlay) && (
                 <Transformer
                     ref={trRef}
                     padding={0}

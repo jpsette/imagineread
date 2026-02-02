@@ -75,3 +75,14 @@ class FileRenameRequest(BaseModel):
     name: Optional[str] = None
     color: Optional[str] = None
     isPinned: Optional[bool] = None
+
+class GlossaryTerm(BaseModel):
+    original: str                           # Original term
+    translation: str                        # Translation in target language
+
+class TranslationRequest(BaseModel):
+    texts: List[str]
+    source_lang: str
+    target_lang: str
+    context: Optional[str] = None
+    glossary: Optional[List[GlossaryTerm]] = None  # Glossary terms to respect

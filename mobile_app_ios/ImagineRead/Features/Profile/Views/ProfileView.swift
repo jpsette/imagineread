@@ -10,13 +10,12 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(\.container) private var container
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var loc: LocalizationService
     @State private var showSettings = false
     
     var body: some View {
         NavigationView {
             ZStack {
-                backgroundGradient
-                
                 ScrollView {
                     VStack(spacing: 24) {
                         ProfileHeaderView()
@@ -30,6 +29,7 @@ struct ProfileView: View {
                     .padding(.bottom, 40)
                 }
             }
+            .appBackground()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -38,40 +38,28 @@ struct ProfileView: View {
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title2)
-                            .foregroundStyle(.white.opacity(0.7))
+                            .foregroundStyle(IRColors.textSecondary)
                     }
                 }
                 
                 ToolbarItem(placement: .principal) {
-                    Text("Meu Perfil")
+                    Text(loc.myProfile)
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(IRColors.textPrimary)
                 }
             }
         }
     }
     
-    // MARK: - Background
-    
-    private var backgroundGradient: some View {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                Color(red: 0.1, green: 0.1, blue: 0.2),
-                Color(red: 0.05, green: 0.05, blue: 0.15)
-            ]),
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
-    }
+
     
     // MARK: - Quick Stats Section
     
     private var quickStatsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Estatísticas Rápidas")
+            Text(loc.quickStats)
                 .font(.headline)
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(IRColors.textSecondary)
             
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -79,28 +67,28 @@ struct ProfileView: View {
             ], spacing: 12) {
                 QuickStatsCard(
                     icon: "book.pages",
-                    title: "Páginas Lidas",
+                    title: loc.pagesRead,
                     value: "\(container.readingStats.stats.totalPagesRead)",
                     gradient: [.purple, .blue]
                 )
                 
                 QuickStatsCard(
                     icon: "flame.fill",
-                    title: "Streak Atual",
-                    value: "\(container.readingStats.stats.currentStreak) dias",
+                    title: loc.currentStreak,
+                    value: "\(container.readingStats.stats.currentStreak) \(loc.days)",
                     gradient: [.orange, .red]
                 )
                 
                 QuickStatsCard(
                     icon: "checkmark.circle.fill",
-                    title: "Completos",
+                    title: loc.completedLabel,
                     value: "\(container.readingStats.stats.comicsCompleted)",
                     gradient: [.green, .teal]
                 )
                 
                 QuickStatsCard(
                     icon: "clock.fill",
-                    title: "Tempo de Leitura",
+                    title: loc.readingTime,
                     value: formatTime(container.readingStats.stats.totalReadingTimeMinutes),
                     gradient: [.cyan, .blue]
                 )
@@ -117,8 +105,8 @@ struct ProfileView: View {
             } label: {
                 ProfileNavigationRow(
                     icon: "folder.fill",
-                    title: "Minhas Coleções",
-                    subtitle: "\(container.collections.allCollections().count) coleções",
+                    title: loc.myCollections,
+                    subtitle: "\(container.collections.allCollections().count) \(loc.collections.lowercased())",
                     color: .purple
                 )
             }
@@ -128,8 +116,8 @@ struct ProfileView: View {
             } label: {
                 ProfileNavigationRow(
                     icon: "chart.bar.fill",
-                    title: "Estatísticas",
-                    subtitle: "Histórico de leitura",
+                    title: loc.statistics,
+                    subtitle: loc.readingHistory,
                     color: .blue
                 )
             }
@@ -139,8 +127,8 @@ struct ProfileView: View {
             } label: {
                 ProfileNavigationRow(
                     icon: "bell.badge.fill",
-                    title: "Notificações",
-                    subtitle: container.notifications.settings.dailyReminderEnabled ? "Ativo" : "Desativado",
+                    title: loc.notifications,
+                    subtitle: container.notifications.settings.dailyReminderEnabled ? loc.enabled : loc.disabled,
                     color: .orange
                 )
             }
@@ -151,8 +139,8 @@ struct ProfileView: View {
             } label: {
                 ProfileNavigationRow(
                     icon: "gearshape.fill",
-                    title: "Configurações",
-                    subtitle: "Idioma, aparência e mais",
+                    title: loc.settings,
+                    subtitle: loc.settingsSubtitle,
                     color: .gray
                 )
             }
@@ -197,16 +185,16 @@ struct QuickStatsCard: View {
             
             Text(value)
                 .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(IRColors.textPrimary)
             
             Text(title)
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(IRColors.textMuted)
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.white.opacity(0.08))
+                .fill(IRColors.surface)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(
@@ -242,23 +230,23 @@ struct ProfileNavigationRow: View {
                 Text(title)
                     .font(.body)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(IRColors.textPrimary)
                 
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(IRColors.textMuted)
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.4))
+                .foregroundColor(IRColors.textMuted)
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.white.opacity(0.05))
+                .fill(IRColors.surface)
         )
     }
 }

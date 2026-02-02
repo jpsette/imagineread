@@ -157,6 +157,7 @@ from app.services.ocr_service import perform_ocr as execute_ocr_logic
 def perform_ocr(image_path_or_url: str, balloons: List[dict]):
     """
     Delegates OCR task to the dedicated OCR Service.
+    Returns: dict with 'balloons' and 'detected_language'
     """
     # Pass the global client and model_id from this module
     return execute_ocr_logic(image_path_or_url, balloons, client, MODEL_ID)

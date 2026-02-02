@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ReadingStatsView: View {
     @Environment(\.container) private var container
+    @EnvironmentObject private var loc: LocalizationService
     
     var body: some View {
         ZStack {
@@ -30,7 +31,7 @@ struct ReadingStatsView: View {
                 .padding(.bottom, 40)
             }
         }
-        .navigationTitle("Estatísticas")
+        .navigationTitle(loc.statistics)
         .navigationBarTitleDisplayMode(.inline)
     }
     
@@ -38,7 +39,7 @@ struct ReadingStatsView: View {
     
     private var mainStatsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Resumo")
+            Text(loc.summary)
                 .font(.headline)
                 .foregroundColor(.white.opacity(0.9))
             
@@ -49,28 +50,28 @@ struct ReadingStatsView: View {
                 StatCard(
                     icon: "book.pages",
                     value: "\(container.readingStats.stats.totalPagesRead)",
-                    label: "Páginas Lidas",
+                    label: loc.pagesRead,
                     color: .purple
                 )
                 
                 StatCard(
                     icon: "clock.fill",
                     value: formatTime(container.readingStats.stats.totalReadingTimeMinutes),
-                    label: "Tempo de Leitura",
+                    label: loc.readingTime,
                     color: .blue
                 )
                 
                 StatCard(
                     icon: "checkmark.circle.fill",
                     value: "\(container.readingStats.stats.comicsCompleted)",
-                    label: "Quadrinhos Completos",
+                    label: loc.completedComics,
                     color: .green
                 )
                 
                 StatCard(
                     icon: "calendar",
                     value: "\(container.readingStats.stats.readingDays.count)",
-                    label: "Dias Ativos",
+                    label: loc.activeDays,
                     color: .orange
                 )
             }
@@ -81,7 +82,7 @@ struct ReadingStatsView: View {
     
     private var streakSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Sequência de Leitura")
+            Text(loc.readingStreak)
                 .font(.headline)
                 .foregroundColor(.white.opacity(0.9))
             
@@ -100,13 +101,13 @@ struct ReadingStatsView: View {
                                 .font(.system(size: 32, weight: .bold))
                                 .foregroundColor(.white)
                             
-                            Text("dias")
+                            Text(loc.days)
                                 .font(.caption2)
                                 .foregroundColor(.white.opacity(0.8))
                         }
                     }
                     
-                    Text("Streak Atual")
+                    Text(loc.currentStreak)
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -120,7 +121,7 @@ struct ReadingStatsView: View {
                         )
                     
                     if container.readingStats.stats.currentStreak > 0 {
-                        Text("Continue lendo!")
+                        Text(loc.keepReading)
                             .font(.caption)
                             .foregroundColor(.orange)
                     }
@@ -139,13 +140,13 @@ struct ReadingStatsView: View {
                                 .font(.system(size: 32, weight: .bold))
                                 .foregroundColor(.white)
                             
-                            Text("dias")
+                            Text(loc.days)
                                 .font(.caption2)
                                 .foregroundColor(.white.opacity(0.6))
                         }
                     }
                     
-                    Text("Maior Streak")
+                    Text(loc.longestStreak)
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -162,7 +163,7 @@ struct ReadingStatsView: View {
     
     private var monthlyChartSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Páginas por Mês")
+            Text(loc.pagesPerMonth)
                 .font(.headline)
                 .foregroundColor(.white.opacity(0.9))
             

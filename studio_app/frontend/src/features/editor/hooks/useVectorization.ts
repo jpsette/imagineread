@@ -69,6 +69,7 @@ export const useVectorization = ({
     // --- 3. HOOK: OCR (TEXT) ---
     const { detectText, isProcessingOcr } = useOcrProcessing({
         imageUrl,
+        fileId,
         balloons,
         setBalloons
     });

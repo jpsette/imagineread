@@ -8,6 +8,10 @@ import { LeftSidebar } from './LeftSidebar';
 import { TranslateMenu } from '@features/editor/components/menus/TranslateMenu';
 import { AnimateMenu } from '@features/editor/components/menus/AnimateMenu';
 import { FloatingPanel } from '@shared/components/FloatingPanel';
+import { TranslateLoadingOverlay } from '@features/editor/components/TranslateLoadingOverlay';
+
+// Hooks
+import { useTranslation } from '@features/editor/hooks/useTranslation';
 
 // Types passed down from Logic Hooks to avoid re-initializing them here
 interface EditorLeftPanelProps {
@@ -18,6 +22,7 @@ interface EditorLeftPanelProps {
     isCleaned?: boolean;
     isLoading?: boolean;
     isFetching?: boolean;
+    fileId?: string;  // For translation language detection
 }
 
 export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
@@ -26,9 +31,29 @@ export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
     onCenterPage,
     cleanUrl,
     isCleaned,
-    isLoading
+    isLoading,
+    fileId
 }) => {
     const { activeMode } = useEditorUIStore();
+    const { balloons, setBalloons } = useEditorStore();
+
+    // Translation hook
+    const {
+        translateAll,
+        switchToLanguage,
+        isTranslating,
+        translatingFromLang,
+        translatingToLang,
+        activeLanguage,
+        hasTranslations,
+        translations,
+        selectedGlossaryId,
+        setSelectedGlossaryId
+    } = useTranslation({
+        fileId: fileId || '',
+        balloons,
+        setBalloons
+    });
 
     return (
         <FloatingPanel
@@ -67,19 +92,7 @@ export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
                             isPanelsConfirmed={true}
                             onConfirmPanels={() => { }}
                             onOpenPanelGallery={onOpenPanelGallery}
-                            onAddPanel={() => {
-                                // Add Panel Logic
-                                const { setPanels, panels } = useEditorStore.getState();
-                                const newId = `panel-${Date.now()}`;
-                                const newPanel: any = {
-                                    id: newId,
-                                    type: 'panel',
-                                    order: panels.length + 1,
-                                    box_2d: [100, 100, 500, 500], // Default Box
-                                    points: [100, 100, 500, 100, 500, 500, 100, 500] // Default Rect
-                                };
-                                setPanels((prev: any[]) => [...prev, newPanel]);
-                            }}
+                            // onAddPanel and onAddMask removed - now using setActiveTool via store
                             isCleaned={isCleaned}
                         />
                     )}
@@ -88,10 +101,32 @@ export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
                         <LeftSidebar onOpenPanelGallery={onOpenPanelGallery} onCenterPage={onCenterPage} />
                     )}
 
-                    {activeMode === 'translate' && <TranslateMenu />}
+                    {activeMode === 'translate' && (
+                        <TranslateMenu
+                            fileId={fileId}
+                            balloons={balloons}
+                            isTranslating={isTranslating}
+                            onStartTranslate={translateAll}
+                            onSwitchLanguage={switchToLanguage}
+                            onCenterPage={onCenterPage}
+                            activeLanguage={activeLanguage}
+                            hasTranslations={hasTranslations}
+                            translations={translations}
+                            selectedGlossaryId={selectedGlossaryId}
+                            onSelectGlossary={setSelectedGlossaryId}
+                        />
+                    )}
                     {activeMode === 'animate' && <AnimateMenu />}
                 </div>
             </div>
+
+            {/* Translation Loading Overlay */}
+            <TranslateLoadingOverlay
+                isTranslating={isTranslating}
+                sourceLang={translatingFromLang}
+                targetLang={translatingToLang}
+            />
         </FloatingPanel>
     );
 });
+

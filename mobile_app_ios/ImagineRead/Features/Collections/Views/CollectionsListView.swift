@@ -9,8 +9,10 @@ import SwiftUI
 
 struct CollectionsListView: View {
     @Environment(\.container) private var container
+    @EnvironmentObject private var loc: LocalizationService
     @ObservedObject private var collectionsService: CollectionsService
     @State private var showCreateSheet = false
+    @State private var collectionToEdit: Collection?
     
     init() {
         // Need to observe collections service for updates
@@ -18,24 +20,40 @@ struct CollectionsListView: View {
     }
     
     var body: some View {
-        ZStack {
-            backgroundGradient
-            
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(collectionsService.allCollections()) { collection in
-                        NavigationLink {
-                            CollectionDetailView(collection: collection)
+        List {
+            ForEach(collectionsService.allCollections()) { collection in
+                NavigationLink {
+                    CollectionDetailView(collection: collection)
+                } label: {
+                    CollectionRow(collection: collection)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    // Delete button (not for Favorites)
+                    if collection.id != CollectionsService.favoritesID {
+                        Button(role: .destructive) {
+                            collectionsService.deleteCollection(collection.id)
                         } label: {
-                            CollectionRow(collection: collection)
+                            Label("Excluir", systemImage: "trash")
                         }
                     }
+                    
+                    // Edit button (not for Favorites)
+                    if collection.id != CollectionsService.favoritesID {
+                        Button {
+                            collectionToEdit = collection
+                        } label: {
+                            Label(loc.edit, systemImage: "pencil")
+                        }
+                        .tint(.blue)
+                    }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
+                .listRowBackground(Color.white.opacity(0.05))
             }
         }
-        .navigationTitle("Minhas Coleções")
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .appBackground()
+        .navigationTitle(loc.myCollections)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -44,28 +62,19 @@ struct CollectionsListView: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.title2)
-                        .foregroundStyle(
-                            LinearGradient(colors: [.purple, .blue], startPoint: .topLeading, endPoint: .bottomTrailing)
-                        )
+                        .foregroundStyle(IRGradients.primary)
                 }
             }
         }
         .sheet(isPresented: $showCreateSheet) {
             CreateCollectionSheet()
         }
+        .sheet(item: $collectionToEdit) { collection in
+            EditCollectionSheet(collection: collection)
+        }
     }
     
-    private var backgroundGradient: some View {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                Color(red: 0.1, green: 0.1, blue: 0.2),
-                Color(red: 0.05, green: 0.05, blue: 0.15)
-            ]),
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
-    }
+
 }
 
 // MARK: - Collection Row
@@ -93,23 +102,19 @@ struct CollectionRow: View {
                 Text(collection.name)
                     .font(.body)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(IRColors.textPrimary)
                 
                 Text("\(collection.count) quadrinhos")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(IRColors.textMuted)
             }
             
             Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.4))
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.white.opacity(0.05))
+                .fill(IRColors.surface)
         )
     }
 }

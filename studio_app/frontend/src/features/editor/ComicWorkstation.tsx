@@ -210,6 +210,7 @@ export const ComicWorkstation: React.FC<ComicWorkstationProps> = ({
                     onClose={() => setIsExportModalOpen(false)}
                     projectId={comic.id}
                     projectName={comic.name}
+                    pages={orderedPages}
                 />
             )}
         </>

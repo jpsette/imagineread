@@ -32,9 +32,9 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var flag: String {
         switch self {
         case .portuguese: return "🇧🇷"
-        case .english: return "🇬🇧"
+        case .english: return "🇺🇸"
         case .spanish: return "🇪🇸"
-        case .arabic: return "🇸🇦"
+        case .arabic: return "🇦🇪"
         case .french: return "🇫🇷"
         }
     }

@@ -53,5 +53,27 @@ export const aiApi = {
             method: 'POST',
             body: JSON.stringify({ image_path: actualPath })
         });
+    },
+
+    async translateTexts(
+        texts: string[],
+        sourceLang: string,
+        targetLang: string,
+        context?: string,
+        glossary?: { original: string; translation: string }[]
+    ): Promise<{ status: string; translations: string[]; error?: string }> {
+        return request<{ status: string; translations: string[]; error?: string }>(
+            `${API_ENDPOINTS.BASE_URL}/traduzir`,
+            {
+                method: 'POST',
+                body: JSON.stringify({
+                    texts,
+                    source_lang: sourceLang,
+                    target_lang: targetLang,
+                    context,
+                    glossary
+                })
+            }
+        );
     }
 };

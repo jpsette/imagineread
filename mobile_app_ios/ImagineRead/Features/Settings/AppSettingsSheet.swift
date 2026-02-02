@@ -22,13 +22,7 @@ struct AppSettingsSheet: View {
                     HStack(spacing: 16) {
                         Image(systemName: "book.pages.fill")
                             .font(.system(size: 40))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.purple, .blue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .foregroundStyle(IRGradients.primary)
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text(loc.appName)
@@ -49,11 +43,7 @@ struct AppSettingsSheet: View {
                         HStack {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(LinearGradient(
-                                        colors: [.green, .teal],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ))
+                                    .fill(IRGradients.success)
                                     .frame(width: 32, height: 32)
                                 
                                 Image(systemName: "globe")
@@ -80,11 +70,7 @@ struct AppSettingsSheet: View {
                         HStack {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(LinearGradient(
-                                        colors: [.purple, .blue],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ))
+                                    .fill(IRGradients.primary)
                                     .frame(width: 32, height: 32)
                                 
                                 Image(systemName: "book.fill")
@@ -108,11 +94,7 @@ struct AppSettingsSheet: View {
                         HStack {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(LinearGradient(
-                                        colors: [.green, .teal],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ))
+                                    .fill(IRGradients.success)
                                     .frame(width: 32, height: 32)
                                 
                                 Image(systemName: "arrow.down.circle.fill")
@@ -327,14 +309,7 @@ struct OfflineLibraryInnerView: View {
         VStack(spacing: 16) {
             Image(systemName: "arrow.down.circle")
                 .font(.system(size: 50))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.green, .teal],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-            
+                    .foregroundStyle(IRGradients.success)          
             Text(loc.noOfflineComics)
                 .font(.headline)
                 .foregroundColor(.secondary)
@@ -363,7 +338,7 @@ struct OfflineLibraryInnerView: View {
                                 removeComic(comic)
                             }
                         } label: {
-                            Label("Excluir", systemImage: "trash")
+                            Label(loc.delete_, systemImage: "trash")
                         }
                     }
             }

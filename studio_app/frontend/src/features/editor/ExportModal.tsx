@@ -1,31 +1,29 @@
 import React, { useState } from 'react';
-import { FileJson, Image, FileText, Download, Loader2 } from 'lucide-react';
+import { FileJson, Image, FileText, Download, Loader2, Smartphone } from 'lucide-react';
+import JSZip from 'jszip';
 import { BaseModal } from '@shared/ui/Modal';
 import { API_ENDPOINTS } from '@app/config';
+import { FileEntry } from '@shared/types';
+import { exportForMobile, getImageManifest } from './utils/exportForMobile';
 
 interface ExportModalProps {
     isOpen: boolean;
     onClose: () => void;
     projectId: string;
     projectName: string;
+    pages: FileEntry[];
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
     isOpen,
     onClose,
     projectId,
-    projectName
+    projectName,
+    pages
 }) => {
-    const [loading, setLoading] = useState<string | null>(null); // 'pdf' | 'clean_images' | 'json'
+    const [loading, setLoading] = useState<string | null>(null); // 'pdf' | 'clean_images' | 'json' | 'mobile'
 
     if (!isOpen) return null;
-
-    // Use JobStore access via hook in component body (needs to be moved up)
-    // To do this properly, we need to import useJobStore outside.
-    // However, since handleExport is inside the component, we can use the hook.
-
-    // We can't easily import the hook inside the function, so we rely on the component using it.
-    // See the full component update below.
 
     const handleExport = async (format: 'pdf' | 'clean_images' | 'json_data') => {
         setLoading(format);
@@ -40,22 +38,73 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
             const data = await response.json();
 
-            // Expected Response: { status: "queued", jobId: "..." }
             if (data.jobId) {
-                // Job Started!
-                // We can close the modal immediately or show a success message.
-                // Let's close it and let the JobMonitor handle it.
-                // Trigger a poll update if possible
-                // useJobStore.getState().fetchJobs(); 
-
                 onClose();
-                // Optional: Show a toast? 
-                // For now, the JobMonitor appearing is the feedback.
             }
 
         } catch (error) {
             console.error(error);
             alert('Falha ao iniciar exportação.');
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    const handleExportMobile = async () => {
+        setLoading('mobile');
+        try {
+            const zip = new JSZip();
+
+            // 1. Build the JSON export
+            const mobileData = exportForMobile(projectId, projectName, pages);
+            zip.file('project.json', JSON.stringify(mobileData, null, 2));
+
+            // 2. Create images folder
+            const imagesFolder = zip.folder('images');
+            if (!imagesFolder) throw new Error('Failed to create images folder');
+
+            // 3. Fetch and add each image
+            const imageManifest = getImageManifest(pages);
+
+            for (const { url, filename } of imageManifest) {
+                try {
+                    // Handle different URL formats
+                    let fetchUrl = url;
+                    if (url.startsWith('media://')) {
+                        // Convert media:// protocol to API endpoint
+                        fetchUrl = url.replace('media://', `${API_ENDPOINTS.BASE_URL}/media/`);
+                    } else if (!url.startsWith('http')) {
+                        // Relative URL - prepend base
+                        fetchUrl = `${API_ENDPOINTS.BASE_URL}${url}`;
+                    }
+
+                    const response = await fetch(fetchUrl);
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        imagesFolder.file(filename, blob);
+                    } else {
+                        console.warn(`Failed to fetch image: ${url}`);
+                    }
+                } catch (imgError) {
+                    console.warn(`Error fetching image ${url}:`, imgError);
+                }
+            }
+
+            // 4. Generate and download ZIP
+            const content = await zip.generateAsync({ type: 'blob' });
+            const downloadUrl = URL.createObjectURL(content);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `${projectName.replace(/[^a-z0-9]/gi, '_')}_mobile.zip`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(downloadUrl);
+
+            onClose();
+        } catch (error) {
+            console.error('Mobile export error:', error);
+            alert('Falha ao gerar pacote Mobile.');
         } finally {
             setLoading(null);
         }
@@ -73,13 +122,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </div>
 
             {/* Options Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 {/* Option 1: Clean Images */}
                 <button
                     disabled={!!loading}
                     onClick={() => handleExport('clean_images')}
-                    // ... rest of the button code remains largely similar but checking classes
                     className="group relative flex flex-col items-start p-6 rounded-xl border border-[#27272a] bg-[#27272a]/30 hover:bg-[#27272a]/80 hover:border-blue-500/50 transition-all text-left disabled:opacity-50"
                 >
                     <div className="p-3 rounded-lg bg-blue-500/10 text-blue-400 mb-4 group-hover:scale-110 transition-transform">
@@ -130,6 +178,25 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     <div className="mt-auto w-full pt-4 border-t border-white/5 flex items-center gap-2 text-xs font-medium text-red-400 opacity-60 group-hover:opacity-100">
                         {loading === 'pdf' ? <Loader2 className="animate-spin" size={14} /> : <Download size={14} />}
                         Download PDF
+                    </div>
+                </button>
+
+                {/* Option 4: Mobile Package */}
+                <button
+                    disabled={!!loading}
+                    onClick={handleExportMobile}
+                    className="group relative flex flex-col items-start p-6 rounded-xl border border-[#27272a] bg-[#27272a]/30 hover:bg-[#27272a]/80 hover:border-purple-500/50 transition-all text-left disabled:opacity-50"
+                >
+                    <div className="p-3 rounded-lg bg-purple-500/10 text-purple-400 mb-4 group-hover:scale-110 transition-transform">
+                        <Smartphone size={24} />
+                    </div>
+                    <h3 className="font-bold text-white mb-1">Mobile Package</h3>
+                    <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
+                        Pacote JSON para ImagineRead App com balões vetorizados e animações.
+                    </p>
+                    <div className="mt-auto w-full pt-4 border-t border-white/5 flex items-center gap-2 text-xs font-medium text-purple-400 opacity-60 group-hover:opacity-100">
+                        {loading === 'mobile' ? <Loader2 className="animate-spin" size={14} /> : <Download size={14} />}
+                        Download ZIP
                     </div>
                 </button>
 

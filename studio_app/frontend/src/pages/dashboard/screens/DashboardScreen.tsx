@@ -9,6 +9,7 @@ import { ProjectDetail } from '../ProjectDetail';
 import { RenameItemModal } from '../components/RenameItemModal';
 import { CreateProjectModal } from '../components/CreateProjectModal';
 import { CreateLibraryModal } from '../components/CreateLibraryModal';
+import { DictionaryManager } from '@features/dictionary';
 import { api } from '@shared/api/api';
 
 // Stores & Hooks
@@ -48,6 +49,7 @@ export const DashboardScreen: React.FC = () => {
     const {
         showExplorer, setShowExplorer,
         showManager, setShowManager,
+        showDictionary, setShowDictionary,
         view, setView,
         isCreatingProject, setIsCreatingProject
     } = useUIStore();
@@ -335,6 +337,21 @@ export const DashboardScreen: React.FC = () => {
                             isImporting={isImporting}
                         />
                     )}
+                </DraggableWindow>
+            )}
+
+            {/* GLOSSARY WINDOW */}
+            {showDictionary && (
+                <DraggableWindow
+                    title="📖 Glossário de Termos"
+                    onClose={() => setShowDictionary(false)}
+                    minimize={false}
+                    docked={false}
+                    className="border border-white/10 shadow-2xl bg-[#09090b]"
+                    initialPosition={{ x: 200, y: 100 }}
+                    initialSize={{ width: 900, height: 550 }}
+                >
+                    <DictionaryManager />
                 </DraggableWindow>
             )}
             {/* RENAME MODAL */}

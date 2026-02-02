@@ -27,6 +27,13 @@ struct ReaderView: View {
     @State private var showCompletionModal: Bool = false
     @State private var suggestions: [LibraryService.ComicItem] = []
     @State private var showShareSheet: Bool = false
+    @State private var showCollectionSheet: Bool = false
+    @State private var showAnnotations: Bool = false
+    @State private var showAnnotationsList: Bool = false
+    @State private var showMenu: Bool = false
+    
+    @Environment(\.container) private var container
+    @ObservedObject private var annotationsService = AppContainer.shared.annotations
     
     @EnvironmentObject private var loc: LocalizationService
     @EnvironmentObject private var prefs: PreferencesService
@@ -300,16 +307,95 @@ struct ReaderView: View {
         HStack {
             GlassButton(icon: "xmark") { dismiss() }
             bookmarkCountButton
+            annotationCountButton
             Spacer()
-            GlassButton(icon: "square.and.arrow.up") { showShareSheet = true }
-            GlassButton(icon: isCurrentPageBookmarked ? "bookmark.fill" : "bookmark", action: toggleBookmark)
-            GlassButton(icon: "gearshape") { showSettings = true }
+            
+            // Expandable Menu
+            readerActionsMenu
         }
         .padding(.horizontal)
         .padding(.top, 8)
         .sheet(isPresented: $showShareSheet) {
             if let _ = viewModel.comic {
                 ShareComicSheet(pdfURL: pdfURL)
+            }
+        }
+        .sheet(isPresented: $showCollectionSheet) {
+            AddToCollectionSheet(comicPath: pdfURL.path, comicTitle: viewModel.comic?.title ?? "Quadrinho")
+        }
+        .sheet(isPresented: $showAnnotations) {
+            AddAnnotationSheet(
+                comicPath: pdfURL.path,
+                pageIndex: viewModel.currentPageIndex
+            )
+        }
+        .sheet(isPresented: $showAnnotationsList) {
+            AnnotationsListSheet(
+                comicPath: pdfURL.path,
+                comicTitle: viewModel.comic?.title ?? "Quadrinho",
+                onGoToPage: { page in
+                    withAnimation { viewModel.currentPageIndex = page }
+                }
+            )
+        }
+    }
+    
+    @ViewBuilder
+    private var readerActionsMenu: some View {
+        // Menu toggle button (fixed position)
+        Button {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                showMenu.toggle()
+            }
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred()
+        } label: {
+            Image(systemName: showMenu ? "xmark" : "ellipsis")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.white)
+                .contentTransition(.symbolEffect(.replace))
+                .frame(width: 44, height: 44)
+                .background(
+                    Circle()
+                        .fill(
+                            showMenu ?
+                            AnyShapeStyle(LinearGradient(colors: [.red.opacity(0.8), .orange.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)) :
+                            AnyShapeStyle(Color.white.opacity(0.15))
+                        )
+                )
+                .background(Circle().fill(.ultraThinMaterial))
+        }
+        .overlay(alignment: .top) {
+            // Dropdown menu as overlay
+            if showMenu {
+                VStack(spacing: 8) {
+                    GlassButton(icon: isCurrentPageBookmarked ? "bookmark.fill" : "bookmark") {
+                        toggleBookmark()
+                        withAnimation(.spring(response: 0.3)) { showMenu = false }
+                    }
+                    
+                    GlassButton(icon: "plus") {
+                        showCollectionSheet = true
+                        withAnimation(.spring(response: 0.3)) { showMenu = false }
+                    }
+                    
+                    GlassButton(icon: "note.text") {
+                        showAnnotations = true
+                        withAnimation(.spring(response: 0.3)) { showMenu = false }
+                    }
+                    
+                    GlassButton(icon: "square.and.arrow.up") {
+                        showShareSheet = true
+                        withAnimation(.spring(response: 0.3)) { showMenu = false }
+                    }
+                    
+                    GlassButton(icon: "gearshape") {
+                        showSettings = true
+                        withAnimation(.spring(response: 0.3)) { showMenu = false }
+                    }
+                }
+                .offset(y: 52)
+                .transition(.scale(scale: 0.01, anchor: .top).combined(with: .opacity))
             }
         }
     }
@@ -326,6 +412,25 @@ struct ReaderView: View {
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                 }
                 .foregroundColor(.orange)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Capsule().fill(.ultraThinMaterial))
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var annotationCountButton: some View {
+        let annotationCount = annotationsService.annotationsForPage(viewModel.currentPageIndex, in: pdfURL.path).count
+        if annotationCount > 0 {
+            Button { showAnnotationsList = true } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "note.text")
+                        .font(.system(size: 16, weight: .semibold))
+                    Text("\(annotationCount)")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                }
+                .foregroundColor(.yellow)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(Capsule().fill(.ultraThinMaterial))
@@ -354,7 +459,7 @@ struct ReaderView: View {
                 .tint(.white)
             Text(loc.loadingLibrary)
                 .font(.headline)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(IRColors.textSecondary)
         }
         .transition(.opacity)
     }
@@ -365,7 +470,7 @@ struct ReaderView: View {
                 .font(.largeTitle)
                 .foregroundColor(.orange)
             Text(message)
-                .foregroundColor(.white)
+                .foregroundColor(IRColors.textPrimary)
             Button(loc.close) { dismiss() }
                 .foregroundColor(.purple)
         }

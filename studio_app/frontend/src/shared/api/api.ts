@@ -47,6 +47,7 @@ class ApiClient {
     cleanPage = aiApi.cleanPage;
     detectBalloons = aiApi.detectBalloons;
     detectPanels = aiApi.detectPanels;
+    translateTexts = aiApi.translateTexts;
 }
 
 export const api = new ApiClient();

@@ -22,6 +22,7 @@ interface LocalSaveData {
     balloons?: Balloon[];     // Balloon data to save
     panels?: Panel[];         // Panel data to save
     cleanedImagePath?: string; // Path to cleaned image (in temp) to copy
+    detectedLanguage?: string; // Language detected during OCR
 }
 
 // Page data structure (shared between both formats)
@@ -33,6 +34,7 @@ interface PageData {
     cleanedPath?: string;
     balloons?: Balloon[];
     panels?: Panel[];
+    detectedLanguage?: string; // Language detected during OCR
 }
 
 // Comic metadata structure (new structure - comic.json)
@@ -297,7 +299,8 @@ export const useLocalProjectSave = (basePath: string | null) => {
                 filename: data.pageId,
                 originPath: `${LOCAL_PROJECT_FOLDERS.origin}/${data.pageId}.jpg`,
                 balloons: data.balloons || [],
-                panels: data.panels || []
+                panels: data.panels || [],
+                detectedLanguage: data.detectedLanguage
             };
             pages.push(newPage);
             pageIndex = pages.length - 1;
@@ -308,6 +311,9 @@ export const useLocalProjectSave = (basePath: string | null) => {
             }
             if (data.panels !== undefined) {
                 pages[pageIndex].panels = data.panels;
+            }
+            if (data.detectedLanguage !== undefined) {
+                pages[pageIndex].detectedLanguage = data.detectedLanguage;
             }
         }
 

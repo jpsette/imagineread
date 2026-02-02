@@ -9,6 +9,7 @@ import SwiftUI
 
 struct NotificationSettingsView: View {
     @Environment(\.container) private var container
+    @EnvironmentObject private var loc: LocalizationService
     @State private var isRequestingPermission = false
     
     var body: some View {
@@ -32,7 +33,7 @@ struct NotificationSettingsView: View {
                 .padding(.top, 20)
             }
         }
-        .navigationTitle("Notificações")
+        .navigationTitle(loc.notifications)
         .navigationBarTitleDisplayMode(.inline)
     }
     
@@ -46,7 +47,7 @@ struct NotificationSettingsView: View {
                     LinearGradient(colors: [.orange, .yellow], startPoint: .top, endPoint: .bottom)
                 )
             
-            Text("Ative as Notificações")
+            Text(loc.enableNotifications)
                 .font(.headline)
                 .foregroundColor(.white)
             
@@ -58,7 +59,7 @@ struct NotificationSettingsView: View {
             Button {
                 requestPermission()
             } label: {
-                Text("Permitir Notificações")
+                Text(loc.allowNotifications)
                     .font(.body)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
@@ -89,7 +90,7 @@ struct NotificationSettingsView: View {
     
     private var dailyReminderSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Lembrete Diário")
+            Text(loc.dailyReminder)
                 .font(.headline)
                 .foregroundColor(.white.opacity(0.9))
             
@@ -177,7 +178,7 @@ struct NotificationSettingsView: View {
                     Text("Lembrar quadrinhos")
                         .foregroundColor(.white)
                     
-                    Text("Após 3 dias sem ler")
+                    Text(loc.afterDaysWithoutReading)
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.5))
                 }

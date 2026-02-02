@@ -57,12 +57,10 @@ struct LibraryView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "clock.arrow.circlepath")
-                    .foregroundStyle(
-                        LinearGradient(colors: [.purple, .blue], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    )
-                Text("Últimos Lidos")
+                    .foregroundStyle(IRGradients.primary)
+                Text(loc.lastRead)
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(IRColors.textPrimary)
             }
             .padding(.horizontal, 20)
             
@@ -86,12 +84,10 @@ struct LibraryView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "books.vertical")
-                    .foregroundStyle(
-                        LinearGradient(colors: [.orange, .pink], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    )
-                Text("Biblioteca")
+                    .foregroundStyle(IRGradients.warning)
+                Text(loc.library_)
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(IRColors.textPrimary)
             }
             .padding(.horizontal, 20)
             
@@ -129,7 +125,7 @@ struct LibraryView: View {
             Text(loc.noComics)
                 .font(.title2)
                 .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .foregroundColor(IRColors.textPrimary)
             
             Text(loc.addPDFs)
                 .font(.subheadline)
@@ -156,13 +152,13 @@ struct RecentComicCard: View {
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 100, height: 140)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                    .cardShadow(radius: 4, y: 2)
                 
                 // Title
                 Text(comic.title)
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(IRColors.textPrimary)
                     .lineLimit(2)
                     .frame(width: 100, alignment: .leading)
             }

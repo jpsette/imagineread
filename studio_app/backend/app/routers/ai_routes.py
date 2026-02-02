@@ -60,8 +60,12 @@ async def analisar_yolo(request: YOLOAnalyzeRequest):
 @router.post("/ler-texto")
 async def read_text(request: OCRRequest):
     try:
-        updated_balloons = perform_ocr(request.image_path, request.balloons)
-        return {"status": "success", "balloons": updated_balloons}
+        result = perform_ocr(request.image_path, request.balloons)
+        return {
+            "status": "success", 
+            "balloons": result.get("balloons", []),
+            "detected_language": result.get("detected_language")
+        }
     except Exception as e:
         logger.error(f"OCR Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -75,4 +79,36 @@ async def analisar_quadros(request: YOLOAnalyzeRequest):
         return {"status": "success", "panels": frames}
     except Exception as e:
         logger.error(f"Panel Detection Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# --- TRANSLATION ENDPOINT ---
+from app.models import TranslationRequest
+from app.services.translation_service import translate_texts
+from app.config import MODEL_ID
+
+@router.post("/traduzir")
+async def translate(request: TranslationRequest):
+    try:
+        # Import client dynamically to get the initialized instance
+        from app.services.ai_service import client
+        
+        logger.info(f"🌐 Translation request: {request.source_lang} → {request.target_lang} ({len(request.texts)} texts)")
+        
+        result = translate_texts(
+            texts=request.texts,
+            source_lang=request.source_lang,
+            target_lang=request.target_lang,
+            client=client,
+            model_id=MODEL_ID,
+            context=request.context,
+            glossary=[{"original": t.original, "translation": t.translation} for t in request.glossary] if request.glossary else None
+        )
+        
+        return {
+            "status": "success" if result["success"] else "error",
+            "translations": result.get("translations", []),
+            "error": result.get("error")
+        }
+    except Exception as e:
+        logger.error(f"Translation Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

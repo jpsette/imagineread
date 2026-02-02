@@ -7,9 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00480B6A707A4072C20AC7F0 /* StudioProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB316ABEE0D0B81A6CF0473C /* StudioProject.swift */; };
+		3E5B527B96EBBE0E6E14A8DF /* BackgroundStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F695F32FE303664BB32BDE6 /* BackgroundStyle.swift */; };
+		41863C333038AAB5C7950063 /* StudioAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57EAA7F7C11AA25B050A185F /* StudioAPI.swift */; };
+		44B4EC8C949C73784B00D8E2 /* BalloonOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B01CE9090EB2FD94485868 /* BalloonOverlay.swift */; };
+		4877AB84CE9E17C2FA5A2EA0 /* Panel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BBD379616C2ABEBE835F3BE /* Panel.swift */; };
+		4E986913F5A5386C7BC8A96D /* IRBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA26F658BACA6B95CD5BF356 /* IRBadge.swift */; };
+		5CCE1ABB590ACA49BD336781 /* IRButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4106F3D84C08224542E04D4 /* IRButton.swift */; };
+		5DC63A269898018C0E3B8232 /* CardStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4119EBEABE17F63A7A915765 /* CardStyle.swift */; };
+		5EB4402D64BAA39D84D47D98 /* AnimatedReaderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B56D7FAC33EBAE4593A7F5CF /* AnimatedReaderViewModel.swift */; };
+		68418DED3464B6E39BB0814E /* SectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9699E2EAFE4F3FFA1D93C807 /* SectionHeader.swift */; };
+		99371532B148CC9DE017A494 /* Balloon.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE6DBA8CD20741B53DAF1DB4 /* Balloon.swift */; };
 		A1B2C3D401234567 /* ImagineReadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000001 /* ImagineReadApp.swift */; };
 		A1B2C3D402234567 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000002 /* ContentView.swift */; };
 		A1B2C3D403234567 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000003 /* Assets.xcassets */; };
+		A8A05FE664DDD60F4CF7F217 /* IRFloatingButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8627142D98B6AF695E9938 /* IRFloatingButton.swift */; };
+		AC3020BD308CE4353E435136 /* IRColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A7B780FC5343CD6C95BF7C /* IRColors.swift */; };
 		B1000001 /* Comic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000001 /* Comic.swift */; };
 		B1000002 /* PDFService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000002 /* PDFService.swift */; };
 		B1000003 /* ReaderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000003 /* ReaderViewModel.swift */; };
@@ -63,9 +76,18 @@
 		B1000073 /* AnnotationsListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000073 /* AnnotationsListSheet.swift */; };
 		B1000074 /* AddAnnotationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000074 /* AddAnnotationSheet.swift */; };
 		B1000075 /* ShareComicSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000075 /* ShareComicSheet.swift */; };
+		B1000076 /* EditCollectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000076 /* EditCollectionSheet.swift */; };
+		B1000077 /* AddComicsToCollectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000077 /* AddComicsToCollectionSheet.swift */; };
+		D5CC00F176D2E94647685F0F /* IRGradients.swift in Sources */ = {isa = PBXBuildFile; fileRef = C02729E2BD98AD596BFD4BE5 /* IRGradients.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		37A7B780FC5343CD6C95BF7C /* IRColors.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IRColors.swift; path = DesignSystem/Tokens/IRColors.swift; sourceTree = "<group>"; };
+		4119EBEABE17F63A7A915765 /* CardStyle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CardStyle.swift; path = DesignSystem/ViewModifiers/CardStyle.swift; sourceTree = "<group>"; };
+		57EAA7F7C11AA25B050A185F /* StudioAPI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StudioAPI.swift; sourceTree = "<group>"; };
+		7BBD379616C2ABEBE835F3BE /* Panel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Panel.swift; sourceTree = "<group>"; };
+		7F695F32FE303664BB32BDE6 /* BackgroundStyle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BackgroundStyle.swift; path = DesignSystem/ViewModifiers/BackgroundStyle.swift; sourceTree = "<group>"; };
+		9699E2EAFE4F3FFA1D93C807 /* SectionHeader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SectionHeader.swift; path = DesignSystem/ViewModifiers/SectionHeader.swift; sourceTree = "<group>"; };
 		A1B2C3D400000000 /* ImagineRead.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ImagineRead.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B2C3D400000001 /* ImagineReadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagineReadApp.swift; sourceTree = "<group>"; };
 		A1B2C3D400000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -123,6 +145,16 @@
 		B2000073 /* AnnotationsListSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationsListSheet.swift; sourceTree = "<group>"; };
 		B2000074 /* AddAnnotationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddAnnotationSheet.swift; sourceTree = "<group>"; };
 		B2000075 /* ShareComicSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareComicSheet.swift; sourceTree = "<group>"; };
+		B2000076 /* EditCollectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditCollectionSheet.swift; sourceTree = "<group>"; };
+		B2000077 /* AddComicsToCollectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddComicsToCollectionSheet.swift; sourceTree = "<group>"; };
+		B56D7FAC33EBAE4593A7F5CF /* AnimatedReaderViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnimatedReaderViewModel.swift; sourceTree = "<group>"; };
+		BA26F658BACA6B95CD5BF356 /* IRBadge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IRBadge.swift; path = DesignSystem/Components/IRBadge.swift; sourceTree = "<group>"; };
+		C02729E2BD98AD596BFD4BE5 /* IRGradients.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IRGradients.swift; path = DesignSystem/Tokens/IRGradients.swift; sourceTree = "<group>"; };
+		D1B01CE9090EB2FD94485868 /* BalloonOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BalloonOverlay.swift; sourceTree = "<group>"; };
+		DB8627142D98B6AF695E9938 /* IRFloatingButton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IRFloatingButton.swift; path = DesignSystem/Components/IRFloatingButton.swift; sourceTree = "<group>"; };
+		DE6DBA8CD20741B53DAF1DB4 /* Balloon.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Balloon.swift; sourceTree = "<group>"; };
+		EB316ABEE0D0B81A6CF0473C /* StudioProject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StudioProject.swift; sourceTree = "<group>"; };
+		F4106F3D84C08224542E04D4 /* IRButton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IRButton.swift; path = DesignSystem/Components/IRButton.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -136,6 +168,26 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3BA4884EB91875EE1BB4EF17 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				F4106F3D84C08224542E04D4 /* IRButton.swift */,
+				BA26F658BACA6B95CD5BF356 /* IRBadge.swift */,
+				DB8627142D98B6AF695E9938 /* IRFloatingButton.swift */,
+			);
+			name = Components;
+			sourceTree = "<group>";
+		};
+		8B70A1927A712CA04556B85E /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				AD7CE720C1C5751CF54409A2 /* Tokens */,
+				CC822D99DDE76EC846AC71F9 /* ViewModifiers */,
+				3BA4884EB91875EE1BB4EF17 /* Components */,
+			);
+			name = DesignSystem;
+			sourceTree = "<group>";
+		};
 		A1B2C3D4G0000000 = {
 			isa = PBXGroup;
 			children = (
@@ -166,6 +218,25 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		AD7CE720C1C5751CF54409A2 /* Tokens */ = {
+			isa = PBXGroup;
+			children = (
+				37A7B780FC5343CD6C95BF7C /* IRColors.swift */,
+				C02729E2BD98AD596BFD4BE5 /* IRGradients.swift */,
+			);
+			name = Tokens;
+			sourceTree = "<group>";
+		};
+		CC822D99DDE76EC846AC71F9 /* ViewModifiers */ = {
+			isa = PBXGroup;
+			children = (
+				7F695F32FE303664BB32BDE6 /* BackgroundStyle.swift */,
+				4119EBEABE17F63A7A915765 /* CardStyle.swift */,
+				9699E2EAFE4F3FFA1D93C807 /* SectionHeader.swift */,
+			);
+			name = ViewModifiers;
+			sourceTree = "<group>";
+		};
 		G0000001 /* Core */ = {
 			isa = PBXGroup;
 			children = (
@@ -192,24 +263,6 @@
 			path = Features;
 			sourceTree = "<group>";
 		};
-		G0000030 /* Settings */ = {
-			isa = PBXGroup;
-			children = (
-				B2000024 /* AppSettingsSheet.swift */,
-				B2000039 /* OfflineLibrarySheet.swift */,
-				G0000088 /* Views */,
-			);
-			path = Settings;
-			sourceTree = "<group>";
-		};
-		G0000088 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				B2000071 /* NotificationSettingsView.swift */,
-			);
-			path = Views;
-			sourceTree = "<group>";
-		};
 		G0000003 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -227,47 +280,6 @@
 				B2000053 /* NotificationService.swift */,
 			);
 			path = Services;
-			sourceTree = "<group>";
-		};
-		G0000040 /* DI */ = {
-			isa = PBXGroup;
-			children = (
-				B2000029 /* AppContainer.swift */,
-			);
-			path = DI;
-			sourceTree = "<group>";
-		};
-		G0000041 /* Network */ = {
-			isa = PBXGroup;
-			children = (
-				B2000034 /* APIClient.swift */,
-			);
-			path = Network;
-			sourceTree = "<group>";
-		};
-		G0000042 /* Data */ = {
-			isa = PBXGroup;
-			children = (
-				G0000043 /* Repositories */,
-			);
-			path = Data;
-			sourceTree = "<group>";
-		};
-		G0000043 /* Repositories */ = {
-			isa = PBXGroup;
-			children = (
-				B2000035 /* ComicRepository.swift */,
-				B2000036 /* UserRepository.swift */,
-			);
-			path = Repositories;
-			sourceTree = "<group>";
-		};
-		G0000044 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				B2000037 /* AppLanguage.swift */,
-			);
-			path = Models;
 			sourceTree = "<group>";
 		};
 		G0000004 /* Reader */ = {
@@ -295,6 +307,7 @@
 			isa = PBXGroup;
 			children = (
 				B2000003 /* ReaderViewModel.swift */,
+				B56D7FAC33EBAE4593A7F5CF /* AnimatedReaderViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -314,6 +327,7 @@
 				B2000073 /* AnnotationsListSheet.swift */,
 				B2000074 /* AddAnnotationSheet.swift */,
 				B2000075 /* ShareComicSheet.swift */,
+				D1B01CE9090EB2FD94485868 /* BalloonOverlay.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -322,6 +336,7 @@
 			isa = PBXGroup;
 			children = (
 				G0000009 /* Components */,
+				8B70A1927A712CA04556B85E /* DesignSystem */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -363,12 +378,91 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		G0000030 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				B2000024 /* AppSettingsSheet.swift */,
+				B2000039 /* OfflineLibrarySheet.swift */,
+				G0000088 /* Views */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		G0000040 /* DI */ = {
+			isa = PBXGroup;
+			children = (
+				B2000029 /* AppContainer.swift */,
+			);
+			path = DI;
+			sourceTree = "<group>";
+		};
+		G0000041 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				B2000034 /* APIClient.swift */,
+				57EAA7F7C11AA25B050A185F /* StudioAPI.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		G0000042 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				G0000043 /* Repositories */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		G0000043 /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+				B2000035 /* ComicRepository.swift */,
+				B2000036 /* UserRepository.swift */,
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		G0000044 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B2000037 /* AppLanguage.swift */,
+				DE6DBA8CD20741B53DAF1DB4 /* Balloon.swift */,
+				7BBD379616C2ABEBE835F3BE /* Panel.swift */,
+				EB316ABEE0D0B81A6CF0473C /* StudioProject.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
 		G0000080 /* Profile */ = {
 			isa = PBXGroup;
 			children = (
 				G0000084 /* Views */,
 			);
 			path = Profile;
+			sourceTree = "<group>";
+		};
+		G0000081 /* Collections */ = {
+			isa = PBXGroup;
+			children = (
+				G0000085 /* Views */,
+			);
+			path = Collections;
+			sourceTree = "<group>";
+		};
+		G0000082 /* Stats */ = {
+			isa = PBXGroup;
+			children = (
+				G0000086 /* Views */,
+			);
+			path = Stats;
+			sourceTree = "<group>";
+		};
+		G0000083 /* Search */ = {
+			isa = PBXGroup;
+			children = (
+				G0000087 /* Views */,
+			);
+			path = Search;
 			sourceTree = "<group>";
 		};
 		G0000084 /* Views */ = {
@@ -380,14 +474,6 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		G0000081 /* Collections */ = {
-			isa = PBXGroup;
-			children = (
-				G0000085 /* Views */,
-			);
-			path = Collections;
-			sourceTree = "<group>";
-		};
 		G0000085 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -395,16 +481,10 @@
 				B2000063 /* CollectionDetailView.swift */,
 				B2000064 /* CreateCollectionSheet.swift */,
 				B2000065 /* AddToCollectionSheet.swift */,
+				B2000076 /* EditCollectionSheet.swift */,
+				B2000077 /* AddComicsToCollectionSheet.swift */,
 			);
 			path = Views;
-			sourceTree = "<group>";
-		};
-		G0000082 /* Stats */ = {
-			isa = PBXGroup;
-			children = (
-				G0000086 /* Views */,
-			);
-			path = Stats;
 			sourceTree = "<group>";
 		};
 		G0000086 /* Views */ = {
@@ -415,18 +495,18 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		G0000083 /* Search */ = {
-			isa = PBXGroup;
-			children = (
-				G0000087 /* Views */,
-			);
-			path = Search;
-			sourceTree = "<group>";
-		};
 		G0000087 /* Views */ = {
 			isa = PBXGroup;
 			children = (
 				B2000072 /* SearchView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		G0000088 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B2000071 /* NotificationSettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -510,14 +590,12 @@
 				B1000004 /* ReaderView.swift in Sources */,
 				B1000005 /* PageView.swift in Sources */,
 				B1000006 /* PageIndicator.swift in Sources */,
-				B1000008 /* DocumentPicker.swift in Sources */,
 				B1000009 /* LibraryService.swift in Sources */,
 				B1000010 /* LibraryViewModel.swift in Sources */,
 				B1000011 /* LibraryView.swift in Sources */,
 				B1000012 /* ComicCard.swift in Sources */,
 				B1000014 /* PageCache.swift in Sources */,
 				B1000015 /* ReadingMode.swift in Sources */,
-				B1000016 /* ReadingModeButton.swift in Sources */,
 				B1000017 /* GlassButton.swift in Sources */,
 				B1000018 /* ZoomableView.swift in Sources */,
 				B1000020 /* NightMode.swift in Sources */,
@@ -558,6 +636,22 @@
 				B1000073 /* AnnotationsListSheet.swift in Sources */,
 				B1000074 /* AddAnnotationSheet.swift in Sources */,
 				B1000075 /* ShareComicSheet.swift in Sources */,
+				B1000076 /* EditCollectionSheet.swift in Sources */,
+				B1000077 /* AddComicsToCollectionSheet.swift in Sources */,
+				AC3020BD308CE4353E435136 /* IRColors.swift in Sources */,
+				D5CC00F176D2E94647685F0F /* IRGradients.swift in Sources */,
+				3E5B527B96EBBE0E6E14A8DF /* BackgroundStyle.swift in Sources */,
+				5DC63A269898018C0E3B8232 /* CardStyle.swift in Sources */,
+				68418DED3464B6E39BB0814E /* SectionHeader.swift in Sources */,
+				5CCE1ABB590ACA49BD336781 /* IRButton.swift in Sources */,
+				4E986913F5A5386C7BC8A96D /* IRBadge.swift in Sources */,
+				A8A05FE664DDD60F4CF7F217 /* IRFloatingButton.swift in Sources */,
+				99371532B148CC9DE017A494 /* Balloon.swift in Sources */,
+				4877AB84CE9E17C2FA5A2EA0 /* Panel.swift in Sources */,
+				00480B6A707A4072C20AC7F0 /* StudioProject.swift in Sources */,
+				41863C333038AAB5C7950063 /* StudioAPI.swift in Sources */,
+				44B4EC8C949C73784B00D8E2 /* BalloonOverlay.swift in Sources */,
+				5EB4402D64BAA39D84D47D98 /* AnimatedReaderViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

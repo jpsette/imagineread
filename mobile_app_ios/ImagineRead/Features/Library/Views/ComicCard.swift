@@ -14,7 +14,6 @@ struct ComicCard: View {
     @EnvironmentObject private var loc: LocalizationService
     @EnvironmentObject private var prefs: PreferencesService
     @Environment(\.container) private var container
-    @ObservedObject private var collections = AppContainer.shared.collections
     
     @State private var isDownloading: Bool = false
     @State private var showCollectionSheet: Bool = false
@@ -34,9 +33,14 @@ struct ComicCard: View {
         prefs.comicRating(for: comic.url.path)
     }
     
-    /// Check if comic is favorited
+    /// Check if comic is favorited (use container to avoid @ObservedObject re-renders)
     private var isFavorite: Bool {
-        collections.isFavorite(comic.url.path)
+        container.collections.isFavorite(comic.url.path)
+    }
+    
+    /// Check if comic is completed
+    private var isCompleted: Bool {
+        container.readingStats.isComicCompleted(comic.url.path)
     }
     
     var body: some View {
@@ -49,26 +53,14 @@ struct ComicCard: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .shadow(color: .black.opacity(0.4), radius: 10, x: 0, y: 6)
+                            .cardShadow()
                         
-                        // Progress badge
-                        if let progress = readingProgress {
-                            Text(progress)
-                                .font(.caption2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(
-                                    Capsule()
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [.purple, .blue],
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            )
-                                        )
-                                )
+                        // Progress badge or Completed badge
+                        if isCompleted {
+                            IRBadge("Lido", icon: "checkmark.circle.fill", style: .success)
+                                .padding(8)
+                        } else if let progress = readingProgress {
+                            IRBadge(progress, style: .primary)
                                 .padding(8)
                         }
                         
@@ -80,13 +72,7 @@ struct ComicCard: View {
                                         .font(.system(size: 8))
                                 }
                             }
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.yellow, .orange],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                            .foregroundStyle(IRGradients.warning)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 4)
                             .background(
@@ -104,7 +90,7 @@ struct ComicCard: View {
                     } label: {
                         Image(systemName: isFavorite ? "heart.fill" : "heart")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(isFavorite ? .pink : .white.opacity(0.8))
+                            .foregroundColor(isFavorite ? IRColors.accentPink : IRColors.textSecondary)
                             .padding(8)
                             .background(
                                 Circle()
@@ -119,7 +105,7 @@ struct ComicCard: View {
                 Text(comic.title)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(IRColors.textPrimary)
                     .lineLimit(2)
                 
                 // Page count, download button or offline badge
@@ -162,13 +148,7 @@ struct ComicCard: View {
                                         .font(.system(size: 10, weight: .medium))
                                 }
                             }
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.cyan, .blue],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                            .foregroundStyle(IRGradients.cyan)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(

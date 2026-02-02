@@ -10,6 +10,7 @@ import SwiftUI
 struct AddAnnotationSheet: View {
     @Environment(\.container) private var container
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var loc: LocalizationService
     
     let comicPath: String
     let pageIndex: Int
@@ -35,7 +36,7 @@ struct AddAnnotationSheet: View {
                         Image(systemName: "bookmark.fill")
                             .foregroundColor(.purple)
                         
-                        Text("Página \(pageIndex + 1)")
+                        Text("\(loc.page) \(pageIndex + 1)")
                             .font(.subheadline)
                             .foregroundColor(.white.opacity(0.7))
                         
@@ -45,7 +46,7 @@ struct AddAnnotationSheet: View {
                     
                     // Text Editor
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Sua anotação")
+                        Text(loc.yourAnnotation)
                             .font(.headline)
                             .foregroundColor(.white.opacity(0.9))
                             .padding(.horizontal, 20)
@@ -65,7 +66,7 @@ struct AddAnnotationSheet: View {
                     
                     // Highlight Color
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Cor do destaque")
+                        Text(loc.highlightColor)
                             .font(.headline)
                             .foregroundColor(.white.opacity(0.9))
                             .padding(.horizontal, 20)
@@ -98,18 +99,18 @@ struct AddAnnotationSheet: View {
                 }
                 .padding(.top, 20)
             }
-            .navigationTitle(existingAnnotation != nil ? "Editar Anotação" : "Nova Anotação")
+            .navigationTitle(existingAnnotation != nil ? loc.editAnnotation : loc.newAnnotation)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancelar") {
+                    Button(loc.cancel) {
                         dismiss()
                     }
                     .foregroundColor(.white.opacity(0.7))
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Salvar") {
+                    Button(loc.save) {
                         saveAnnotation()
                     }
                     .fontWeight(.semibold)

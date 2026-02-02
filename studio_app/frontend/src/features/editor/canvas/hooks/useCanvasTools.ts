@@ -8,6 +8,7 @@ interface UseCanvasToolsProps {
     setActiveTool: (tool: EditorTool) => void;
     onSelect: (id: string | null) => void;
     onBalloonAdd: (balloon: Balloon) => void;
+    onPanelAdd?: (panel: any) => void; // NEW: For panel creation tool
     setEditingId: (id: string | null) => void;
     imgOriginal: HTMLImageElement | undefined;
 }
@@ -30,6 +31,7 @@ export const useCanvasTools = ({
     setActiveTool,
     onSelect,
     onBalloonAdd,
+    onPanelAdd,
     setEditingId,
     imgOriginal
 }: UseCanvasToolsProps) => {
@@ -56,8 +58,9 @@ export const useCanvasTools = ({
 
         const clickedOnEmpty = e.target === stage;
 
-        // Only track drag for text/balloon tools on empty canvas
-        if ((activeTool === 'text' || activeTool.startsWith('balloon-')) && clickedOnEmpty && imgOriginal) {
+        // Track drag for text/balloon/mask/panel tools on empty canvas
+        const isCreationTool = activeTool === 'text' || activeTool === 'mask' || activeTool === 'panel' || activeTool.startsWith('balloon-');
+        if (isCreationTool && clickedOnEmpty && imgOriginal) {
             const pos = getCanvasPos(stage);
             dragStateRef.current = {
                 isDragging: true,
@@ -88,7 +91,8 @@ export const useCanvasTools = ({
 
         // Only process if we were dragging with a creation tool
         if (!dragState.startPos || !imgOriginal) return;
-        if (activeTool !== 'text' && !activeTool.startsWith('balloon-')) return;
+        const isCreationTool = activeTool === 'text' || activeTool === 'mask' || activeTool === 'panel' || activeTool.startsWith('balloon-');
+        if (!isCreationTool) return;
 
         const endPos = getCanvasPos(stage);
         const startPos = dragState.startPos;
@@ -195,7 +199,83 @@ export const useCanvasTools = ({
             onSelect(newBalloon.id);
             setActiveTool('select');
         }
-    }, [activeTool, imgOriginal, onBalloonAdd, onSelect, setActiveTool, setEditingId]);
+
+        // MASK creation tool
+        if (activeTool === 'mask') {
+            const minX = Math.min(startPos.x, endPos.x);
+            const maxX = Math.max(startPos.x, endPos.x);
+            const minY = Math.min(startPos.y, endPos.y);
+            const maxY = Math.max(startPos.y, endPos.y);
+
+            // Minimum size check
+            if (maxX - minX < 30 || maxY - minY < 30) {
+                setActiveTool('select');
+                return;
+            }
+
+            const box_2d: [number, number, number, number] = [
+                Math.round(minY),
+                Math.round(minX),
+                Math.round(maxY),
+                Math.round(maxX)
+            ];
+
+            const newMask: Balloon = {
+                id: `mask-${Date.now()}`,
+                type: 'mask',
+                text: '',
+                box_2d,
+                shape: 'rectangle',
+                color: 'rgba(255, 0, 0, 0.4)',
+                borderColor: 'red',
+                borderWidth: 2,
+                borderRadius: 4,
+                opacity: 1
+            } as Balloon;
+
+            onBalloonAdd(newMask);
+            onSelect(newMask.id);
+            setActiveTool('select');
+        }
+
+        // PANEL creation tool
+        if (activeTool === 'panel' && onPanelAdd) {
+            const minX = Math.min(startPos.x, endPos.x);
+            const maxX = Math.max(startPos.x, endPos.x);
+            const minY = Math.min(startPos.y, endPos.y);
+            const maxY = Math.max(startPos.y, endPos.y);
+
+            // Minimum size check
+            if (maxX - minX < 30 || maxY - minY < 30) {
+                setActiveTool('select');
+                return;
+            }
+
+            const box_2d = [
+                Math.round(minY),
+                Math.round(minX),
+                Math.round(maxY),
+                Math.round(maxX)
+            ];
+
+            const newPanel = {
+                id: `panel-${Date.now()}`,
+                type: 'panel',
+                order: 0, // Will be updated by parent
+                box_2d,
+                points: [
+                    minX, minY,
+                    maxX, minY,
+                    maxX, maxY,
+                    minX, maxY
+                ]
+            };
+
+            onPanelAdd(newPanel);
+            onSelect(newPanel.id);
+            setActiveTool('select');
+        }
+    }, [activeTool, imgOriginal, onBalloonAdd, onPanelAdd, onSelect, setActiveTool, setEditingId]);
 
     // Track mouse movement to show preview rectangle
     const handleStageMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {

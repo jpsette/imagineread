@@ -19,6 +19,7 @@ import { useEditorStore } from '@features/editor/store';
 import { useVectorization } from '@features/editor/hooks/useVectorization';
 import { useShortcutManager } from '@features/editor/hooks/useShortcutManager';
 import { usePanelWorkflow } from '@features/editor/hooks/usePanelWorkflow';
+import { useTranslationStore } from '@app/store/useTranslationStore';
 
 export const EditorScreen: React.FC = () => {
     // --- ROUTER PARAMS ---
@@ -38,6 +39,7 @@ export const EditorScreen: React.FC = () => {
         balloons: any[];
         panels: any[];
         cleanUrl?: string;
+        detectedLanguage?: string;
     } | null>(null);
 
     // Load saved data from local project file when opening a local file
@@ -85,12 +87,20 @@ export const EditorScreen: React.FC = () => {
 
                         if (page) {
                             console.log('✅ [EditorScreen] Found saved data for page:', pageId);
+
+                            // Restore detected language to Zustand if saved
+                            if (page.detectedLanguage && fileId) {
+                                useTranslationStore.getState().setDetectedLanguage(fileId, page.detectedLanguage);
+                                console.log('🌐 [EditorScreen] Restored detected language:', page.detectedLanguage);
+                            }
+
                             setLoadedLocalData({
                                 balloons: page.balloons || [],
                                 panels: page.panels || [],
                                 cleanUrl: page.cleanedPath
                                     ? `media://${basePath}/${page.cleanedPath}`
-                                    : undefined
+                                    : undefined,
+                                detectedLanguage: page.detectedLanguage
                             });
                             return;
                         }
@@ -289,6 +299,7 @@ export const EditorScreen: React.FC = () => {
                         isCleaned={activeFile ? activeFile.isCleaned : false}
                         isLoading={effectiveIsLoading && !hasData} // Optional: Dim sidebar if truly loading
                         isFetching={isFetching} // Fix: Notify sidebar of background updates
+                        fileId={safeFileId}
                     />
                 }
                 rightPanel={

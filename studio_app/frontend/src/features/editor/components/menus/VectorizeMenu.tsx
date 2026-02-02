@@ -42,7 +42,6 @@ interface VectorizeMenuProps {
     isPanelsConfirmed?: boolean;
     onConfirmPanels?: () => void;
     onOpenPanelGallery?: () => void;
-    onAddPanel?: () => void;
     initialCleanUrl?: string | null;
     isCleaned?: boolean;
 }
@@ -68,8 +67,7 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     isPanelsConfirmed,
     onDetectPanels,
     onConfirmPanels,
-    onOpenPanelGallery,
-    onAddPanel
+    onOpenPanelGallery
 }) => {
 
     // Removed unused showBalloons/toggleBalloons from destructuring if they aren't passed prop? 
@@ -79,7 +77,7 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
     // Ah, Step 397 attempted to use `toggleBalloons` inside the component but it wasn't defined.
     // Wait, `useEditorUIStore` usually has `showBalloons`.
     // Let's check `useEditorUIStore` usage locally.
-    const { cleanImageUrl, showMasks, toggleMasks, showBalloons, toggleBalloons, showText, toggleText } = useEditorUIStore();
+    const { cleanImageUrl, showMasks, toggleMasks, showBalloons, toggleBalloons, showText, toggleText, setActiveTool, activeTool } = useEditorUIStore();
 
     const hasCleanImage = !!(isCleaned || cleanImageUrl || initialCleanUrl);
     const isBusy = isProcessing || isLoading || isFetching;
@@ -204,6 +202,19 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                         {showMasks ? 'ON' : 'OFF'}
                     </button>
                 </div>
+
+                {/* Add Mask Button */}
+                <button
+                    onClick={() => setActiveTool(activeTool === 'mask' ? 'select' : 'mask')}
+                    className={`w-full h-[32px] px-3 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-2 select-none border ${activeTool === 'mask'
+                        ? 'bg-red-500/20 text-red-400 border-red-500/50'
+                        : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600'
+                        } active:scale-[0.98]`}
+                    title="Adicionar Máscara - Clique e arraste no canvas"
+                >
+                    <div className="w-4 h-4 flex items-center justify-center border border-current rounded text-[10px]">+</div>
+                    <span>{activeTool === 'mask' ? 'Desenhar Máscara...' : 'Adicionar Máscara'}</span>
+                </button>
             </div>
 
             <div className="h-px bg-white/5 w-full"></div>
@@ -245,7 +256,7 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     onConfirmPanels={onConfirmPanels}
 
                     onOpenPanelGallery={onOpenPanelGallery}
-                    onAddPanel={onAddPanel} // Pass through
+                // onAddPanel removed - Step5Structure now uses setActiveTool directly
                 />
             </div>
             {/* OVERLAY: Covers the entire screen when processing */}

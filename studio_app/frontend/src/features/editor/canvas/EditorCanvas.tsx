@@ -4,6 +4,7 @@ import useImage from 'use-image';
 import Konva from 'konva';
 import { Balloon, Panel, EditorTool } from '@shared/types';
 import { useEditorUIStore } from '@features/editor/uiStore';
+import { useEditorStore } from '@features/editor/store';
 
 // HOOKS
 import { useCanvasNavigation } from './hooks/useCanvasNavigation';
@@ -78,6 +79,24 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         selectedIds
     } = useEditorUIStore();
 
+    // --- GLOBAL CURSOR FOR CREATION TOOLS ---
+    // Use CSS class with !important to override all other cursor styles
+    React.useEffect(() => {
+        // Remove previous cursor classes
+        document.body.classList.remove('cursor-crosshair-global', 'cursor-text-global');
+
+        if (activeTool === 'mask' || activeTool === 'panel' || activeTool.startsWith('balloon-')) {
+            document.body.classList.add('cursor-crosshair-global');
+        } else if (activeTool === 'text') {
+            document.body.classList.add('cursor-text-global');
+        }
+
+        // Cleanup on unmount
+        return () => {
+            document.body.classList.remove('cursor-crosshair-global', 'cursor-text-global');
+        };
+    }, [activeTool]);
+
     // --- IMAGES (CORS ENABLED) ---
     // Standard useImage hook to ensure correct state synchronization in stable shell
     const [imgOriginal, statusOriginal] = useImage(imageUrl, 'anonymous');
@@ -140,6 +159,12 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         setActiveTool,
         onSelect: handleSelect,
         onBalloonAdd,
+        onPanelAdd: (panel: any) => {
+            // Add panel to store using getState for direct access
+            const { setPanels, panels } = useEditorStore.getState();
+            const newPanel = { ...panel, order: panels.length + 1 };
+            setPanels((prev: any[]) => [...prev, newPanel]);
+        },
         setEditingId,
         imgOriginal
     });
@@ -168,8 +193,8 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         if (activeTool === 'text') {
             return 'cursor-text'; // I-beam cursor for text
         }
-        if (activeTool.startsWith('balloon-')) {
-            return 'cursor-crosshair'; // Crosshair for balloons
+        if (activeTool === 'mask' || activeTool === 'panel' || activeTool.startsWith('balloon-')) {
+            return 'cursor-crosshair'; // Crosshair for creation tools
         }
         return 'cursor-default';
     };
@@ -256,10 +281,18 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                             y={dragPreview.y}
                             width={dragPreview.width}
                             height={dragPreview.height}
-                            stroke={activeTool === 'text' ? '#06b6d4' : '#3b82f6'}
+                            stroke={
+                                activeTool === 'text' ? '#06b6d4' :
+                                    activeTool === 'mask' ? '#ef4444' :
+                                        '#3b82f6'
+                            }
                             strokeWidth={2 / scale}
                             dash={[6 / scale, 4 / scale]}
-                            fill={activeTool === 'text' ? 'rgba(6, 182, 212, 0.1)' : 'rgba(59, 130, 246, 0.1)'}
+                            fill={
+                                activeTool === 'text' ? 'rgba(6, 182, 212, 0.1)' :
+                                    activeTool === 'mask' ? 'rgba(239, 68, 68, 0.2)' :
+                                        'rgba(59, 130, 246, 0.1)'
+                            }
                             listening={false}
                         />
                     </Layer>

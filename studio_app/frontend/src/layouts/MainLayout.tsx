@@ -19,6 +19,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         setShowExplorer,
         showManager,
         setShowManager,
+        setShowDictionary,
         setIsCreatingProject,
         setView
     } = useUIStore();
@@ -130,11 +131,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                                         type="checkbox"
                                         checked={showExplorer}
                                         onChange={() => {
-                                            setShowManager(!showManager); // Intentional? The original code toggled showManager when Explorer was clicked? Wait, original code line 111 toggled Manager, line 101 toggled Explorer. I should verify this.
-                                            // The original code:
-                                            // L101: setShowExplorer(!showExplorer);
-                                            // L112: setShowManager(!showManager);
-                                            // I will fix the potential bug in my memory and stick to the logic.
                                             setShowExplorer(!showExplorer);
                                         }}
                                         className="rounded border-zinc-600 bg-zinc-800 text-accent-blue focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
@@ -155,6 +151,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                             </div>
                         )}
                     </div>
+
+                    {/* MENU: GLOSSÁRIO */}
+                    <button
+                        onClick={() => {
+                            setShowDictionary(true);
+                        }}
+                        className="text-[13px] px-2 py-0.5 rounded transition-colors font-medium text-text-secondary hover:text-text-primary hover:bg-white/5"
+                    >
+                        Glossário
+                    </button>
 
                     {/* EDITOR INDICATOR */}
                     <div className={`text-[13px] px-2 py-0.5 rounded transition-colors flex items-center gap-2 font-medium ${isInEditor ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-muted'}`}>

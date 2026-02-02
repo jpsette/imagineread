@@ -59,6 +59,26 @@ export const EditorCanvasArea: React.FC<EditorCanvasAreaProps> = ({
     // --- GALLERY REGENERATION ---
     const { panels } = useEditorStore();
 
+    // AUTO-REGENERATE previews when canvas is ready and panels exist but previewImages is empty
+    // This handles the page refresh case where panels are loaded from DB but previews aren't generated
+    useEffect(() => {
+        if (isCanvasReady && panels.length > 0 && previewImages.length === 0 && stageRef.current) {
+            console.log("🔄 Auto-regenerating panel previews after page load...");
+            // Small delay to ensure canvas is fully rendered
+            const timer = setTimeout(() => {
+                try {
+                    const newImages = generatePanelPreviews(stageRef.current, panels);
+                    if (newImages.length > 0) {
+                        setPreviewImages(newImages);
+                    }
+                } catch (e) {
+                    console.error("Failed to auto-regenerate previews", e);
+                }
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [isCanvasReady, panels, previewImages.length, stageRef, setPreviewImages]);
+
     // This allows the Gallery Modal to request a re-render of previews 
     // with different visibility settings (e.g. Show/Hide Elements)
     // REFACTORED: Now toggles BOTH Balloons and Text

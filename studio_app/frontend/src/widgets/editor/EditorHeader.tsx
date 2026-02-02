@@ -11,6 +11,7 @@ import { editorModes } from '@features/editor/tools/definitions/editorModes';
 import { EditorMode } from '@shared/types';
 import { UnsavedChangesModal } from '@features/editor/components/modals/UnsavedChangesModal';
 import { useLocalProjectSave } from '@features/editor/hooks/useLocalProjectSave';
+import { useTranslationStore } from '@app/store/useTranslationStore';
 
 export const EditorHeader = () => {
     // --- SMART HEADER LOGIC ---
@@ -68,11 +69,15 @@ export const EditorHeader = () => {
                 // LOCAL SAVE: Use Electron filesystem
                 const pageId = fileId.split('/').pop()?.replace(/\.[^.]+$/, '') || 'unknown';
 
+                // Get detected language from translation store
+                const detectedLanguage = useTranslationStore.getState().getDetectedLanguage(fileId);
+
                 const success = await saveToLocal({
                     pageId,
                     balloons: currentBalloons,
                     panels: currentPanels,
                     cleanedImagePath: cleanImageUrl || undefined,
+                    detectedLanguage: detectedLanguage || undefined,
                 });
 
                 if (!success) throw new Error('Failed to save to local project');

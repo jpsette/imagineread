@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ProfileHeaderView: View {
     @Environment(\.container) private var container
+    @EnvironmentObject private var loc: LocalizationService
     @State private var userName: String = "Leitor"
     
     var body: some View {
@@ -33,7 +34,7 @@ struct ProfileHeaderView: View {
             
             // Name
             VStack(spacing: 4) {
-                Text("Olá, \(userName)!")
+                Text(loc.helloReader)
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
@@ -50,7 +51,7 @@ struct ProfileHeaderView: View {
                         .font(.system(size: 12))
                         .foregroundColor(.yellow)
                     
-                    Text("Leitor Dedicado")
+                    Text(loc.dedicatedReader)
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(.white.opacity(0.9))
@@ -72,13 +73,13 @@ struct ProfileHeaderView: View {
     private var memberSinceText: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
-        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.locale = Locale(identifier: loc.language == .portuguese ? "pt_BR" : loc.language == .english ? "en_US" : loc.language == .spanish ? "es_ES" : loc.language == .arabic ? "ar_SA" : "fr_FR")
         
         // Use first reading session date or now
         if let firstSession = container.readingStats.sessions.sorted(by: { $0.startTime < $1.startTime }).first {
-            return "Membro desde \(formatter.string(from: firstSession.startTime))"
+            return "\(loc.memberSince) \(formatter.string(from: firstSession.startTime))"
         }
-        return "Bem-vindo ao ImagineRead!"
+        return loc.welcomeMessage
     }
 }
 

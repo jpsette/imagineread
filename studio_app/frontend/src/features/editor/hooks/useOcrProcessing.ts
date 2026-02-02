@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { Balloon } from '@shared/types';
 import { api } from '@shared/api/api';
+import { useTranslationStore } from '@app/store/useTranslationStore';
 
 interface UseOcrProcessingProps {
     imageUrl: string;
+    fileId: string;  // Required to save detected language per file
     balloons: Balloon[];
     setBalloons: (balloons: Balloon[]) => void;
 }
 
 export const useOcrProcessing = ({
     imageUrl,
+    fileId,
     balloons,
     setBalloons
 }: UseOcrProcessingProps) => {
+
+    const { setDetectedLanguage } = useTranslationStore();
 
     const [isProcessingOcr, setIsProcessing] = useState(false);
 
@@ -98,6 +103,12 @@ export const useOcrProcessing = ({
                 });
 
                 setBalloons(updatedBalloons);
+
+                // Save detected language if available
+                if ((result as any).detected_language) {
+                    console.log(`🌐 Detected Language: ${(result as any).detected_language}`);
+                    setDetectedLanguage(fileId, (result as any).detected_language);
+                }
             }
 
         } catch (error: any) {
