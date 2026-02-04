@@ -17,8 +17,8 @@ export const Button: React.FC<ButtonProps> = ({
     className = '',
     ...props
 }) => {
-    // Added active:scale-95 and tracking-wide for Inter
-    const baseStyles = "rounded-md font-medium transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95";
+    // Enhanced with focus-ring for accessibility and smooth transitions
+    const baseStyles = "rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 focus-ring hover-smooth";
 
     const variants = {
         primary: "bg-accent-blue text-white hover:bg-accent-hover shadow-lg shadow-blue-500/20",

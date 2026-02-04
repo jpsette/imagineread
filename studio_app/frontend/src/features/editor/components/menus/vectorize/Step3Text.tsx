@@ -22,7 +22,7 @@ export const Step3Text: React.FC<Step3TextProps> = ({
 
     return (
         <div className="mb-4">
-            <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">3. Texto</label>
+            <label className="text-[10px] text-text-muted font-bold uppercase mb-2 block">3. Texto</label>
             {hasText ? (
                 <div className="flex gap-2">
                     <div className={BTN_SUCCESS}>

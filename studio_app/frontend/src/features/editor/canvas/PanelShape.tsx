@@ -12,7 +12,7 @@ interface PanelShapeProps {
     editable?: boolean;
 }
 
-export const PanelShape: React.FC<PanelShapeProps> = ({
+const PanelShapeComponent: React.FC<PanelShapeProps> = ({
     panel,
     isSelected,
     onSelect,
@@ -244,3 +244,19 @@ export const PanelShape: React.FC<PanelShapeProps> = ({
         </>
     );
 };
+
+// MEMOIZATION:
+// Comparison function ignores 'on...' handlers to prevent re-renders when parent creates inline functions.
+export const PanelShape = React.memo(PanelShapeComponent, (prev, next) => {
+    // If panel points/box change, we MUST re-render
+    const panelChanged = prev.panel !== next.panel;
+
+    // If selection changes, we re-render
+    const selectionChanged = prev.isSelected !== next.isSelected;
+
+    // If editable changes
+    const editableChanged = prev.editable !== next.editable;
+
+    return !(panelChanged || selectionChanged || editableChanged);
+});
+

@@ -103,6 +103,30 @@ export class LocalFileSystemService implements IFileSystemService {
     }
 
     /**
+     * Update project metadata (name, color, etc.)
+     */
+    async updateProject(projectPath: string, updates: { name?: string; color?: string }): Promise<boolean> {
+        try {
+            const project = await this.loadProject(projectPath);
+
+            // Apply updates
+            if (updates.name !== undefined) {
+                project.meta.name = updates.name;
+            }
+            if (updates.color !== undefined) {
+                project.meta.color = updates.color;
+            }
+            project.meta.updatedAt = new Date().toISOString();
+
+            // Save back
+            return await this.saveProject(project, projectPath);
+        } catch (e) {
+            console.error('Failed to update local project:', e);
+            return false;
+        }
+    }
+
+    /**
      * Import a comic (PDF, images) into a project.
      * Creates a comic folder with proper structure and extracts pages.
      */

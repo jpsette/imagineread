@@ -45,12 +45,12 @@ export const VectorizeLoadingOverlay: React.FC<VectorizeLoadingOverlayProps> = (
             </div>
 
             <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Otimizando Página</h2>
-            <p className="text-zinc-400 text-lg animate-pulse font-medium">{message}</p>
+            <p className="text-text-secondary text-lg animate-pulse font-medium">{message}</p>
 
             {/* Progress Steps (Visual Flair) */}
             <div className="flex gap-2 mt-8">
                 <StepIndicator active={isProcessingBalloons || isProcessingOcr} done={isProcessingOcr} label="Estrutura" />
-                <div className="w-8 h-px bg-zinc-800 self-center"></div>
+                <div className="w-8 h-px bg-surface self-center"></div>
                 <StepIndicator active={isProcessingOcr} done={false} label="Texto" />
             </div>
         </div>,
@@ -60,7 +60,7 @@ export const VectorizeLoadingOverlay: React.FC<VectorizeLoadingOverlayProps> = (
 
 const StepIndicator = ({ active, done, label }: { active: boolean, done: boolean, label: string }) => (
     <div className={`flex flex-col items-center gap-2 transition-all duration-500 ${active ? 'opacity-100' : 'opacity-30'}`}>
-        <div className={`w-3 h-3 rounded-full ${done ? 'bg-green-500' : (active ? 'bg-blue-500 animate-pulse' : 'bg-zinc-700')}`}></div>
-        <span className="text-[10px] uppercase tracking-widest text-zinc-500">{label}</span>
+        <div className={`w-3 h-3 rounded-full ${done ? 'bg-green-500' : (active ? 'bg-blue-500 animate-pulse' : 'bg-border-color')}`}></div>
+        <span className="text-[10px] uppercase tracking-widest text-text-muted">{label}</span>
     </div>
 );

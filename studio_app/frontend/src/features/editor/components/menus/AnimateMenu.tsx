@@ -76,7 +76,7 @@ export const AnimateMenu: React.FC = () => {
                             <span>Preview</span>
                         </button>
                     </div>
-                    <p className="text-[10px] text-zinc-500">
+                    <p className="text-[10px] text-text-muted">
                         Prepare a sequência de leitura para o app
                     </p>
                 </div>
@@ -104,7 +104,7 @@ export const AnimateMenu: React.FC = () => {
                         ) : (
                             <div className="flex flex-col items-center justify-center text-center py-6">
                                 <Layers size={28} className="text-zinc-700 mb-2" />
-                                <p className="text-zinc-400 text-xs font-medium mb-1">
+                                <p className="text-text-secondary text-xs font-medium mb-1">
                                     Nenhum quadro detectado
                                 </p>
                                 <p className="text-zinc-600 text-[10px] max-w-[180px]">
@@ -137,11 +137,11 @@ export const AnimateMenu: React.FC = () => {
                     />
 
                     {/* Modal Content */}
-                    <div className="relative z-10 bg-zinc-900 rounded-2xl shadow-2xl p-6 max-w-[280px]">
+                    <div className="relative z-10 bg-panel-bg rounded-2xl shadow-2xl p-6 max-w-[280px]">
                         {/* Close Button */}
                         <button
                             onClick={() => setShowPreview(false)}
-                            className="absolute -top-2 -right-2 p-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+                            className="absolute -top-2 -right-2 p-1.5 rounded-full bg-surface text-text-secondary hover:text-white hover:bg-border-color transition-colors"
                         >
                             <X size={14} />
                         </button>

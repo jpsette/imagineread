@@ -79,6 +79,8 @@
 		B1000076 /* EditCollectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000076 /* EditCollectionSheet.swift */; };
 		B1000077 /* AddComicsToCollectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000077 /* AddComicsToCollectionSheet.swift */; };
 		D5CC00F176D2E94647685F0F /* IRGradients.swift in Sources */ = {isa = PBXBuildFile; fileRef = C02729E2BD98AD596BFD4BE5 /* IRGradients.swift */; };
+		B1000090 /* LiteDownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000090 /* LiteDownloadService.swift */; };
+		B1000091 /* DeepLinkHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000091 /* DeepLinkHandler.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -155,6 +157,8 @@
 		DE6DBA8CD20741B53DAF1DB4 /* Balloon.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Balloon.swift; sourceTree = "<group>"; };
 		EB316ABEE0D0B81A6CF0473C /* StudioProject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StudioProject.swift; sourceTree = "<group>"; };
 		F4106F3D84C08224542E04D4 /* IRButton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IRButton.swift; path = DesignSystem/Components/IRButton.swift; sourceTree = "<group>"; };
+		B2000090 /* LiteDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiteDownloadService.swift; sourceTree = "<group>"; };
+		B2000091 /* DeepLinkHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkHandler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -278,6 +282,8 @@
 				B2000051 /* ReadingStatsService.swift */,
 				B2000052 /* AnnotationsService.swift */,
 				B2000053 /* NotificationService.swift */,
+				B2000090 /* LiteDownloadService.swift */,
+				B2000091 /* DeepLinkHandler.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -652,6 +658,8 @@
 				41863C333038AAB5C7950063 /* StudioAPI.swift in Sources */,
 				44B4EC8C949C73784B00D8E2 /* BalloonOverlay.swift in Sources */,
 				5EB4402D64BAA39D84D47D98 /* AnimatedReaderViewModel.swift in Sources */,
+				B1000090 /* LiteDownloadService.swift in Sources */,
+				B1000091 /* DeepLinkHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

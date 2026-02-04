@@ -11,29 +11,48 @@ import SwiftUI
 struct AddComicSheet: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var loc: LocalizationService
+    @EnvironmentObject private var deepLinkHandler: DeepLinkHandler
+    @EnvironmentObject private var liteService: LiteDownloadService
     
     @State private var code = ""
     @State private var showScanner = false
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var downloadedFile: URL?
+    @State private var downloadedFileInfo: LiteFileInfo?
+    @State private var showSuccess = false
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 24) {
-                headerIcon
-                titleSection
-                Spacer().frame(height: 10)
-                codeInputSection
-                divider
-                scanButton
-                errorSection
-                Spacer()
-                infoFooter
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(loc.close) { dismiss() }
+            ZStack {
+                VStack(spacing: 24) {
+                    headerIcon
+                    titleSection
+                    Spacer().frame(height: 10)
+                    codeInputSection
+                    divider
+                    scanButton
+                    errorSection
+                    Spacer()
+                    infoFooter
+                }
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(loc.close) { dismiss() }
+                    }
+                }
+                .disabled(isLoading)
+                .opacity(isLoading ? 0.5 : 1)
+                
+                // Loading overlay
+                if isLoading {
+                    loadingOverlay
+                }
+                
+                // Success overlay
+                if showSuccess {
+                    successOverlay
                 }
             }
         }
@@ -41,11 +60,18 @@ struct AddComicSheet: View {
             QRScannerView { scannedCode in
                 code = scannedCode
                 showScanner = false
-                validateCode()
+                processCode()
             }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+        .onAppear {
+            // Check for pending deep link code
+            if let pendingCode = deepLinkHandler.consumeLiteCode() {
+                code = pendingCode
+                processCode()
+            }
+        }
     }
     
     // MARK: - Subviews
@@ -89,13 +115,13 @@ struct AddComicSheet: View {
                     .autocorrectionDisabled()
                 
                 Button {
-                    validateCode()
+                    processCode()
                 } label: {
                     Image(systemName: "arrow.right.circle.fill")
                         .font(.title2)
                         .foregroundColor(IRColors.accentPrimary)
                 }
-                .disabled(code.count < 6)
+                .disabled(code.count < 4)
             }
         }
         .padding(.horizontal, 24)
@@ -142,10 +168,14 @@ struct AddComicSheet: View {
     @ViewBuilder
     private var errorSection: some View {
         if let error = errorMessage {
-            Text(error)
-                .font(.caption)
-                .foregroundColor(.red)
-                .padding(.horizontal, 24)
+            HStack {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                Text(error)
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
+            .padding(.horizontal, 24)
         }
     }
     
@@ -162,20 +192,109 @@ struct AddComicSheet: View {
         .padding(.bottom, 20)
     }
     
+    private var loadingOverlay: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .scaleEffect(1.5)
+                .tint(.white)
+            
+            Text("Downloading...")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            if let fileName = liteService.currentFileName {
+                Text(fileName)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+        }
+        .frame(width: 200, height: 150)
+        .background(Color.black.opacity(0.8))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+    
+    private var successOverlay: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.green)
+            
+            Text("Added to Library!")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            if let info = downloadedFileInfo {
+                Text(info.originalName)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            
+            Button("Done") {
+                dismiss()
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 32)
+            .padding(.vertical, 12)
+            .background(IRGradients.primary)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .frame(width: 250, height: 220)
+        .background(Color.black.opacity(0.9))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+    }
+    
     // MARK: - Actions
     
-    private func validateCode() {
+    private func processCode() {
         guard !code.isEmpty else { return }
         
         isLoading = true
         errorMessage = nil
         
-        // TODO: Implement actual API validation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            isLoading = false
-            errorMessage = loc.codeNotFound
+        Task {
+            do {
+                // 1. Extract clean code (handles deep link format)
+                let cleanCode = liteService.extractCode(from: code)
+                
+                // 2. Download file
+                let (localURL, fileInfo) = try await liteService.downloadFromCode(cleanCode)
+                
+                await MainActor.run {
+                    downloadedFile = localURL
+                    downloadedFileInfo = fileInfo
+                    isLoading = false
+                    showSuccess = true
+                    
+                    // Notify library to refresh
+                    NotificationCenter.default.post(name: .comicAdded, object: nil)
+                }
+                
+            } catch let error as LiteDownloadError {
+                await MainActor.run {
+                    isLoading = false
+                    switch error {
+                    case .codeNotFound:
+                        errorMessage = loc.codeNotFound
+                    case .codeExpired:
+                        errorMessage = "This code has expired"
+                    default:
+                        errorMessage = error.localizedDescription
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = error.localizedDescription
+                }
+            }
         }
     }
+}
+
+// MARK: - Notifications
+
+extension Notification.Name {
+    static let comicAdded = Notification.Name("comicAdded")
 }
 
 #Preview {

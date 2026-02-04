@@ -85,42 +85,42 @@ export const TranslateMenu: React.FC<TranslateMenuProps> = ({
 
                 {/* VISUALIZATION SECTION */}
                 <div className="space-y-3">
-                    <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Visualização</label>
+                    <label className="text-[10px] text-text-muted font-bold uppercase tracking-widest px-1">Visualização</label>
                     <div className="bg-white/5 border border-white/5 rounded-xl p-2 space-y-2">
                         {/* Toggle: Original Image */}
                         <button
                             onClick={toggleVisibility}
-                            className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${isOriginalVisible ? 'bg-purple-500/20 text-purple-400' : 'text-zinc-500 hover:bg-white/5'}`}
+                            className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${isOriginalVisible ? 'bg-purple-500/20 text-purple-400' : 'text-text-muted hover:bg-white/5'}`}
                         >
                             <span className="flex items-center gap-2"><ImageIcon size={14} /> Ver Imagem Original</span>
-                            <div className={`w-2 h-2 rounded-full ${isOriginalVisible ? 'bg-purple-500' : 'bg-zinc-700'}`} />
+                            <div className={`w-2 h-2 rounded-full ${isOriginalVisible ? 'bg-purple-500' : 'bg-border-color'}`} />
                         </button>
 
                         {/* Toggle: Balloons */}
                         <button
                             onClick={toggleBalloons}
-                            className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${showBalloons ? 'bg-blue-500/20 text-blue-400' : 'text-zinc-500 hover:bg-white/5'}`}
+                            className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${showBalloons ? 'bg-blue-500/20 text-blue-400' : 'text-text-muted hover:bg-white/5'}`}
                         >
                             <span className="flex items-center gap-2"><Square size={14} /> Balões</span>
-                            <div className={`w-2 h-2 rounded-full ${showBalloons ? 'bg-blue-500' : 'bg-zinc-700'}`} />
+                            <div className={`w-2 h-2 rounded-full ${showBalloons ? 'bg-blue-500' : 'bg-border-color'}`} />
                         </button>
 
                         {/* Toggle: Text */}
                         <button
                             onClick={toggleText}
-                            className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${showText ? 'bg-green-500/20 text-green-400' : 'text-zinc-500 hover:bg-white/5'}`}
+                            className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${showText ? 'bg-green-500/20 text-green-400' : 'text-text-muted hover:bg-white/5'}`}
                         >
                             <span className="flex items-center gap-2"><Type size={14} /> Texto</span>
-                            <div className={`w-2 h-2 rounded-full ${showText ? 'bg-green-500' : 'bg-zinc-700'}`} />
+                            <div className={`w-2 h-2 rounded-full ${showText ? 'bg-green-500' : 'bg-border-color'}`} />
                         </button>
 
                         {/* Toggle: Panels/Frames */}
                         <button
                             onClick={() => setShowPanelsLayer(!showPanelsLayer)}
-                            className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${showPanelsLayer ? 'bg-orange-500/20 text-orange-400' : 'text-zinc-500 hover:bg-white/5'}`}
+                            className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${showPanelsLayer ? 'bg-orange-500/20 text-orange-400' : 'text-text-muted hover:bg-white/5'}`}
                         >
                             <span className="flex items-center gap-2"><Layout size={14} /> Quadros</span>
-                            <div className={`w-2 h-2 rounded-full ${showPanelsLayer ? 'bg-orange-500' : 'bg-zinc-700'}`} />
+                            <div className={`w-2 h-2 rounded-full ${showPanelsLayer ? 'bg-orange-500' : 'bg-border-color'}`} />
                         </button>
                     </div>
                 </div>
@@ -129,7 +129,7 @@ export const TranslateMenu: React.FC<TranslateMenuProps> = ({
 
                 {/* TRANSLATION SECTION */}
                 <div className="space-y-3">
-                    <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Tradução</label>
+                    <label className="text-[10px] text-text-muted font-bold uppercase tracking-widest px-1">Tradução</label>
 
                     {/* Glossary Selector */}
                     <div className="relative">
@@ -137,7 +137,7 @@ export const TranslateMenu: React.FC<TranslateMenuProps> = ({
                             onClick={() => setShowGlossaryDropdown(!showGlossaryDropdown)}
                             className={`w-full h-9 rounded-xl flex items-center justify-between px-3 transition-all border text-[10px] font-medium ${selectedGlossaryId
                                     ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-                                    : 'bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10'
+                                    : 'bg-white/5 text-text-secondary border-white/10 hover:bg-white/10'
                                 }`}
                         >
                             <span className="flex items-center gap-2">
@@ -164,9 +164,9 @@ export const TranslateMenu: React.FC<TranslateMenuProps> = ({
 
                         {/* Dropdown */}
                         {showGlossaryDropdown && (
-                            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-zinc-900 border border-white/10 rounded-xl shadow-xl overflow-hidden">
+                            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-panel-bg border border-white/10 rounded-xl shadow-xl overflow-hidden">
                                 {dictionaries.length === 0 ? (
-                                    <p className="p-3 text-xs text-zinc-500 text-center">Nenhum glossário criado</p>
+                                    <p className="p-3 text-xs text-text-muted text-center">Nenhum glossário criado</p>
                                 ) : (
                                     dictionaries.map(dict => (
                                         <button
@@ -179,7 +179,7 @@ export const TranslateMenu: React.FC<TranslateMenuProps> = ({
                                                 }`}
                                         >
                                             <span>{dict.name}</span>
-                                            <span className="text-zinc-500">{dict.entries.length} termos</span>
+                                            <span className="text-text-muted">{dict.entries.length} termos</span>
                                         </button>
                                     ))
                                 )}
@@ -193,7 +193,7 @@ export const TranslateMenu: React.FC<TranslateMenuProps> = ({
                         disabled={!detectedLanguageCode || isTranslating || balloons.length === 0}
                         className={`w-full h-9 rounded-xl flex items-center justify-center gap-2 transition-all border text-[10px] font-bold uppercase tracking-wider ${detectedLanguageCode && !isTranslating && balloons.length > 0
                             ? 'bg-cyan-500/5 hover:bg-cyan-500/20 text-cyan-400 border-cyan-500/10 hover:border-cyan-500/30 hover:shadow-[0_0_15px_rgba(6,182,212,0.2)]'
-                            : 'bg-zinc-800/50 text-zinc-500 border-zinc-700/50 cursor-not-allowed'
+                            : 'bg-surface/50 text-text-muted border-zinc-700/50 cursor-not-allowed'
                             }`}
                     >
                         {isTranslating ? (
@@ -225,7 +225,7 @@ export const TranslateMenu: React.FC<TranslateMenuProps> = ({
                             <div className="flex items-center gap-2">
                                 <span className="text-xl">{originalDisplay.flag}</span>
                                 <div className="text-left">
-                                    <p className="text-[10px] text-zinc-500">Original</p>
+                                    <p className="text-[10px] text-text-muted">Original</p>
                                     <p className="text-xs font-medium text-white">{originalDisplay.name}</p>
                                 </div>
                             </div>
@@ -252,7 +252,7 @@ export const TranslateMenu: React.FC<TranslateMenuProps> = ({
                                     <div className="flex items-center gap-2">
                                         <span className="text-xl">{display.flag}</span>
                                         <div className="text-left">
-                                            <p className="text-[10px] text-zinc-500">Traduzido</p>
+                                            <p className="text-[10px] text-text-muted">Traduzido</p>
                                             <p className="text-xs font-medium text-white">{display.name}</p>
                                         </div>
                                     </div>

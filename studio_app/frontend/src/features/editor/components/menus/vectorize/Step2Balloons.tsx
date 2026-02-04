@@ -22,7 +22,7 @@ export const Step2Balloons: React.FC<Step2BalloonsProps> = ({
 
     return (
         <div className="mb-4">
-            <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">2. Balões</label>
+            <label className="text-[10px] text-text-muted font-bold uppercase mb-2 block">2. Balões</label>
             {hasBalloons ? (
                 <div className="flex gap-2">
                     <div className={BTN_SUCCESS}>

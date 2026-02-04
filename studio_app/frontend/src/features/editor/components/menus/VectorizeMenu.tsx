@@ -103,7 +103,7 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
 
             {/* HEADER */}
             <div className="flex items-center justify-between px-1">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">
                     Fluxo de Trabalho
                 </span>
                 {isBusy && <Loader2 className="animate-spin text-blue-500" size={14} />}
@@ -183,11 +183,11 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
 
                 <div className={`p-3 rounded-xl border transition-all flex items-center justify-between ${showMasks
                     ? 'bg-red-500/5 border-red-500/20'
-                    : 'bg-zinc-900 border-zinc-800 opacity-60'
+                    : 'bg-panel-bg border-zinc-800 opacity-60'
                     }`}>
                     <div className="flex items-center gap-3">
                         <ScanFace size={20} className={showMasks ? "text-red-400" : "text-zinc-600"} />
-                        <span className={`text-xs font-bold ${showMasks ? "text-red-200" : "text-zinc-500"}`}>
+                        <span className={`text-xs font-bold ${showMasks ? "text-red-200" : "text-text-muted"}`}>
                             Modo de Edição
                         </span>
                     </div>
@@ -196,7 +196,7 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                         onClick={toggleMasks}
                         className={`text-[10px] px-2 py-1 rounded border transition-all ${showMasks
                             ? 'bg-red-500 text-white border-red-500'
-                            : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-700'
+                            : 'bg-surface text-text-secondary border-zinc-700 hover:bg-border-color'
                             }`}
                     >
                         {showMasks ? 'ON' : 'OFF'}
@@ -208,7 +208,7 @@ export const VectorizeMenu: React.FC<VectorizeMenuProps> = ({
                     onClick={() => setActiveTool(activeTool === 'mask' ? 'select' : 'mask')}
                     className={`w-full h-[32px] px-3 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-2 select-none border ${activeTool === 'mask'
                         ? 'bg-red-500/20 text-red-400 border-red-500/50'
-                        : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600'
+                        : 'bg-panel-bg text-zinc-300 border-zinc-700 hover:bg-surface hover:border-zinc-600'
                         } active:scale-[0.98]`}
                     title="Adicionar Máscara - Clique e arraste no canvas"
                 >

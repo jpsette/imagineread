@@ -63,7 +63,7 @@ export const EditorLeftPanel = React.memo<EditorLeftPanelProps>(({
             maxWidth={350}
             minHeight={250}
         >
-            <div className="w-full h-full bg-zinc-950 rounded-2xl border border-zinc-800 shadow-xl flex flex-col items-center overflow-hidden pointer-events-auto">
+            <div className="w-full h-full bg-panel-bg rounded-2xl border border-border-color shadow-xl flex flex-col items-center overflow-hidden pointer-events-auto">
                 <div className="w-full h-full bg-transparent px-4 pt-2 overflow-y-auto custom-scrollbar">
                     {activeMode === 'vectorize' && (
                         <VectorizeMenu

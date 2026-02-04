@@ -25,25 +25,25 @@ export const StyleControls: React.FC<StyleControlsProps> = ({
             <button
                 onMouseDown={(e) => isEditing && e.preventDefault()}
                 onClick={() => toggleStyle('bold')}
-                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isBold ? 'bg-white/10 text-neon-blue' : 'text-zinc-400'
+                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isBold ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'
                     }`}
                 title="Negrito"
                 disabled={isDisabled}
             ><Bold size={14} /></button>
-            <div className="w-px bg-zinc-700" />
+            <div className="w-px bg-border-color" />
             <button
                 onMouseDown={(e) => isEditing && e.preventDefault()}
                 onClick={() => toggleStyle('italic')}
-                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isItalic ? 'bg-white/10 text-neon-blue' : 'text-zinc-400'
+                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isItalic ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'
                     }`}
                 title="Itálico"
                 disabled={isDisabled}
             ><Italic size={14} /></button>
-            <div className="w-px bg-zinc-700" />
+            <div className="w-px bg-border-color" />
             <button
                 onMouseDown={(e) => isEditing && e.preventDefault()}
                 onClick={toggleDecoration}
-                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isUnderline ? 'bg-white/10 text-neon-blue' : 'text-zinc-400'
+                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isUnderline ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'
                     }`}
                 title="Sublinhado"
                 disabled={isDisabled}

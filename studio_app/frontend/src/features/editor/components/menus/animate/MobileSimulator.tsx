@@ -29,7 +29,7 @@ export const MobileSimulator: React.FC<MobileSimulatorProps> = ({
     return (
         <div className="flex flex-col items-center gap-3">
             {/* Phone Label */}
-            <div className="flex items-center gap-2 text-zinc-500 text-xs">
+            <div className="flex items-center gap-2 text-text-muted text-xs">
                 <Smartphone size={14} />
                 <span>Preview Mobile</span>
             </div>
@@ -38,7 +38,7 @@ export const MobileSimulator: React.FC<MobileSimulatorProps> = ({
             <div className="relative">
                 {/* Phone outer frame */}
                 <div
-                    className="bg-zinc-900 rounded-[2.5rem] p-2 shadow-2xl"
+                    className="bg-panel-bg rounded-[2.5rem] p-2 shadow-2xl"
                     style={{
                         width: 220,
                         aspectRatio: '9/19.5'
@@ -71,8 +71,8 @@ export const MobileSimulator: React.FC<MobileSimulatorProps> = ({
                     onClick={onPrevious}
                     disabled={!hasPrevious}
                     className={`absolute left-[-40px] top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${hasPrevious
-                            ? 'bg-zinc-800 hover:bg-zinc-700 text-white'
-                            : 'bg-zinc-900 text-zinc-700 cursor-not-allowed'
+                            ? 'bg-surface hover:bg-border-color text-white'
+                            : 'bg-panel-bg text-zinc-700 cursor-not-allowed'
                         }`}
                 >
                     <ChevronLeft size={20} />
@@ -82,8 +82,8 @@ export const MobileSimulator: React.FC<MobileSimulatorProps> = ({
                     onClick={onNext}
                     disabled={!hasNext}
                     className={`absolute right-[-40px] top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${hasNext
-                            ? 'bg-zinc-800 hover:bg-zinc-700 text-white'
-                            : 'bg-zinc-900 text-zinc-700 cursor-not-allowed'
+                            ? 'bg-surface hover:bg-border-color text-white'
+                            : 'bg-panel-bg text-zinc-700 cursor-not-allowed'
                         }`}
                 >
                     <ChevronRight size={20} />
@@ -92,7 +92,7 @@ export const MobileSimulator: React.FC<MobileSimulatorProps> = ({
 
             {/* Panel Counter */}
             {totalPanels > 0 && (
-                <div className="text-zinc-400 text-xs font-medium">
+                <div className="text-text-secondary text-xs font-medium">
                     {currentIndex + 1} / {totalPanels}
                 </div>
             )}

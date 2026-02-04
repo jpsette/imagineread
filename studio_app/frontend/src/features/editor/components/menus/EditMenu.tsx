@@ -139,7 +139,7 @@ export const EditMenu: React.FC = () => {
 
                 {/* 1. TEXT CONTENT */}
                 <div className="space-y-1.5 pt-1">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase flex items-center gap-1.5">
+                    <label className="text-[10px] font-bold text-text-secondary uppercase flex items-center gap-1.5">
                         <Type size={12} /> Conteúdo
                     </label>
                     <DebouncedTextarea
@@ -153,7 +153,7 @@ export const EditMenu: React.FC = () => {
 
                 {/* 2. TYPOGRAPHY TOOLS */}
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase flex items-center gap-1.5">
+                    <label className="text-[10px] font-bold text-text-secondary uppercase flex items-center gap-1.5">
                         <Baseline size={12} /> Tipografia
                     </label>
 
@@ -208,25 +208,25 @@ export const EditMenu: React.FC = () => {
                             <button
                                 onMouseDown={(e) => isEditing && e.preventDefault()}
                                 onClick={() => toggleStyle('bold')}
-                                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isBold ? 'bg-white/10 text-neon-blue' : 'text-zinc-400'
+                                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isBold ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'
                                     }`}
                                 title="Negrito"
                                 disabled={isDisabled}
                             ><Bold size={14} /></button>
-                            <div className="w-px bg-zinc-700" />
+                            <div className="w-px bg-border-color" />
                             <button
                                 onMouseDown={(e) => isEditing && e.preventDefault()}
                                 onClick={() => toggleStyle('italic')}
-                                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isItalic ? 'bg-white/10 text-neon-blue' : 'text-zinc-400'
+                                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isItalic ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'
                                     }`}
                                 title="Itálico"
                                 disabled={isDisabled}
                             ><Italic size={14} /></button>
-                            <div className="w-px bg-zinc-700" />
+                            <div className="w-px bg-border-color" />
                             <button
                                 onMouseDown={(e) => isEditing && e.preventDefault()}
                                 onClick={toggleDecoration}
-                                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isUnderline ? 'bg-white/10 text-neon-blue' : 'text-zinc-400'
+                                className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isUnderline ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'
                                     }`}
                                 title="Sublinhado"
                                 disabled={isDisabled}
@@ -238,28 +238,28 @@ export const EditMenu: React.FC = () => {
                     <div className="flex bg-white/5 rounded-xl border border-white/5 overflow-hidden h-8">
                         <button
                             onClick={() => handleUpdate({ textAlign: 'left' })}
-                            className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${selectedBalloon?.textAlign === 'left' ? 'bg-white/10 text-neon-blue' : 'text-zinc-400'}`}
+                            className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${selectedBalloon?.textAlign === 'left' ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'}`}
                             title="Alinhar à Esquerda"
                             disabled={isDisabled}
                         ><AlignLeft size={14} /></button>
-                        <div className="w-px bg-zinc-700" />
+                        <div className="w-px bg-border-color" />
                         <button
                             onClick={() => handleUpdate({ textAlign: 'center' })}
-                            className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${!selectedBalloon?.textAlign || selectedBalloon?.textAlign === 'center' ? 'bg-white/10 text-neon-blue' : 'text-zinc-400'}`}
+                            className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${!selectedBalloon?.textAlign || selectedBalloon?.textAlign === 'center' ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'}`}
                             title="Centralizar"
                             disabled={isDisabled}
                         ><AlignCenter size={14} /></button>
-                        <div className="w-px bg-zinc-700" />
+                        <div className="w-px bg-border-color" />
                         <button
                             onClick={() => handleUpdate({ textAlign: 'right' })}
-                            className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${selectedBalloon?.textAlign === 'right' ? 'bg-white/10 text-neon-blue' : 'text-zinc-400'}`}
+                            className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${selectedBalloon?.textAlign === 'right' ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'}`}
                             title="Alinhar à Direita"
                             disabled={isDisabled}
                         ><AlignRight size={14} /></button>
-                        <div className="w-px bg-zinc-700" />
+                        <div className="w-px bg-border-color" />
                         <button
                             onClick={() => handleUpdate({ textAlign: 'justify' })}
-                            className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${selectedBalloon?.textAlign === 'justify' ? 'bg-white/10 text-neon-blue' : 'text-zinc-400'}`}
+                            className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${selectedBalloon?.textAlign === 'justify' ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'}`}
                             title="Justificar"
                             disabled={isDisabled}
                         ><AlignJustify size={14} /></button>
@@ -267,8 +267,8 @@ export const EditMenu: React.FC = () => {
 
                     {/* Line Height Control */}
                     <div className="flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl px-2.5 h-8">
-                        <AlignVerticalSpaceAround size={14} className="text-zinc-400" />
-                        <span className="text-[10px] text-zinc-400 font-medium">Espaçamento</span>
+                        <AlignVerticalSpaceAround size={14} className="text-text-secondary" />
+                        <span className="text-[10px] text-text-secondary font-medium">Espaçamento</span>
                         <input
                             type="number"
                             min="0.8" max="3" step="0.1"

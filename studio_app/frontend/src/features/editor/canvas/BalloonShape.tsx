@@ -4,6 +4,8 @@ import { Balloon } from '@shared/types';
 import { BalloonVector } from './parts/BalloonVector';
 import { BalloonText } from './parts/BalloonText';
 import { BalloonVertexEditor } from './parts/BalloonVertexEditor';
+// New vector system (kept for gradual migration):
+// import { BalloonVectorAdapter } from './vector/BalloonVectorAdapter';
 import { TextBoxHandles } from './parts/TextBoxHandles';
 
 interface BalloonShapeProps {
@@ -112,9 +114,20 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
             }));
         }
 
+        // Shift VertexHandles if they exist (CRITICAL for maintaining curves)
+        let newVertexHandles = balloon.vertexHandles;
+        if (newVertexHandles && newVertexHandles.length > 0) {
+            newVertexHandles = newVertexHandles.map(vh => ({
+                ...vh,
+                handleIn: vh?.handleIn ? { x: vh.handleIn.x + dx, y: vh.handleIn.y + dy } : undefined,
+                handleOut: vh?.handleOut ? { x: vh.handleOut.x + dx, y: vh.handleOut.y + dy } : undefined
+            }));
+        }
+
         onChange({
             box_2d: newBox,
-            points: newPoints
+            points: newPoints,
+            vertexHandles: newVertexHandles
         });
         node.scaleX(1); node.scaleY(1);
 
@@ -151,6 +164,22 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
             }));
         }
 
+        // Scale VertexHandles if they exist (CRITICAL for maintaining curves on resize)
+        let newVertexHandles = balloon.vertexHandles;
+        if (newVertexHandles && newVertexHandles.length > 0) {
+            newVertexHandles = newVertexHandles.map(vh => ({
+                ...vh,
+                handleIn: vh?.handleIn ? {
+                    x: currentX + (vh.handleIn.x - x) * scaleX,
+                    y: currentY + (vh.handleIn.y - y) * scaleY
+                } : undefined,
+                handleOut: vh?.handleOut ? {
+                    x: currentX + (vh.handleOut.x - x) * scaleX,
+                    y: currentY + (vh.handleOut.y - y) * scaleY
+                } : undefined
+            }));
+        }
+
         // RESET SCALES
         node.scaleX(1); node.scaleY(1);
 
@@ -169,7 +198,8 @@ const BalloonShapeComponent: React.FC<BalloonShapeProps> = ({
                 currentY + height * scaleY,
                 currentX + width * scaleX
             ],
-            points: newPoints
+            points: newPoints,
+            vertexHandles: newVertexHandles
         });
     };
 

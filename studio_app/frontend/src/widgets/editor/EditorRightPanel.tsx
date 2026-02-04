@@ -20,7 +20,7 @@ export const EditorRightPanel: React.FC = () => {
             maxWidth={350}
             minHeight={250}
         >
-            <div className="w-full h-full bg-zinc-950 rounded-2xl border border-zinc-800 shadow-xl overflow-hidden pointer-events-auto flex flex-col">
+            <div className="w-full h-full bg-panel-bg rounded-2xl border border-border-color shadow-xl overflow-hidden pointer-events-auto flex flex-col">
                 <div className="w-full h-full px-4 pt-2 overflow-y-auto custom-scrollbar">
                     <RightSidebar />
                 </div>

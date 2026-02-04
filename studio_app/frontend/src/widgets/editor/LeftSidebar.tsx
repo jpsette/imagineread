@@ -39,7 +39,7 @@ export const LeftSidebar: React.FC<EditorSidebarProps> = ({ onOpenPanelGallery, 
 
             {/* 1. CORE TOOLS */}
             <div className="space-y-3">
-                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Essenciais</label>
+                <label className="text-[10px] text-text-muted font-bold uppercase tracking-widest px-1">Essenciais</label>
                 <div className="grid grid-cols-2 gap-3">
                     {coreTools.map(tool => (
                         <SidebarToolButton
@@ -68,48 +68,48 @@ export const LeftSidebar: React.FC<EditorSidebarProps> = ({ onOpenPanelGallery, 
 
             {/* 2. VISUALIZATION MENU */}
             <div className="space-y-3">
-                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Visualização</label>
+                <label className="text-[10px] text-text-muted font-bold uppercase tracking-widest px-1">Visualização</label>
                 <div className="bg-white/5 border border-white/5 rounded-xl p-2 space-y-2">
                     {/* Toggle: Original Image */}
                     <button
                         onClick={useEditorUIStore.getState().toggleVisibility}
-                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${useEditorUIStore(s => s.isOriginalVisible) ? 'bg-purple-500/20 text-purple-400' : 'text-zinc-500 hover:bg-white/5'}`}
+                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${useEditorUIStore(s => s.isOriginalVisible) ? 'bg-purple-500/20 text-purple-400' : 'text-text-muted hover:bg-white/5'}`}
                     >
                         <span className="flex items-center gap-2"><ImageIcon size={14} /> Ver Imagem Original</span>
-                        <div className={`w-2 h-2 rounded-full ${useEditorUIStore(s => s.isOriginalVisible) ? 'bg-purple-500' : 'bg-zinc-700'}`} />
+                        <div className={`w-2 h-2 rounded-full ${useEditorUIStore(s => s.isOriginalVisible) ? 'bg-purple-500' : 'bg-border-color'}`} />
                     </button>
 
                     {/* Toggle: Balloons */}
                     <button
                         onClick={useEditorUIStore.getState().toggleBalloons}
-                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${useEditorUIStore(s => s.showBalloons) ? 'bg-blue-500/20 text-blue-400' : 'text-zinc-500 hover:bg-white/5'}`}
+                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${useEditorUIStore(s => s.showBalloons) ? 'bg-blue-500/20 text-blue-400' : 'text-text-muted hover:bg-white/5'}`}
                     >
                         <span className="flex items-center gap-2"><Square size={14} /> Balões</span>
-                        <div className={`w-2 h-2 rounded-full ${useEditorUIStore(s => s.showBalloons) ? 'bg-blue-500' : 'bg-zinc-700'}`} />
+                        <div className={`w-2 h-2 rounded-full ${useEditorUIStore(s => s.showBalloons) ? 'bg-blue-500' : 'bg-border-color'}`} />
                     </button>
 
                     {/* Toggle: Text */}
                     <button
                         onClick={useEditorUIStore.getState().toggleText}
-                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${useEditorUIStore(s => s.showText) ? 'bg-green-500/20 text-green-400' : 'text-zinc-500 hover:bg-white/5'}`}
+                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${useEditorUIStore(s => s.showText) ? 'bg-green-500/20 text-green-400' : 'text-text-muted hover:bg-white/5'}`}
                     >
                         <span className="flex items-center gap-2"><Type size={14} /> Texto</span>
-                        <div className={`w-2 h-2 rounded-full ${useEditorUIStore(s => s.showText) ? 'bg-green-500' : 'bg-zinc-700'}`} />
+                        <div className={`w-2 h-2 rounded-full ${useEditorUIStore(s => s.showText) ? 'bg-green-500' : 'bg-border-color'}`} />
                     </button>
 
                     {/* Toggle: Panels/Frames */}
                     <button
                         onClick={() => useEditorUIStore.getState().setShowPanelsLayer(!useEditorUIStore.getState().showPanelsLayer)}
-                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${useEditorUIStore(s => s.showPanelsLayer) ? 'bg-orange-500/20 text-orange-400' : 'text-zinc-500 hover:bg-white/5'}`}
+                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all ${useEditorUIStore(s => s.showPanelsLayer) ? 'bg-orange-500/20 text-orange-400' : 'text-text-muted hover:bg-white/5'}`}
                     >
                         <span className="flex items-center gap-2"><Layout size={14} /> Quadros</span>
-                        <div className={`w-2 h-2 rounded-full ${useEditorUIStore(s => s.showPanelsLayer) ? 'bg-orange-500' : 'bg-zinc-700'}`} />
+                        <div className={`w-2 h-2 rounded-full ${useEditorUIStore(s => s.showPanelsLayer) ? 'bg-orange-500' : 'bg-border-color'}`} />
                     </button>
 
                     {/* Button: Open Panel Gallery */}
                     <button
                         onClick={onOpenPanelGallery}
-                        className="w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all text-zinc-500 hover:bg-white/5 hover:text-zinc-300"
+                        className="w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all text-text-muted hover:bg-white/5 hover:text-text-secondary"
                     >
                         <span className="flex items-center gap-2"><Images size={14} /> Gerenciar Quadros</span>
                         <div className="w-2 h-2" /> {/* Spacer */}

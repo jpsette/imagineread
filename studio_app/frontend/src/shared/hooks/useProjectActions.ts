@@ -79,7 +79,22 @@ export const useProjectActions = () => {
 
     const updateProject = async (id: string, data: Partial<Project>) => {
         try {
-            await api.updateProject(id, data);
+            // Check if it's a local project
+            const projectToUpdate = projects.find(p => p.id === id);
+
+            if (projectToUpdate?.localPath) {
+                // === LOCAL UPDATE ===
+                const { LocalFileSystemService } = await import('@shared/services/filesystem/LocalFileSystemService');
+                const localService = new LocalFileSystemService();
+
+                await localService.updateProject(projectToUpdate.localPath, {
+                    name: data.name,
+                    color: data.color,
+                });
+            } else {
+                // === CLOUD UPDATE ===
+                await api.updateProject(id, data);
+            }
 
             // 1. Update Legacy Store
             updateStoreProject(id, data);

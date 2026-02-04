@@ -1,6 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+/**
+ * DashboardScreen
+ * 
+ * Main dashboard screen with project management, file explorer, and modals.
+ * 
+ * REFACTORED: Uses extracted hooks for handlers and modal state.
+ */
+
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { MainLayout } from '../../../layouts/MainLayout';
 import DraggableWindow from '@shared/ui/DraggableWindow';
 import { LazyExplorer } from '../components/LazyExplorer/LazyExplorer';
@@ -14,38 +21,30 @@ import { api } from '@shared/api/api';
 
 // Stores & Hooks
 import { useProjectStore } from '@app/store/useProjectStore';
-
 import { useUIStore } from '@app/store/useUIStore';
-import { useFileActions } from '@shared/hooks/useFileActions';
-import { useProjectActions } from '@shared/hooks/useProjectActions';
-import { useProjects } from '../hooks/useProjects'; // New Hook
-import { useLocalProjectsLoader } from '../hooks/useLocalProjectsLoader'; // Loader Hook
+import { useProjects, useLocalProjectsLoader, useDashboardHandlers, useModalState } from '../hooks';
 
 // Types & Constants
-import { Project, FileEntry } from '@shared/types';
 import { PROJECT_THEMES } from '../../../constants/theme';
 
 export const DashboardScreen: React.FC = () => {
-    const navigate = useNavigate();
-
-    // === GLOBAL STORES (Legacy - Keeping currentProjectId for selection state) ===
+    // === GLOBAL STORES ===
     const { currentProjectId, setCurrentProjectId } = useProjectStore();
 
     // === PERSISTENCE: Load Local Projects ===
     useLocalProjectsLoader();
 
-    // === DATA FETCHING (React Query) ===
+    // === DATA FETCHING ===
     const { data: projectsData } = useProjects();
     const projects = projectsData || [];
 
-    // Fetch FULL FileSystem for Breadcrumbs & Navigation Context
-    // We need the whole tree to reconstruct paths.
     const { data: fullFileSystem } = useQuery({
         queryKey: ['filesystem', 'full'],
-        queryFn: () => api.getFileSystem(), // Fetches all files flat
-        staleTime: 1000 * 60 * 5, // 5 min cache
+        queryFn: () => api.getFileSystem(),
+        staleTime: 1000 * 60 * 5,
     });
 
+    // === UI STORE ===
     const {
         showExplorer, setShowExplorer,
         showManager, setShowManager,
@@ -54,156 +53,22 @@ export const DashboardScreen: React.FC = () => {
         isCreatingProject, setIsCreatingProject
     } = useUIStore();
 
-    // === ACTIONS (HOOKS) ===
-    const { createProject, updateProject, deleteProject, togglePin: togglePinProject } = useProjectActions();
-    const { createFolder, deleteFolder, uploadPages, uploadPDF, renameItem, togglePin, importComicLocal } = useFileActions();
-
-    // === LOCAL DASHBOARD STATE ===
+    // === LOCAL STATE ===
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-
-    // === LAZY LOAD DATA ===
-    const queryClient = useQueryClient();
-
-
-
-
-    // Explorer State (LazyExplorer handles expansion locally mostly, but we keep projects for persistence if needed later)
     const [expandedProjects] = useState<Set<string>>(new Set());
-
-
-    // Rename Modal State
-    const [itemToRename, setItemToRename] = useState<FileEntry | null>(null);
-
-    // Project Manager State
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState<'az' | 'za'>('az');
-    const [newItemName, setNewItemName] = useState('');
-    const [newItemColor, setNewItemColor] = useState(PROJECT_THEMES[0].bg);
 
-    // Project Detail State
-    const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+    // === EXTRACTED HOOKS ===
+    const modals = useModalState();
 
-    // === HANDLERS ===
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const folderInputRef = useRef<HTMLInputElement>(null);
+    const handlers = useDashboardHandlers({
+        projects,
+        currentFolderId,
+        setCurrentFolderId
+    });
 
-    const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            handleImportFiles(Array.from(e.target.files));
-        }
-        if (fileInputRef.current) fileInputRef.current.value = '';
-    };
-
-    const onFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            handleImportFiles(Array.from(e.target.files));
-        }
-        if (folderInputRef.current) folderInputRef.current.value = '';
-    };
-
-    const handleCreateWrapper = async (mode: 'cloud' | 'local' = 'cloud', path?: string) => {
-        if (!newItemName.trim()) return;
-
-        // Pass the mode and path to the Action
-        const newProject = await createProject(newItemName, newItemColor, mode, path);
-
-        if (newProject) {
-            setIsCreatingProject(false);
-            setNewItemName('');
-            setNewItemColor(PROJECT_THEMES[0].bg);
-            setCurrentProjectId(newProject.id);
-            setCurrentFolderId(null); // Fix: Reset folder state to prevent leaking previous project's view
-            setView('project');
-        }
-    };
-
-    const handleUpdateWrapper = (id: string, updates: Partial<Project>) => {
-        updateProject(id, updates);
-        // setEditingProject(null); // Removed
-    };
-
-    const handleDeleteWrapper = (id: string) => {
-        if (confirm("Tem certeza que deseja excluir este projeto?")) {
-            deleteProject(id);
-            if (currentProjectId === id) {
-                setCurrentProjectId(null);
-                setView('dashboard');
-            }
-        }
-    };
-
-    const handleDeleteFolderWrapper = (id: string) => {
-        deleteFolder(id);
-        if (currentFolderId === id) {
-            setCurrentFolderId(null);
-        }
-    };
-
-    // Import Loading State
-    const [isImporting, setIsImporting] = useState(false);
-
-    const handleImportFiles = async (files: File[]) => {
-        if (!files || files.length === 0) return;
-
-        let target: string | null = currentFolderId;
-        if (!target && currentProjectId) {
-            const proj = projects.find(p => p.id === currentProjectId);
-            if (proj) target = proj.rootFolderId || null;
-        }
-
-        if (!target) return;
-
-        setIsImporting(true);
-        try {
-            const pdfs = files.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
-            const images = files.filter(f => !pdfs.includes(f));
-
-            if (pdfs.length > 0) {
-                for (const pdf of pdfs) {
-                    await uploadPDF(pdf, target);
-                }
-            }
-
-            if (images.length > 0) {
-                await uploadPages(images, target);
-            }
-        } finally {
-            setIsImporting(false);
-        }
-    };
-
-    /**
-     * Handle import for LOCAL projects using native Electron dialog.
-     * Uses IPC to copy files directly to the project folder.
-     */
-    const handleImportFilesLocal = async () => {
-        console.log('[handleImportFilesLocal] Called');
-        const currentProject = projects.find(p => p.id === currentProjectId);
-        console.log('[handleImportFilesLocal] currentProject:', currentProject);
-        if (!currentProject?.localPath) {
-            console.log('[handleImportFilesLocal] No localPath, returning');
-            return;
-        }
-
-        // Use currentFolderId if inside a library/folder, otherwise use project root
-        const targetPath = currentFolderId || currentProject.localPath;
-        console.log('[handleImportFilesLocal] targetPath:', targetPath);
-
-        try {
-            // Use importComicLocal which creates proper comic folder structure
-            const success = await importComicLocal(targetPath, () => setIsImporting(true));
-
-            if (success) {
-                // Invalidate folder contents cache to refresh UI
-                queryClient.invalidateQueries({ queryKey: ['filesystem', currentFolderId] });
-                queryClient.invalidateQueries({ queryKey: ['filesystem', targetPath] });
-                alert('Quadrinho importado com sucesso!');
-            }
-        } finally {
-            setIsImporting(false);
-        }
-    };
-
+    // === RENDER ===
     return (
         <MainLayout isInEditor={false}>
             {/* EXPLORER WINDOW */}
@@ -222,8 +87,6 @@ export const DashboardScreen: React.FC = () => {
                         currentProjectId={currentProjectId}
                         currentFolderId={currentFolderId}
                         PROJECT_THEMES={PROJECT_THEMES}
-
-                        // Actions
                         onSelectProject={(id) => {
                             setCurrentProjectId(id);
                             setCurrentFolderId(null);
@@ -235,27 +98,11 @@ export const DashboardScreen: React.FC = () => {
                             setView('project');
                             if (!showManager) setShowManager(true);
                         }}
-                        onEditProject={(p) => {
-                            // Convert Project to FileEntry-like object for the modal
-                            // This keeps the UI consistent (Lightweight Modal vs Full Manager)
-                            setItemToRename({
-                                ...p,
-                                type: 'project',
-                                parentId: null, // Projects are root
-                                url: ''
-                            } as FileEntry);
-                        }}
-                        onDeleteProject={handleDeleteWrapper}
-                        onPinProject={togglePinProject}
-
-
-
-                        onEditFolder={(folder) => {
-                            setItemToRename(folder);
-                        }}
-                        onDeleteFolder={handleDeleteFolderWrapper}
-
-                        // Expand State (We pass setExpandedProjects just to initial expand)
+                        onEditProject={(p) => modals.openRenameModal(p, true)}
+                        onDeleteProject={handlers.handleDeleteProject}
+                        onPinProject={handlers.togglePinProject}
+                        onEditFolder={(folder) => modals.openRenameModal(folder)}
+                        onDeleteFolder={handlers.handleDeleteFolder}
                         expandedProjects={expandedProjects}
                     />
                 </DraggableWindow>
@@ -276,65 +123,39 @@ export const DashboardScreen: React.FC = () => {
                         <ProjectManager
                             projects={projects}
                             PROJECT_THEMES={PROJECT_THEMES}
-
-                            // Local State Props
                             searchTerm={searchTerm}
                             setSearchTerm={setSearchTerm}
                             sortOrder={sortOrder}
                             setSortOrder={setSortOrder}
-
                             isCreatingProject={isCreatingProject}
                             setIsCreatingProject={setIsCreatingProject}
-                            newItemName={newItemName}
-                            setNewItemName={setNewItemName}
-                            newItemColor={newItemColor}
-                            setNewItemColor={setNewItemColor}
-
-                            // Handlers
-                            onCreateProject={handleCreateWrapper}
-                            onUpdateProject={handleUpdateWrapper}
-                            onDeleteProject={handleDeleteWrapper}
-                            onSelectProject={(id) => {
-                                setCurrentProjectId(id);
-                                setCurrentFolderId(null); // Fix: Reset to root to avoid stale folder view
-                                setView('project');
-                            }}
-                            onTogglePin={togglePinProject}
-
-                            // Unified Editing
-                            onEditProject={(p) => {
-                                // Convert Project to FileEntry-like object for the modal
-                                setItemToRename({
-                                    ...p,
-                                    type: 'project',
-                                    parentId: null,
-                                    url: ''
-                                } as FileEntry);
-                            }}
+                            newItemName={handlers.newItemName}
+                            setNewItemName={handlers.setNewItemName}
+                            newItemColor={handlers.newItemColor}
+                            setNewItemColor={handlers.setNewItemColor}
+                            onCreateProject={handlers.handleCreateProject}
+                            onUpdateProject={handlers.handleUpdateProject}
+                            onDeleteProject={handlers.handleDeleteProject}
+                            onSelectProject={handlers.handleSelectProject}
+                            onTogglePin={handlers.togglePinProject}
+                            onEditProject={(p) => modals.openRenameModal(p, true)}
                         />
                     ) : (
                         <ProjectDetail
-                            project={projects.find((p: any) => p.id === currentProjectId) || null}
+                            project={projects.find(p => p.id === currentProjectId) || null}
                             currentFolderId={currentFolderId}
                             fileSystem={fullFileSystem || []}
                             searchTerm={searchTerm}
-
-                            // Library Modal Trigger
-                            setIsCreatingFolder={setIsCreatingFolder}
-
-                            // Actions
-                            onOpenItem={(node: FileEntry) => setCurrentFolderId(node.id)}
-                            onOpenComic={(comicId) => {
-                                const encodedId = encodeURIComponent(comicId);
-                                navigate(`/comic/${encodedId}`);
-                            }}
-                            onDeleteFolder={handleDeleteFolderWrapper}
-                            onImportFiles={handleImportFiles}
-                            onImportFilesLocal={handleImportFilesLocal}
-                            onTogglePin={togglePin}
-                            onBack={() => setView('dashboard')}
-                            onEditItem={(item) => setItemToRename(item)}
-                            isImporting={isImporting}
+                            setIsCreatingFolder={modals.setIsCreatingFolder}
+                            onOpenItem={handlers.handleOpenItem}
+                            onOpenComic={handlers.handleOpenComic}
+                            onDeleteFolder={handlers.handleDeleteFolder}
+                            onImportFiles={handlers.handleImportFiles}
+                            onImportFilesLocal={handlers.handleImportFilesLocal}
+                            onTogglePin={handlers.togglePin}
+                            onBack={handlers.handleBack}
+                            onEditItem={(item) => modals.openRenameModal(item)}
+                            isImporting={handlers.isImporting}
                         />
                     )}
                 </DraggableWindow>
@@ -354,68 +175,61 @@ export const DashboardScreen: React.FC = () => {
                     <DictionaryManager />
                 </DraggableWindow>
             )}
+
             {/* RENAME MODAL */}
             <RenameItemModal
-                item={itemToRename}
-                onClose={() => setItemToRename(null)}
+                item={modals.itemToRename}
+                onClose={modals.closeRenameModal}
                 onRename={(id, name, color) => {
-                    if (itemToRename && itemToRename.type === 'project') {
-                        updateProject(id, { name, color });
+                    if (modals.itemToRename?.type === 'project') {
+                        handlers.handleUpdateProject(id, { name, color });
                     } else {
-                        renameItem(id, name, color);
+                        handlers.renameItem(id, name, color);
                     }
                 }}
                 projectThemes={PROJECT_THEMES}
             />
 
-            {/* CREATE PROJECT MODAL (Global) */}
+            {/* CREATE PROJECT MODAL */}
             <CreateProjectModal
                 isOpen={isCreatingProject}
                 onClose={() => setIsCreatingProject(false)}
-                onCreate={handleCreateWrapper}
-                newName={newItemName}
-                setNewName={setNewItemName}
-                newColor={newItemColor}
-                setNewColor={setNewItemColor}
+                onCreate={handlers.handleCreateProject}
+                newName={handlers.newItemName}
+                setNewName={handlers.setNewItemName}
+                newColor={handlers.newItemColor}
+                setNewColor={handlers.setNewItemColor}
                 projectThemes={PROJECT_THEMES}
             />
 
-            {/* CREATE LIBRARY MODAL (Inside Project) */}
+            {/* CREATE LIBRARY MODAL */}
             <CreateLibraryModal
-                isOpen={isCreatingFolder}
-                onClose={() => setIsCreatingFolder(false)}
+                isOpen={modals.isCreatingFolder}
+                onClose={modals.closeCreateFolderModal}
                 onCreate={async (name, color) => {
-                    // Determine parent: currentFolderId OR project root
-                    let parent: string | null = currentFolderId;
-                    if (!parent) {
-                        const proj = projects.find(p => p.id === currentProjectId);
-                        if (proj) parent = proj.localPath || proj.rootFolderId || null;
-                    }
-
-                    if (parent) {
-                        await createFolder(name, parent, color);
-                        setIsCreatingFolder(false);
-                    }
+                    const success = await handlers.handleCreateFolder(name, color);
+                    if (success) modals.closeCreateFolderModal();
                 }}
             />
 
+            {/* Hidden File Inputs */}
             <input
                 type="file"
-                ref={fileInputRef}
+                ref={handlers.fileInputRef}
                 className="hidden"
                 multiple
-                onChange={onFileChange}
+                onChange={handlers.onFileChange}
                 accept="image/*,application/pdf"
             />
 
             <input
                 type="file"
-                ref={folderInputRef}
+                ref={handlers.folderInputRef}
                 className="hidden"
                 multiple
-                // @ts-ignore - webkitdirectory is standard in Chrome/Electron but TS doesn't know
+                // @ts-ignore
                 webkitdirectory=""
-                onChange={onFolderChange}
+                onChange={handlers.onFolderChange}
             />
         </MainLayout>
     );

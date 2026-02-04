@@ -21,7 +21,7 @@ export const PanelThumbnails: React.FC<PanelThumbnailsProps> = ({
 }) => {
     if (images.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-6 text-zinc-500">
+            <div className="flex flex-col items-center justify-center py-6 text-text-muted">
                 <Grid3X3 size={24} className="mb-2 opacity-50" />
                 <p className="text-xs">Nenhum quadro detectado</p>
                 <p className="text-[10px] mt-1 text-zinc-600">
@@ -34,7 +34,7 @@ export const PanelThumbnails: React.FC<PanelThumbnailsProps> = ({
     return (
         <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-                <h3 className="text-zinc-400 text-xs font-medium flex items-center gap-1.5">
+                <h3 className="text-text-secondary text-xs font-medium flex items-center gap-1.5">
                     <Grid3X3 size={12} />
                     Quadros
                 </h3>

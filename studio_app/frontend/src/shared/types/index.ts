@@ -11,7 +11,7 @@ export interface Project {
 
 // Editor Types
 export type EditorMode = 'vectorize' | 'edit' | 'translate' | 'animate';
-export type EditorTool = 'select' | 'text' | 'delete' | 'pen' | 'mask' | 'panel' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout';
+export type EditorTool = 'select' | 'pointer' | 'text' | 'delete' | 'pen' | 'mask' | 'panel' | 'balloon-square' | 'balloon-circle' | 'balloon-thought' | 'balloon-shout';
 
 export interface Balloon {
     id: string;

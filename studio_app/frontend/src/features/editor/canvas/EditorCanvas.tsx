@@ -9,6 +9,7 @@ import { useEditorStore } from '@features/editor/store';
 // HOOKS
 import { useCanvasNavigation } from './hooks/useCanvasNavigation';
 import { useCanvasTools } from './hooks/useCanvasTools';
+import { useThrottledPosition, useThrottledScale } from './hooks/useThrottledPosition';
 
 // LAYERS
 import { BackgroundLayer } from './layers/BackgroundLayer';
@@ -73,6 +74,7 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         showText,
         showMasks,
         vertexEditingEnabled,
+        curveEditingEnabled,
         activeTool,
         setActiveTool,
         selectedId,
@@ -83,17 +85,19 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
     // Use CSS class with !important to override all other cursor styles
     React.useEffect(() => {
         // Remove previous cursor classes
-        document.body.classList.remove('cursor-crosshair-global', 'cursor-text-global');
+        document.body.classList.remove('cursor-crosshair-global', 'cursor-text-global', 'cursor-select-global');
 
         if (activeTool === 'mask' || activeTool === 'panel' || activeTool.startsWith('balloon-')) {
             document.body.classList.add('cursor-crosshair-global');
         } else if (activeTool === 'text') {
             document.body.classList.add('cursor-text-global');
+        } else if (activeTool === 'pointer') {
+            document.body.classList.add('cursor-select-global');
         }
 
         // Cleanup on unmount
         return () => {
-            document.body.classList.remove('cursor-crosshair-global', 'cursor-text-global');
+            document.body.classList.remove('cursor-crosshair-global', 'cursor-text-global', 'cursor-select-global');
         };
     }, [activeTool]);
 
@@ -153,6 +157,20 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
         dimensions, // New Prop to prevent microscopic auto-fit
         fileId // PASSED FOR SAVE STABILITY
     });
+
+    // Performance: Throttle position/scale updates for viewport culling
+    // This reduces re-renders in child layers during rapid pan/zoom
+    const throttledPosition = useThrottledPosition(position, 32); // ~30fps for culling
+    const throttledScale = useThrottledScale(scale, 32);
+
+    // Memoized viewport for layers (uses throttled values)
+    const layerViewport = React.useMemo(() => ({
+        x: throttledPosition.x,
+        y: throttledPosition.y,
+        width: dimensions.width,
+        height: dimensions.height,
+        scale: throttledScale
+    }), [throttledPosition.x, throttledPosition.y, dimensions.width, dimensions.height, throttledScale]);
 
     const { handleStageMouseDown, handleStageMouseUp, handleStageMouseMove, dragPreview } = useCanvasTools({
         activeTool,
@@ -254,6 +272,7 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                         selectedId={selectedId}
                         onSelect={handleSelect}
                         onUpdate={(id, attrs) => onUpdate(id, attrs)}
+                        viewport={layerViewport}
                     />
                 )}
 
@@ -265,12 +284,13 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                     showMasks={showMasks}
                     showBalloons={showBalloons}
                     showText={showText}
-                    vertexEditingEnabled={vertexEditingEnabled || activeTool === 'pen'}
-                    curveEditingEnabled={activeTool === 'pen'}
+                    vertexEditingEnabled={vertexEditingEnabled}
+                    curveEditingEnabled={curveEditingEnabled}
                     onSelect={handleSelect}
                     onUpdate={onUpdate}
                     onEditRequest={handleEditRequestInternal}
                     setEditingId={setEditingId}
+                    viewport={layerViewport}
                 />
 
                 {/* Drag Preview Layer - Show rectangle while dragging */}

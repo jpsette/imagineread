@@ -155,13 +155,13 @@ export const EditorHeader = () => {
     const handleClose = () => requestNavigation('/');
 
     return (
-        <header className="w-full z-50 flex items-center justify-center bg-[#0c0c0e] border-b border-white/5 py-1">
+        <header className="w-full z-50 flex items-center justify-center bg-app-bg border-b border-white/5 py-1">
             {/* ISLAND CONTAINER */}
             <div className="flex items-center gap-1 p-1">
                 {/* LEFT: Back Button */}
                 <button
                     onClick={handleBack}
-                    className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-all active:scale-95 mr-1"
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-white hover:bg-white/10 transition-all active:scale-95 mr-1"
                     title="Voltar"
                 >
                     <ArrowLeft size={16} />
@@ -179,8 +179,8 @@ export const EditorHeader = () => {
                                 key={tab.key}
                                 onClick={() => setActiveMode(tab.key as EditorMode)}
                                 className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all active:scale-95 ${isActive
-                                    ? 'bg-zinc-800 text-neon-blue shadow-glow-sm ring-1 ring-white/5'
-                                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                                    ? 'bg-surface text-neon-blue shadow-glow-sm ring-1 ring-white/5'
+                                    : 'text-text-muted hover:text-text-secondary hover:bg-white/5'
                                     }`}
                             >
                                 {tab.label}
@@ -196,14 +196,14 @@ export const EditorHeader = () => {
                 <div className="flex items-center gap-0.5">
                     <button
                         onClick={() => useEditorStore.getState().undo()}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
                         title="Desfazer"
                     >
                         <Undo size={14} />
                     </button>
                     <button
                         onClick={() => useEditorStore.getState().redo()}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
                         title="Refazer"
                     >
                         <Redo size={14} />
@@ -240,7 +240,7 @@ export const EditorHeader = () => {
 
                     <button
                         onClick={handleClose}
-                        className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-500 hover:text-white hover:bg-red-500/20 hover:border-red-500/30 transition-all active:scale-95"
+                        className="w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:text-white hover:bg-red-500/20 hover:border-red-500/30 transition-all active:scale-95"
                         title="Fechar Editor"
                     >
                         <X size={16} />

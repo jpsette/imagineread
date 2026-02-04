@@ -1,6 +1,10 @@
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { DashboardScreen } from '@pages/dashboard/screens/DashboardScreen';
+
+// Lazy Imports for code splitting
+const DashboardScreen = React.lazy(() =>
+    import('@pages/dashboard/screens/DashboardScreen').then(module => ({ default: module.DashboardScreen }))
+);
 
 // Lazy Imports (Named Exports trick)
 // Lazy Imports (Named Exports trick)
@@ -23,7 +27,11 @@ const EditorLoader = () => (
 export const AppRoutes: React.FC = () => {
     return (
         <Routes>
-            <Route path="/" element={<DashboardScreen />} />
+            <Route path="/" element={
+                <Suspense fallback={<EditorLoader />}>
+                    <DashboardScreen />
+                </Suspense>
+            } />
 
             <Route path="/comic/:comicId" element={
                 <Suspense fallback={<EditorLoader />}>

@@ -100,8 +100,58 @@ export const BalloonVector: React.FC<BalloonVectorProps> = ({
         const minY = balloon.box_2d[0];
         const pts = balloon.points.map(p => ({ x: p.x - minX, y: p.y - minY }));
         const cps = balloon.curveControlPoints || [];
+        const vhs = balloon.vertexHandles || [];
 
-        // Check if we have any curve control points
+        // Check if we have vertex handles (cubic bezier) - takes priority
+        const hasVertexHandles = vhs.length > 0 && vhs.some(vh => vh?.handleIn || vh?.handleOut);
+
+        if (hasVertexHandles && vhs.length === pts.length) {
+            // Generate SVG path with CUBIC bezier curves using vertex handles
+            const relativeVhs = vhs.map(vh => ({
+                handleIn: vh?.handleIn ? { x: vh.handleIn.x - minX, y: vh.handleIn.y - minY } : undefined,
+                handleOut: vh?.handleOut ? { x: vh.handleOut.x - minX, y: vh.handleOut.y - minY } : undefined
+            }));
+
+            let d = `M ${pts[0].x + strokeOffset} ${pts[0].y + strokeOffset}`;
+            for (let i = 0; i < pts.length; i++) {
+                const nextI = (i + 1) % pts.length;
+                const p2 = pts[nextI];
+
+                // Get handles for this edge
+                const handleOut = relativeVhs[i]?.handleOut;
+                const handleIn = relativeVhs[nextI]?.handleIn;
+
+                if (handleOut && handleIn) {
+                    // Cubic bezier curve
+                    d += ` C ${handleOut.x + strokeOffset} ${handleOut.y + strokeOffset}, ${handleIn.x + strokeOffset} ${handleIn.y + strokeOffset}, ${p2.x + strokeOffset} ${p2.y + strokeOffset}`;
+                } else if (handleOut) {
+                    // Quadratic approximation with outgoing handle
+                    d += ` Q ${handleOut.x + strokeOffset} ${handleOut.y + strokeOffset}, ${p2.x + strokeOffset} ${p2.y + strokeOffset}`;
+                } else if (handleIn) {
+                    // Quadratic approximation with incoming handle
+                    d += ` Q ${handleIn.x + strokeOffset} ${handleIn.y + strokeOffset}, ${p2.x + strokeOffset} ${p2.y + strokeOffset}`;
+                } else {
+                    // Straight line
+                    d += ` L ${p2.x + strokeOffset} ${p2.y + strokeOffset}`;
+                }
+            }
+            d += ' Z';
+
+            return (
+                <Path
+                    data={d}
+                    fill={balloon.color || '#ffffff'}
+                    stroke={balloon.borderColor || '#000000'}
+                    strokeWidth={strokeW}
+                    dash={getDash()}
+                    perfectDrawEnabled={false}
+                    shadowForStrokeEnabled={false}
+                    listening={true}
+                />
+            );
+        }
+
+        // Check if we have quadratic curve control points (legacy)
         const hasCurves = cps.some(cp => cp !== null);
 
         if (hasCurves && cps.length === pts.length) {

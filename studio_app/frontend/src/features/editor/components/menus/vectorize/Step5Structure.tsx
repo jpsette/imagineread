@@ -82,7 +82,7 @@ export const Step5Structure: React.FC<Step5StructureProps> = ({
                     onClick={() => setActiveTool(activeTool === 'panel' ? 'select' : 'panel')}
                     className={`${activeTool === 'panel'
                         ? 'bg-blue-500/20 text-blue-400 border-blue-500/50'
-                        : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600'
+                        : 'bg-panel-bg text-zinc-300 border-zinc-700 hover:bg-surface hover:border-zinc-600'
                         } w-full h-[32px] px-3 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-2 select-none border active:scale-[0.98]`}
                     title="Adicionar Quadro - Clique e arraste no canvas"
                 >

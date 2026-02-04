@@ -22,7 +22,7 @@ export const Step1Mask: React.FC<Step1MaskProps> = ({
 
     return (
         <div className="mb-4">
-            <label className="text-[10px] text-zinc-500 font-bold uppercase mb-2 block">1. Máscara</label>
+            <label className="text-[10px] text-text-muted font-bold uppercase mb-2 block">1. Máscara</label>
 
             {workflowStep === 'idle' || isProcessingBalloons ? (
                 // STATE 1: IDLE / PROCESSING

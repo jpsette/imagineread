@@ -130,6 +130,134 @@ body {
   animation: editorFadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* Design System Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* ===== PHASE 3: POLISH UTILITIES ===== */
+
+/* Micro-animation: Subtle scale on press */
+@keyframes pressScale {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.97);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-press {
+  animation: pressScale 0.15s ease-out;
+}
+
+/* Smooth hover transitions */
+.hover-smooth {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus ring for accessibility (visible on keyboard focus) */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-app-bg), 0 0 0 4px var(--color-accent-blue);
+}
+
+/* Glow effect on hover */
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+/* Button micro-interaction: lift on hover */
+.btn-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn-lift:active {
+  transform: translateY(0);
+}
+
+/* Standardized border radius tokens */
+.radius-sm {
+  border-radius: 0.375rem;
+}
+
+/* 6px */
+.radius-md {
+  border-radius: 0.5rem;
+}
+
+/* 8px */
+.radius-lg {
+  border-radius: 0.75rem;
+}
+
+/* 12px */
+.radius-xl {
+  border-radius: 1rem;
+}
+
+/* 16px */
+.radius-2xl {
+  border-radius: 1.5rem;
+}
+
+/* 24px */
+
+/* Skeleton loading shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg,
+      var(--color-surface) 25%,
+      var(--color-surface-hover) 50%,
+      var(--color-surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Interactive scale for cards/buttons */
+.interactive {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.interactive:hover {
+  transform: scale(1.02);
+}
+
+.interactive:active {
+  transform: scale(0.98);
+}
+
 /* Global Cursor Override for Creation Tools */
 /* These classes are added to body when a creation tool is active */
 body.cursor-crosshair-global,
@@ -140,4 +268,11 @@ body.cursor-crosshair-global * {
 body.cursor-text-global,
 body.cursor-text-global * {
   cursor: text !important;
+}
+
+/* Custom Triangle Cursor for Select Tool */
+/* Base64-encoded SVG matching the exact triangle shape */
+body.cursor-select-global,
+body.cursor-select-global * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M5 2L5 22L12 15L5 2Z' fill='%233f3f46'/%3E%3Cpath d='M5 2L12 15L19 15L5 2Z' fill='%2352525b'/%3E%3C/svg%3E") 5 2, default !important;
 }

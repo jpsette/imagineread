@@ -115,24 +115,24 @@ export const FloatingMobileSimulator: React.FC<FloatingMobileSimulatorProps> = (
             onMouseDown={handleMouseDown}
         >
             {/* Header / Drag Handle */}
-            <div className="drag-handle flex items-center justify-between bg-zinc-900 rounded-t-lg px-3 py-2 cursor-move border border-zinc-700 border-b-0">
-                <div className="flex items-center gap-2 text-zinc-400 text-xs">
+            <div className="drag-handle flex items-center justify-between bg-panel-bg rounded-t-lg px-3 py-2 cursor-move border border-zinc-700 border-b-0">
+                <div className="flex items-center gap-2 text-text-secondary text-xs">
                     <Move size={12} />
                     <Smartphone size={12} />
                     <span className="font-medium">Preview Mobile</span>
                 </div>
                 <button
                     onClick={() => setIsMinimized(!isMinimized)}
-                    className="p-1 hover:bg-zinc-800 rounded transition-colors"
+                    className="p-1 hover:bg-surface rounded transition-colors"
                 >
-                    {isMinimized ? <Maximize2 size={12} className="text-zinc-400" /> : <Minimize2 size={12} className="text-zinc-400" />}
+                    {isMinimized ? <Maximize2 size={12} className="text-text-secondary" /> : <Minimize2 size={12} className="text-text-secondary" />}
                 </button>
             </div>
 
             {/* Phone Content */}
             {!isMinimized && (
                 <div
-                    className="bg-zinc-900 rounded-b-lg border border-zinc-700 border-t-0 p-3 relative"
+                    className="bg-panel-bg rounded-b-lg border border-zinc-700 border-t-0 p-3 relative"
                     style={{ height: size.height }}
                 >
                     {/* Phone Frame */}
@@ -197,7 +197,7 @@ export const FloatingMobileSimulator: React.FC<FloatingMobileSimulatorProps> = (
                         className="absolute bottom-1 right-1 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity"
                         onMouseDown={handleResizeStart}
                     >
-                        <svg viewBox="0 0 24 24" className="w-full h-full text-zinc-500">
+                        <svg viewBox="0 0 24 24" className="w-full h-full text-text-muted">
                             <path fill="currentColor" d="M22 22H20V20H22V22M22 18H20V16H22V18M18 22H16V20H18V22M18 18H16V16H18V18M14 22H12V20H14V22M22 14H20V12H22V14Z" />
                         </svg>
                     </div>

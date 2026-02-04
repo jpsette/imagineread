@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject private var deepLinkHandler: DeepLinkHandler
+    
     @State private var showAddComic = false
     @State private var showProfile = false
     @State private var showSearch = false
@@ -34,6 +36,13 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showSearch) {
             SearchView()
+        }
+        // Handle deep links
+        .onChange(of: deepLinkHandler.shouldShowAddSheet) { _, shouldShow in
+            if shouldShow {
+                showAddComic = true
+                deepLinkHandler.shouldShowAddSheet = false
+            }
         }
     }
     
@@ -81,4 +90,3 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
-
