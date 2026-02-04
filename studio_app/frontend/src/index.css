@@ -276,3 +276,14 @@ body.cursor-select-global,
 body.cursor-select-global * {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M5 2L5 22L12 15L5 2Z' fill='%233f3f46'/%3E%3Cpath d='M5 2L12 15L19 15L5 2Z' fill='%2352525b'/%3E%3C/svg%3E") 5 2, default !important;
 }
+
+/* Space bar pan mode - Hand cursor */
+body.cursor-grab-global,
+body.cursor-grab-global * {
+  cursor: grab !important;
+}
+
+body.cursor-grabbing-global,
+body.cursor-grabbing-global * {
+  cursor: grabbing !important;
+}

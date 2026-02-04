@@ -9,8 +9,9 @@ import SwiftUI
 
 /// A view that enables pinch-to-zoom on its content
 struct ZoomableView<Content: View>: View {
-    let content: Content
+    let contentBuilder: (CGFloat) -> Content
     let resetID: AnyHashable?
+    let disableGestures: Bool
     
     @State private var scale: CGFloat = 1.0
     @State private var lastScale: CGFloat = 1.0
@@ -22,24 +23,33 @@ struct ZoomableView<Content: View>: View {
     private let minScale: CGFloat = 1.0
     private let maxScale: CGFloat = 4.0
     
-    init(resetID: AnyHashable? = nil, @ViewBuilder content: () -> Content) {
+    /// Init with scale-aware content builder
+    init(resetID: AnyHashable? = nil, disableGestures: Bool = false, @ViewBuilder content: @escaping (CGFloat) -> Content) {
         self.resetID = resetID
-        self.content = content()
+        self.disableGestures = disableGestures
+        self.contentBuilder = content
+    }
+    
+    /// Convenience init for content that doesn't need scale
+    init(resetID: AnyHashable? = nil, disableGestures: Bool = false, @ViewBuilder content: @escaping () -> Content) {
+        self.resetID = resetID
+        self.disableGestures = disableGestures
+        self.contentBuilder = { _ in content() }
     }
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                content
+                contentBuilder(scale)
                     .scaleEffect(scale, anchor: anchor)
                     .offset(offset)
                     .gesture(
-                        SimultaneousGesture(
+                        disableGestures ? nil : SimultaneousGesture(
                             zoomGesture(geometry: geometry),
                             panGesture(geometry: geometry)
                         )
                     )
-                    .gesture(doubleTapGesture(geometry: geometry))
+                    .gesture(disableGestures ? nil : doubleTapGesture(geometry: geometry))
                 
                 // Zoom indicator
                 if showZoomIndicator {

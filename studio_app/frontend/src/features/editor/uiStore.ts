@@ -58,6 +58,10 @@ interface EditorUIState {
     setSelectedId: (id: string | null) => void;
     setSelectedIds: (ids: string[]) => void;
     setZoom: (zoom: number) => void;
+
+    // Text List Panel
+    showTextListPanel: boolean;
+    setShowTextListPanel: (show: boolean) => void;
 }
 
 export const useEditorUIStore = create<EditorUIState>((set) => ({
@@ -122,4 +126,8 @@ export const useEditorUIStore = create<EditorUIState>((set) => ({
     setSelectedId: (id) => set({ selectedId: id, selectedIds: id ? [id] : [] }),
     setSelectedIds: (ids) => set({ selectedIds: ids, selectedId: ids.length === 1 ? ids[0] : null }),
     setZoom: (zoom) => set({ zoom: zoom }),
+
+    // Text List Panel
+    showTextListPanel: false,
+    setShowTextListPanel: (show) => set({ showTextListPanel: show }),
 }));

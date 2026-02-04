@@ -12,12 +12,19 @@ struct PageView: View {
     let pageIndex: Int
     @ObservedObject var cache: PageCache
     var useFixedHeight: Bool = true
+    var comicPath: String? = nil  // For highlight support
+    var zoomResetID: AnyHashable? = nil  // External trigger to reset zoom
+    var isHighlightMode: Bool = false  // Enable drawing mode
     
     @State private var displayImage: UIImage?
     
+    private var combinedResetID: String {
+        "\(pageIndex)-\(zoomResetID.map { "\($0)" } ?? "")"
+    }
+    
     var body: some View {
         GeometryReader { geometry in
-            ZoomableView(resetID: pageIndex) {
+            ZoomableView(resetID: combinedResetID, disableGestures: isHighlightMode) { zoomScale in
                 ZStack {
                     if let image = displayImage ?? cache.getImage(for: pageIndex) {
                         Image(uiImage: image)
@@ -28,6 +35,25 @@ struct PageView: View {
                         ProgressView()
                             .scaleEffect(1.2)
                             .tint(.white)
+                    }
+                    
+                    // Highlight overlay (shows existing highlights - hidden during edit mode)
+                    if let path = comicPath, !isHighlightMode {
+                        HighlightOverlay(
+                            comicPath: path,
+                            pageIndex: pageIndex,
+                            pageSize: geometry.size
+                        )
+                    }
+                    
+                    // Drawing canvas (when in highlight mode - shows editable highlights)
+                    if isHighlightMode, let path = comicPath {
+                        HighlightCanvas(
+                            comicPath: path,
+                            pageIndex: pageIndex,
+                            containerSize: geometry.size,
+                            zoomScale: zoomScale
+                        )
                     }
                 }
                 .frame(width: geometry.size.width, height: geometry.size.height)

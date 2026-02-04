@@ -19,6 +19,11 @@ struct LiteFileInfo: Codable {
     let downloadUrl: String
     let expiresAt: String?
     let downloadCount: Int
+    
+    /// File size as Int64 for display
+    var fileSize: Int64 {
+        Int64(fileSizeBytes)
+    }
 }
 
 struct LiteCodeCheck: Codable {
@@ -132,7 +137,13 @@ class LiteDownloadService: ObservableObject {
     
     /// Download file from URL to local storage
     func downloadFile(from urlString: String, fileName: String) async throws -> URL {
-        guard let url = URL(string: urlString) else {
+        // Handle relative URLs from our API
+        var finalURLString = urlString
+        if urlString.hasPrefix("/") {
+            finalURLString = baseURL.replacingOccurrences(of: "/api", with: "") + urlString
+        }
+        
+        guard let url = URL(string: finalURLString) else {
             throw LiteDownloadError.downloadFailed
         }
         
@@ -181,6 +192,79 @@ class LiteDownloadService: ObservableObject {
         
         await MainActor.run {
             downloadProgress = 1.0
+        }
+        
+        return destinationURL
+    }
+    
+    /// Download file with progress callback
+    func downloadFile(from urlString: String, fileName: String, onProgress: @escaping (Double) -> Void) async throws -> URL {
+        // Handle relative URLs from our API
+        var finalURLString = urlString
+        if urlString.hasPrefix("/") {
+            finalURLString = baseURL.replacingOccurrences(of: "/api", with: "") + urlString
+        }
+        
+        guard let url = URL(string: finalURLString) else {
+            throw LiteDownloadError.downloadFailed
+        }
+        
+        await MainActor.run {
+            isDownloading = true
+            downloadProgress = 0
+            currentFileName = fileName
+        }
+        
+        // Simulate progress for simple download (URLSession download doesn't easily give byte progress)
+        // Start progress animation
+        let progressTask = Task {
+            for i in 1...8 {
+                try? await Task.sleep(nanoseconds: 200_000_000) // 0.2s
+                await MainActor.run {
+                    let progress = Double(i) * 0.1
+                    downloadProgress = min(progress, 0.9)
+                    onProgress(downloadProgress)
+                }
+            }
+        }
+        
+        defer {
+            progressTask.cancel()
+            Task { @MainActor in
+                isDownloading = false
+                currentFileName = nil
+            }
+        }
+        
+        // Download to temp location
+        let (tempURL, response) = try await session.download(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw LiteDownloadError.downloadFailed
+        }
+        
+        // Move to Documents folder
+        let comicsFolder = LibraryService.downloadsDirectory
+        
+        // Generate unique filename if exists
+        var destinationURL = comicsFolder.appendingPathComponent(fileName)
+        var counter = 1
+        let fileExtension = (fileName as NSString).pathExtension
+        let baseName = (fileName as NSString).deletingPathExtension
+        
+        while FileManager.default.fileExists(atPath: destinationURL.path) {
+            let newName = "\(baseName)_\(counter).\(fileExtension)"
+            destinationURL = comicsFolder.appendingPathComponent(newName)
+            counter += 1
+        }
+        
+        // Move file
+        try FileManager.default.moveItem(at: tempURL, to: destinationURL)
+        
+        await MainActor.run {
+            downloadProgress = 1.0
+            onProgress(1.0)
         }
         
         return destinationURL

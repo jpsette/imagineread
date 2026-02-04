@@ -3,7 +3,6 @@ import { Maximize, Square, Type, ImageIcon, Layout, Images } from 'lucide-react'
 import { useEditorUIStore } from '@features/editor/uiStore';
 import { ToolRegistry } from '@features/editor/tools/ToolRegistry';
 import { SidebarToolButton } from '@features/editor/components/parts/SidebarToolButton';
-import { EditMenu } from '@features/editor/components/menus/EditMenu';
 
 import { useEditorStore } from '@features/editor/store';
 
@@ -116,11 +115,6 @@ export const LeftSidebar: React.FC<EditorSidebarProps> = ({ onOpenPanelGallery, 
                     </button>
                 </div>
             </div>
-
-            <div className="h-px bg-white/5 mx-2" />
-
-            {/* 3. EDIT MENU - Text Controls (moved from RightSidebar) */}
-            <EditMenu />
 
         </div>
     );

@@ -17,13 +17,7 @@ struct AddAnnotationSheet: View {
     var existingAnnotation: Annotation?
     
     @State private var text: String = ""
-    @State private var selectedColor: String = "#7C3AED"
     @FocusState private var isTextFocused: Bool
-    
-    private let highlightColors = [
-        "#7C3AED", "#EC4899", "#EF4444", "#F97316",
-        "#EAB308", "#22C55E", "#14B8A6", "#3B82F6"
-    ]
     
     var body: some View {
         NavigationView {
@@ -64,37 +58,6 @@ struct AddAnnotationSheet: View {
                             .focused($isTextFocused)
                     }
                     
-                    // Highlight Color
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(loc.highlightColor)
-                            .font(.headline)
-                            .foregroundColor(.white.opacity(0.9))
-                            .padding(.horizontal, 20)
-                        
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(highlightColors, id: \.self) { hex in
-                                    Button {
-                                        selectedColor = hex
-                                    } label: {
-                                        ZStack {
-                                            Circle()
-                                                .fill(Color(hex: hex) ?? .purple)
-                                                .frame(width: 40, height: 40)
-                                            
-                                            if selectedColor == hex {
-                                                Circle()
-                                                    .stroke(.white, lineWidth: 3)
-                                                    .frame(width: 40, height: 40)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                        }
-                    }
-                    
                     Spacer()
                 }
                 .padding(.top, 20)
@@ -123,7 +86,6 @@ struct AddAnnotationSheet: View {
             .onAppear {
                 if let existing = existingAnnotation {
                     text = existing.text
-                    selectedColor = existing.highlightColor ?? "#7C3AED"
                 }
                 isTextFocused = true
             }
@@ -149,13 +111,13 @@ struct AddAnnotationSheet: View {
         guard !trimmedText.isEmpty else { return }
         
         if let existing = existingAnnotation {
-            container.annotations.updateAnnotation(existing.id, text: trimmedText, highlightColor: selectedColor)
+            container.annotations.updateAnnotation(existing.id, text: trimmedText, highlightColor: nil)
         } else {
             container.annotations.addAnnotation(
                 to: comicPath,
                 page: pageIndex,
                 text: trimmedText,
-                highlightColor: selectedColor
+                highlightColor: nil
             )
         }
         

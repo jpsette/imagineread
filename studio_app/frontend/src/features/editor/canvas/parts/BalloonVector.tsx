@@ -79,6 +79,7 @@ export const BalloonVector: React.FC<BalloonVectorProps> = ({
         stroke: balloon.borderColor || (balloon.type === 'text' ? undefined : '#000000'),
         strokeWidth: strokeW,
         dash: getDash(),
+        opacity: balloon.opacity ?? 1, // Support transparency
         perfectDrawEnabled: false,
         shadowForStrokeEnabled: false,
         listening: true,
@@ -144,6 +145,7 @@ export const BalloonVector: React.FC<BalloonVectorProps> = ({
                     stroke={balloon.borderColor || '#000000'}
                     strokeWidth={strokeW}
                     dash={getDash()}
+                    opacity={balloon.opacity ?? 1}
                     perfectDrawEnabled={false}
                     shadowForStrokeEnabled={false}
                     listening={true}
@@ -181,6 +183,7 @@ export const BalloonVector: React.FC<BalloonVectorProps> = ({
                     stroke={balloon.borderColor || '#000000'}
                     strokeWidth={strokeW}
                     dash={getDash()}
+                    opacity={balloon.opacity ?? 1}
                     perfectDrawEnabled={false}
                     shadowForStrokeEnabled={false}
                     listening={true}

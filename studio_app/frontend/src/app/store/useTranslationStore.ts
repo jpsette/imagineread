@@ -229,31 +229,12 @@ export const useTranslationStore = create<TranslationState>()(
         }),
         {
             name: 'translation-store',
-            version: 4, // Increment to force fresh migration
+            version: 1,
             partialize: (state) => ({
-                // Persist target languages preferences
+                // ONLY persist user preferences, NOT translation data
+                // Translation data is cleared on discard and saved to project file on save
                 targetLanguages: state.targetLanguages,
-                // Persist detected languages for each file so it survives page reload
-                detectedLanguages: state.detectedLanguages,
-                // Persist translations cache so they survive page reload
-                fileTranslations: state.fileTranslations,
-                // DO NOT persist: selectedGlossaryId (session-only), activeLanguage (derived)
             }),
-            migrate: (persistedState: any, version: number) => {
-                // Migration from v3 or earlier to v4
-                if (version < 4) {
-                    console.log('🔄 Migrating translation store to v4: restoring persistence');
-                    return {
-                        targetLanguages: persistedState?.targetLanguages || [],
-                        detectedLanguages: persistedState?.detectedLanguages || {},
-                        fileTranslations: persistedState?.fileTranslations || {},
-                        // Clear session-only state
-                        selectedGlossaryId: null,
-                        activeLanguage: {},
-                    };
-                }
-                return persistedState;
-            }
         }
     )
 );

@@ -31,9 +31,13 @@ struct ReaderView: View {
     @State private var showAnnotations: Bool = false
     @State private var showAnnotationsList: Bool = false
     @State private var showMenu: Bool = false
+    @State private var showHighlightMode: Bool = false
+    @State private var showHighlightsList: Bool = false
+    @State private var zoomResetTrigger: UUID = UUID()
     
     @Environment(\.container) private var container
     @ObservedObject private var annotationsService = AppContainer.shared.annotations
+    @ObservedObject private var highlightsService = HighlightsService.shared
     
     @EnvironmentObject private var loc: LocalizationService
     @EnvironmentObject private var prefs: PreferencesService
@@ -199,6 +203,17 @@ struct ReaderView: View {
             NightModeOverlay(mode: nightMode, intensity: filterIntensity)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
+            
+            // Highlight drawing mode controls
+            if showHighlightMode {
+                HighlightDrawingView(
+                    comicPath: pdfURL.path,
+                    pageIndex: viewModel.currentPageIndex,
+                    onDismiss: { showHighlightMode = false }
+                )
+                .transition(.opacity)
+                .allowsHitTesting(true)
+            }
         }
         .transition(.opacity)
     }
@@ -221,12 +236,12 @@ struct ReaderView: View {
         TabView(selection: $viewModel.currentPageIndex) {
             if reversed {
                 ForEach((0..<comic.pageCount).reversed(), id: \.self) { index in
-                    PageView(pageIndex: index, cache: cache, useFixedHeight: true)
+                    PageView(pageIndex: index, cache: cache, useFixedHeight: true, comicPath: pdfURL.path, zoomResetID: zoomResetTrigger, isHighlightMode: showHighlightMode)
                         .tag(index)
                 }
             } else {
                 ForEach(0..<comic.pageCount, id: \.self) { index in
-                    PageView(pageIndex: index, cache: cache, useFixedHeight: true)
+                    PageView(pageIndex: index, cache: cache, useFixedHeight: true, comicPath: pdfURL.path, zoomResetID: zoomResetTrigger, isHighlightMode: showHighlightMode)
                         .tag(index)
                 }
             }
@@ -244,7 +259,7 @@ struct ReaderView: View {
                         .frame(height: max(0, (outerGeometry.size.height - outerGeometry.size.width * 1.4) / 2))
                     
                     ForEach(0..<comic.pageCount, id: \.self) { index in
-                        VerticalPageView(pageIndex: index, cache: cache)
+                        VerticalPageView(pageIndex: index, cache: cache, comicPath: pdfURL.path, isHighlightMode: showHighlightMode)
                             .background(
                                 GeometryReader { geo in
                                     Color.clear
@@ -304,150 +319,34 @@ struct ReaderView: View {
     }
     
     private var topBar: some View {
-        HStack {
-            GlassButton(icon: "xmark") { dismiss() }
-            bookmarkCountButton
-            annotationCountButton
-            Spacer()
-            
-            // Expandable Menu
-            readerActionsMenu
-        }
-        .padding(.horizontal)
-        .padding(.top, 8)
-        .sheet(isPresented: $showShareSheet) {
-            if let _ = viewModel.comic {
-                ShareComicSheet(pdfURL: pdfURL)
-            }
-        }
-        .sheet(isPresented: $showCollectionSheet) {
-            AddToCollectionSheet(comicPath: pdfURL.path, comicTitle: viewModel.comic?.title ?? "Quadrinho")
-        }
-        .sheet(isPresented: $showAnnotations) {
-            AddAnnotationSheet(
-                comicPath: pdfURL.path,
-                pageIndex: viewModel.currentPageIndex
-            )
-        }
-        .sheet(isPresented: $showAnnotationsList) {
-            AnnotationsListSheet(
-                comicPath: pdfURL.path,
-                comicTitle: viewModel.comic?.title ?? "Quadrinho",
-                onGoToPage: { page in
-                    withAnimation { viewModel.currentPageIndex = page }
-                }
-            )
-        }
-    }
-    
-    @ViewBuilder
-    private var readerActionsMenu: some View {
-        // Menu toggle button (fixed position)
-        Button {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-                showMenu.toggle()
-            }
-            let generator = UIImpactFeedbackGenerator(style: .medium)
-            generator.impactOccurred()
-        } label: {
-            Image(systemName: showMenu ? "xmark" : "ellipsis")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.white)
-                .contentTransition(.symbolEffect(.replace))
-                .frame(width: 44, height: 44)
-                .background(
-                    Circle()
-                        .fill(
-                            showMenu ?
-                            AnyShapeStyle(LinearGradient(colors: [.red.opacity(0.8), .orange.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)) :
-                            AnyShapeStyle(Color.white.opacity(0.15))
-                        )
-                )
-                .background(Circle().fill(.ultraThinMaterial))
-        }
-        .overlay(alignment: .top) {
-            // Dropdown menu as overlay
-            if showMenu {
-                VStack(spacing: 8) {
-                    GlassButton(icon: isCurrentPageBookmarked ? "bookmark.fill" : "bookmark") {
-                        toggleBookmark()
-                        withAnimation(.spring(response: 0.3)) { showMenu = false }
-                    }
-                    
-                    GlassButton(icon: "plus") {
-                        showCollectionSheet = true
-                        withAnimation(.spring(response: 0.3)) { showMenu = false }
-                    }
-                    
-                    GlassButton(icon: "note.text") {
-                        showAnnotations = true
-                        withAnimation(.spring(response: 0.3)) { showMenu = false }
-                    }
-                    
-                    GlassButton(icon: "square.and.arrow.up") {
-                        showShareSheet = true
-                        withAnimation(.spring(response: 0.3)) { showMenu = false }
-                    }
-                    
-                    GlassButton(icon: "gearshape") {
-                        showSettings = true
-                        withAnimation(.spring(response: 0.3)) { showMenu = false }
-                    }
-                }
-                .offset(y: 52)
-                .transition(.scale(scale: 0.01, anchor: .top).combined(with: .opacity))
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var bookmarkCountButton: some View {
-        let bookmarkCount = prefs.bookmarkedPages(for: pdfURL.path).count
-        if bookmarkCount > 0 {
-            Button { showBookmarks = true } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "bookmark.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                    Text("\(bookmarkCount)")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                }
-                .foregroundColor(.orange)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(.ultraThinMaterial))
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var annotationCountButton: some View {
-        let annotationCount = annotationsService.annotationsForPage(viewModel.currentPageIndex, in: pdfURL.path).count
-        if annotationCount > 0 {
-            Button { showAnnotationsList = true } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "note.text")
-                        .font(.system(size: 16, weight: .semibold))
-                    Text("\(annotationCount)")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                }
-                .foregroundColor(.yellow)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(.ultraThinMaterial))
-            }
-        }
+        ReaderTopBar(
+            pdfURL: pdfURL,
+            currentPageIndex: viewModel.currentPageIndex,
+            isCurrentPageBookmarked: isCurrentPageBookmarked,
+            comicTitle: viewModel.comic?.title ?? "Quadrinho",
+            showMenu: $showMenu,
+            showBookmarks: $showBookmarks,
+            showAnnotationsList: $showAnnotationsList,
+            showHighlightsList: $showHighlightsList,
+            showShareSheet: $showShareSheet,
+            showCollectionSheet: $showCollectionSheet,
+            showAnnotations: $showAnnotations,
+            showHighlightMode: $showHighlightMode,
+            showSettings: $showSettings,
+            onDismiss: { dismiss() },
+            onBookmarkToggle: { toggleBookmark() },
+            goToPage: { page in withAnimation { viewModel.currentPageIndex = page } }
+        )
     }
     
     private func bottomBar(totalPages: Int) -> some View {
-        VStack(spacing: 12) {
-            if showProgressBar && readingMode != .vertical {
-                ProgressBar(progress: Double(viewModel.currentPageIndex + 1) / Double(totalPages))
-                    .frame(height: 3)
-                    .padding(.horizontal)
-            }
-            PageIndicator(text: viewModel.pageDisplayText)
-        }
-        .padding(.bottom, 40)
+        ReaderBottomBar(
+            currentPageIndex: viewModel.currentPageIndex,
+            totalPages: totalPages,
+            pageDisplayText: viewModel.pageDisplayText,
+            showProgressBar: showProgressBar,
+            readingMode: readingMode
+        )
     }
     
     // MARK: - States

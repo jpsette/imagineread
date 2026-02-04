@@ -2,79 +2,97 @@
 //  AddComicSheet.swift
 //  ImagineRead
 //
-//  Sheet for adding comics via code or QR scan
+//  Sheet for adding comics via QR code with preview
 //
 
 import SwiftUI
+import PDFKit
+
+/// States for the add comic flow
+enum AddComicState {
+    case input          // Enter code or scan
+    case loading        // Fetching file info
+    case preview        // Show file preview before download
+    case downloading    // Downloading file
+    case success        // Download complete
+    case error(String)  // Error occurred
+}
 
 /// Sheet to add comics via code or QR code
 struct AddComicSheet: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var loc: LocalizationService
     @EnvironmentObject private var deepLinkHandler: DeepLinkHandler
-    @EnvironmentObject private var liteService: LiteDownloadService
     
     @State private var code = ""
     @State private var showScanner = false
-    @State private var isLoading = false
-    @State private var errorMessage: String?
-    @State private var downloadedFile: URL?
-    @State private var downloadedFileInfo: LiteFileInfo?
-    @State private var showSuccess = false
+    @State private var state: AddComicState = .input
+    
+    // File info from API
+    @State private var fileInfo: LiteFileInfo?
+    @State private var previewImage: UIImage?
+    @State private var downloadProgress: Double = 0
+    @State private var downloadedURL: URL?
+    
+    private let liteService = LiteDownloadService.shared
     
     var body: some View {
         NavigationView {
             ZStack {
-                VStack(spacing: 24) {
-                    headerIcon
-                    titleSection
-                    Spacer().frame(height: 10)
-                    codeInputSection
-                    divider
-                    scanButton
-                    errorSection
-                    Spacer()
-                    infoFooter
+                // Main content based on state
+                switch state {
+                case .input:
+                    inputView
+                case .loading:
+                    loadingView(message: "Verificando código...")
+                case .preview:
+                    previewView
+                case .downloading:
+                    downloadingView
+                case .success:
+                    successView
+                case .error(let message):
+                    errorView(message: message)
                 }
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(loc.close) { dismiss() }
-                    }
-                }
-                .disabled(isLoading)
-                .opacity(isLoading ? 0.5 : 1)
-                
-                // Loading overlay
-                if isLoading {
-                    loadingOverlay
-                }
-                
-                // Success overlay
-                if showSuccess {
-                    successOverlay
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(loc.close) { dismiss() }
                 }
             }
         }
         .sheet(isPresented: $showScanner) {
             QRScannerView { scannedCode in
-                code = scannedCode
+                code = liteService.extractCode(from: scannedCode)
                 showScanner = false
-                processCode()
+                fetchFileInfo()
             }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .onAppear {
-            // Check for pending deep link code
             if let pendingCode = deepLinkHandler.consumeLiteCode() {
                 code = pendingCode
-                processCode()
+                fetchFileInfo()
             }
         }
     }
     
-    // MARK: - Subviews
+    // MARK: - Input View
+    
+    private var inputView: some View {
+        VStack(spacing: 24) {
+            headerIcon
+            titleSection
+            Spacer().frame(height: 10)
+            codeInputSection
+            divider
+            scanButton
+            Spacer()
+            infoFooter
+        }
+    }
     
     private var headerIcon: some View {
         ZStack {
@@ -115,7 +133,7 @@ struct AddComicSheet: View {
                     .autocorrectionDisabled()
                 
                 Button {
-                    processCode()
+                    fetchFileInfo()
                 } label: {
                     Image(systemName: "arrow.right.circle.fill")
                         .font(.title2)
@@ -165,20 +183,6 @@ struct AddComicSheet: View {
         .padding(.horizontal, 24)
     }
     
-    @ViewBuilder
-    private var errorSection: some View {
-        if let error = errorMessage {
-            HStack {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.orange)
-                Text(error)
-                    .font(.caption)
-                    .foregroundColor(.red)
-            }
-            .padding(.horizontal, 24)
-        }
-    }
-    
     private var infoFooter: some View {
         HStack(spacing: 8) {
             Image(systemName: "info.circle")
@@ -192,101 +196,292 @@ struct AddComicSheet: View {
         .padding(.bottom, 20)
     }
     
-    private var loadingOverlay: some View {
+    // MARK: - Loading View
+    
+    private func loadingView(message: String) -> some View {
         VStack(spacing: 20) {
             ProgressView()
                 .scaleEffect(1.5)
-                .tint(.white)
             
-            Text("Downloading...")
+            Text(message)
                 .font(.headline)
-                .foregroundColor(.white)
-            
-            if let fileName = liteService.currentFileName {
-                Text(fileName)
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
-            }
+                .foregroundColor(.secondary)
         }
-        .frame(width: 200, height: 150)
-        .background(Color.black.opacity(0.8))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
     
-    private var successOverlay: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.green)
+    // MARK: - Preview View
+    
+    private var previewView: some View {
+        VStack(spacing: 20) {
+            // File preview image
+            if let image = previewImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxHeight: 250)
+                    .cornerRadius(12)
+                    .shadow(radius: 8)
+            } else {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.gray.opacity(0.2))
+                    .frame(height: 200)
+                    .overlay {
+                        Image(systemName: "doc.fill")
+                            .font(.system(size: 60))
+                            .foregroundColor(.gray)
+                    }
+            }
             
-            Text("Added to Library!")
-                .font(.headline)
+            // File info
+            if let info = fileInfo {
+                VStack(spacing: 8) {
+                    Text(info.originalName)
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                    
+                    HStack(spacing: 16) {
+                        Label(formatFileSize(info.fileSize), systemImage: "doc.fill")
+                        
+                        if let ext = info.originalName.split(separator: ".").last {
+                            Label(ext.uppercased(), systemImage: "tag.fill")
+                        }
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 24)
+            }
+            
+            Spacer()
+            
+            // Add to library button
+            Button {
+                downloadFile()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.title2)
+                    
+                    Text("Adicionar na Biblioteca")
+                        .fontWeight(.semibold)
+                }
                 .foregroundColor(.white)
-            
-            if let info = downloadedFileInfo {
-                Text(info.originalName)
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(IRGradients.primaryHorizontal)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
+            .padding(.horizontal, 24)
             
-            Button("Done") {
-                dismiss()
+            // Cancel button
+            Button("Cancelar") {
+                state = .input
+                fileInfo = nil
+                previewImage = nil
             }
-            .foregroundColor(.white)
-            .padding(.horizontal, 32)
-            .padding(.vertical, 12)
-            .background(IRGradients.primary)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .foregroundColor(.secondary)
+            .padding(.bottom, 20)
         }
-        .frame(width: 250, height: 220)
-        .background(Color.black.opacity(0.9))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .padding(.top, 20)
+    }
+    
+    // MARK: - Downloading View
+    
+    private var downloadingView: some View {
+        VStack(spacing: 24) {
+            // Progress circle
+            ZStack {
+                Circle()
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 8)
+                    .frame(width: 100, height: 100)
+                
+                Circle()
+                    .trim(from: 0, to: downloadProgress)
+                    .stroke(IRGradients.primaryHorizontal, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .frame(width: 100, height: 100)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 0.2), value: downloadProgress)
+                
+                Text("\(Int(downloadProgress * 100))%")
+                    .font(.title2)
+                    .fontWeight(.bold)
+            }
+            
+            VStack(spacing: 8) {
+                Text("Baixando no device...")
+                    .font(.headline)
+                
+                if let info = fileInfo {
+                    Text(info.originalName)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Success View
+    
+    private var successView: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 80))
+                .foregroundStyle(IRGradients.primary)
+            
+            VStack(spacing: 8) {
+                Text("Adicionado!")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                if let info = fileInfo {
+                    Text(info.originalName)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                }
+            }
+            
+            Button {
+                dismiss()
+            } label: {
+                Text("Concluído")
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(IRGradients.primaryHorizontal)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(.horizontal, 24)
+        }
+        .padding(.top, 40)
+    }
+    
+    // MARK: - Error View
+    
+    private func errorView(message: String) -> some View {
+        VStack(spacing: 24) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.orange)
+            
+            VStack(spacing: 8) {
+                Text("Erro")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal, 24)
+            
+            Button {
+                state = .input
+            } label: {
+                Text("Tentar Novamente")
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(IRGradients.primaryHorizontal)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(.horizontal, 24)
+        }
+        .padding(.top, 40)
     }
     
     // MARK: - Actions
     
-    private func processCode() {
+    private func fetchFileInfo() {
         guard !code.isEmpty else { return }
         
-        isLoading = true
-        errorMessage = nil
+        state = .loading
         
         Task {
             do {
-                // 1. Extract clean code (handles deep link format)
-                let cleanCode = liteService.extractCode(from: code)
+                let info = try await liteService.fetchFileInfo(code: code)
                 
-                // 2. Download file
-                let (localURL, fileInfo) = try await liteService.downloadFromCode(cleanCode)
+                // Try to get preview image if it's a PDF
+                var preview: UIImage?
+                if info.originalName.lowercased().hasSuffix(".pdf") {
+                    // We'll show cover after download for now
+                    preview = nil
+                }
                 
                 await MainActor.run {
-                    downloadedFile = localURL
-                    downloadedFileInfo = fileInfo
-                    isLoading = false
-                    showSuccess = true
+                    fileInfo = info
+                    previewImage = preview
+                    state = .preview
+                }
+                
+            } catch let error as LiteDownloadError {
+                await MainActor.run {
+                    switch error {
+                    case .codeNotFound:
+                        state = .error("Código não encontrado")
+                    case .codeExpired:
+                        state = .error("Este código expirou")
+                    default:
+                        state = .error(error.localizedDescription)
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    state = .error(error.localizedDescription)
+                }
+            }
+        }
+    }
+    
+    private func downloadFile() {
+        guard let info = fileInfo else { return }
+        
+        state = .downloading
+        downloadProgress = 0
+        
+        Task {
+            do {
+                // Download with progress
+                let url = try await liteService.downloadFile(
+                    from: info.downloadUrl,
+                    fileName: info.originalName
+                ) { progress in
+                    Task { @MainActor in
+                        downloadProgress = progress
+                    }
+                }
+                
+                await MainActor.run {
+                    downloadedURL = url
+                    state = .success
                     
                     // Notify library to refresh
                     NotificationCenter.default.post(name: .comicAdded, object: nil)
                 }
                 
-            } catch let error as LiteDownloadError {
-                await MainActor.run {
-                    isLoading = false
-                    switch error {
-                    case .codeNotFound:
-                        errorMessage = loc.codeNotFound
-                    case .codeExpired:
-                        errorMessage = "This code has expired"
-                    default:
-                        errorMessage = error.localizedDescription
-                    }
-                }
             } catch {
                 await MainActor.run {
-                    isLoading = false
-                    errorMessage = error.localizedDescription
+                    state = .error("Falha no download: \(error.localizedDescription)")
                 }
             }
+        }
+    }
+    
+    // MARK: - Helpers
+    
+    private func formatFileSize(_ bytes: Int64) -> String {
+        let mb = Double(bytes) / 1_000_000
+        if mb >= 1 {
+            return String(format: "%.1f MB", mb)
+        } else {
+            let kb = Double(bytes) / 1_000
+            return String(format: "%.0f KB", kb)
         }
     }
 }

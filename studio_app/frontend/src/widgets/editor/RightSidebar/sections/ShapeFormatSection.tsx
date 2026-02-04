@@ -66,6 +66,23 @@ export const ShapeFormatSection: React.FC<ShapeFormatSectionProps> = ({ selected
                     disabled={!hasSelectedBalloon}
                 />
             </div>
+
+            {/* Opacity Control */}
+            <div className="mt-3">
+                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1 flex items-center justify-between">
+                    <span>Transparência</span>
+                    <span className="text-zinc-400">{Math.round((selectedBalloon?.opacity ?? 1) * 100)}%</span>
+                </label>
+                <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={Math.round((selectedBalloon?.opacity ?? 1) * 100)}
+                    onChange={(e) => selectedBalloon && updateBalloonUndoable(selectedBalloon.id, { opacity: Number(e.target.value) / 100 })}
+                    disabled={!hasSelectedBalloon}
+                    className="w-full h-1.5 mt-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-cyan-500 disabled:opacity-40"
+                />
+            </div>
         </div>
     );
 };

@@ -7,6 +7,7 @@ interface DebouncedTextareaProps {
     placeholder?: string;
     disabled?: boolean;
     className?: string;
+    onFocus?: () => void;
 }
 
 export const DebouncedTextarea: React.FC<DebouncedTextareaProps> = ({
@@ -15,7 +16,8 @@ export const DebouncedTextarea: React.FC<DebouncedTextareaProps> = ({
     debounceMs = 300,
     placeholder,
     disabled,
-    className
+    className,
+    onFocus
 }) => {
     const [localValue, setLocalValue] = useState(value);
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -69,6 +71,7 @@ export const DebouncedTextarea: React.FC<DebouncedTextareaProps> = ({
             value={localValue}
             onChange={handleChange}
             onBlur={handleBlur}
+            onFocus={onFocus}
             placeholder={placeholder}
             disabled={disabled}
             className={className}

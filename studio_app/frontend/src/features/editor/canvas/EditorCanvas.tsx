@@ -83,11 +83,45 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
 
     // --- GLOBAL CURSOR FOR CREATION TOOLS ---
     // Use CSS class with !important to override all other cursor styles
+
+    // Space bar for pan mode (hand tool)
+    const [isSpacePressed, setIsSpacePressed] = React.useState(false);
+
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if typing in input/textarea
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+                return;
+            }
+            if (e.code === 'Space' && !e.repeat) {
+                e.preventDefault(); // Prevent page scroll
+                setIsSpacePressed(true);
+            }
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (e.code === 'Space') {
+                setIsSpacePressed(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+        };
+    }, []);
+
     React.useEffect(() => {
         // Remove previous cursor classes
-        document.body.classList.remove('cursor-crosshair-global', 'cursor-text-global', 'cursor-select-global');
+        document.body.classList.remove('cursor-crosshair-global', 'cursor-text-global', 'cursor-select-global', 'cursor-grab-global', 'cursor-grabbing-global');
 
-        if (activeTool === 'mask' || activeTool === 'panel' || activeTool.startsWith('balloon-')) {
+        // Space bar takes priority - show grab cursor
+        if (isSpacePressed) {
+            document.body.classList.add('cursor-grab-global');
+        } else if (activeTool === 'mask' || activeTool === 'panel' || activeTool.startsWith('balloon-')) {
             document.body.classList.add('cursor-crosshair-global');
         } else if (activeTool === 'text') {
             document.body.classList.add('cursor-text-global');
@@ -97,9 +131,9 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
 
         // Cleanup on unmount
         return () => {
-            document.body.classList.remove('cursor-crosshair-global', 'cursor-text-global', 'cursor-select-global');
+            document.body.classList.remove('cursor-crosshair-global', 'cursor-text-global', 'cursor-select-global', 'cursor-grab-global', 'cursor-grabbing-global');
         };
-    }, [activeTool]);
+    }, [activeTool, isSpacePressed]);
 
     // --- IMAGES (CORS ENABLED) ---
     // Standard useImage hook to ensure correct state synchronization in stable shell
@@ -200,9 +234,14 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
     // Logic: Active Tile ID (Original vs Clean)
     // If showing clean image: pass the full LOCAL path (for /tiles/local/ endpoint)
     // If showing original: pass fileId (Backend Strategy 1 - DB Lookup)
-    // Note: cleanImageUrl is a media:// URL, we need to extract the actual file path
+    // Note: cleanImageUrl can be media:// or http:// (temp URLs from backend)
+    const isCleanUrlTemporary = cleanImageUrl?.startsWith('http://') || cleanImageUrl?.startsWith('https://');
     const cleanFilePath = cleanImageUrl?.replace('media://', '/') || null;
-    const activeTileId = isCleanVisible && cleanFilePath
+
+    // Skip tiles for temporary http URLs (backend doesn't generate tiles for temp images)
+    const shouldSkipTiles = isCleanVisible && isCleanUrlTemporary;
+
+    const activeTileId = isCleanVisible && cleanFilePath && !isCleanUrlTemporary
         ? cleanFilePath
         : (fileId || imageUrl.replace('media://', '/'));
 
@@ -244,7 +283,7 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                 scaleY={scale}
                 x={position.x}
                 y={position.y}
-                draggable={activeTool === 'select' && !editingId}
+                draggable={isSpacePressed || (activeTool === 'select' && !editingId)}
                 onMouseDown={handleStageMouseDown}
                 onMouseUp={handleStageMouseUp}
                 onMouseMove={handleStageMouseMove}
@@ -256,15 +295,18 @@ export const EditorCanvas = React.forwardRef<Konva.Stage, EditorCanvasProps>(({
                     isLoaded={statusOriginal === 'loaded'}
                 />
 
-                <TilesLayer
-                    imgOriginal={imgOriginal}
-                    activeTileId={activeTileId}
-                    stageScale={scale}
-                    stageX={position.x}
-                    stageY={position.y}
-                    stageWidth={dimensions.width}
-                    stageHeight={dimensions.height}
-                />
+                {/* Skip tiles for temporary http:// URLs - backend doesn't generate tiles for them */}
+                {!shouldSkipTiles && (
+                    <TilesLayer
+                        imgOriginal={imgOriginal}
+                        activeTileId={activeTileId}
+                        stageScale={scale}
+                        stageX={position.x}
+                        stageY={position.y}
+                        stageWidth={dimensions.width}
+                        stageHeight={dimensions.height}
+                    />
+                )}
 
                 {showPanels && (
                     <PanelsLayer

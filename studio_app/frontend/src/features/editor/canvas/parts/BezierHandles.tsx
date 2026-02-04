@@ -25,18 +25,18 @@ interface BezierHandlesProps {
 }
 
 // =============================================================================
-// CONSTANTS - Professional Figma-like design
+// CONSTANTS - Professional Figma-like design (matching vertex squares)
 // =============================================================================
 
-const HANDLE_RADIUS = 4;                 // Circles (Figma style)
-const HANDLE_FILL = '#ffffff';           // White fill
-const HANDLE_FILL_GHOST = '#ffffff40';   // Semi-transparent for ghost
-const HANDLE_STROKE = '#0066FF';         // Blue stroke
-const HANDLE_STROKE_GHOST = '#0066FF80'; // Semi-transparent blue for ghost
-const HANDLE_STROKE_WIDTH = 1.5;
-const LINE_STROKE = '#0066FF';           // Blue line
-const LINE_STROKE_GHOST = '#0066FF60';   // Semi-transparent for ghost
-const LINE_STROKE_WIDTH = 1;
+const HANDLE_RADIUS = 3;                 // Smaller circles to match 6px vertex squares
+const HANDLE_FILL = '#3b82f6';           // Blue fill (matching vertex color)
+const HANDLE_FILL_GHOST = '#3b82f640';   // Semi-transparent for ghost
+const HANDLE_STROKE = '#ffffff';         // White stroke (like selected vertex)
+const HANDLE_STROKE_GHOST = '#ffffff60'; // Semi-transparent white for ghost
+const HANDLE_STROKE_WIDTH = 1;
+const LINE_STROKE = '#3b82f6';           // Blue line (matching vertex color)
+const LINE_STROKE_GHOST = '#3b82f640';   // Semi-transparent for ghost
+const LINE_STROKE_WIDTH = 0.5;           // Thinner line
 
 // Bezier approximation constant for circular arcs (≈ 0.5523)
 const BEZIER_K = 0.5523;

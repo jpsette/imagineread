@@ -22,6 +22,17 @@ const BalloonVertexEditorComponent: React.FC<BalloonVertexEditorProps> = ({
     const pathRef = useRef<any>(null);
     const [selectedVertexIndex, setSelectedVertexIndex] = useState<number | null>(null);
 
+    // Cleanup: Reset cursor when component unmounts
+    useEffect(() => {
+        return () => {
+            // Find and reset the Konva stage container cursor
+            const stages = document.querySelectorAll('.konvajs-content');
+            stages.forEach(stage => {
+                (stage as HTMLElement).style.cursor = '';
+            });
+        };
+    }, []);
+
     // Box offset for converting between relative and absolute coords
     const minX = balloon.box_2d[1];
     const minY = balloon.box_2d[0];
@@ -396,11 +407,10 @@ const BalloonVertexEditorComponent: React.FC<BalloonVertexEditorProps> = ({
                 ref={pathRef}
                 data={pathData}
                 stroke="#3b82f6"
-                strokeWidth={0.5}
-                fill="rgba(59, 130, 246, 0.05)"
+                strokeWidth={1}
+                fill="transparent"
                 onDblClick={handleLineDblClick}
                 hitStrokeWidth={15}
-                opacity={0.9}
             />
 
             {/* Invisible overlay for curve drag - captures mouse events reliably */}
@@ -414,7 +424,11 @@ const BalloonVertexEditorComponent: React.FC<BalloonVertexEditorProps> = ({
                     onMouseDown={handleLineDragStart}
                     onMouseMove={handleLineDragMove}
                     onMouseUp={handleLineDragEnd}
-                    onMouseLeave={handleLineDragEnd}
+                    onMouseLeave={(e) => {
+                        handleLineDragEnd(e);
+                        const container = e.target.getStage()?.container();
+                        if (container) container.style.cursor = 'default';
+                    }}
                     onDblClick={handleLineDblClick}
                     onMouseEnter={e => {
                         const container = e.target.getStage()?.container();

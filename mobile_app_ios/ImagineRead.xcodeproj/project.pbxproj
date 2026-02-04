@@ -8,20 +8,29 @@
 
 /* Begin PBXBuildFile section */
 		00480B6A707A4072C20AC7F0 /* StudioProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB316ABEE0D0B81A6CF0473C /* StudioProject.swift */; };
+		0479902D98E43256BCA38354 /* ReaderTopBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EACC727173BA4817757E9B /* ReaderTopBar.swift */; };
+		0FC7A8F5EC6E551D768DF506 /* ReaderActionsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC1EB275EFB11543F6081A4 /* ReaderActionsMenu.swift */; };
+		2CD06B20DCB17B323307D46D /* HighlightCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD31A0C17F45212B8A21E238 /* HighlightCanvas.swift */; };
 		3E5B527B96EBBE0E6E14A8DF /* BackgroundStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F695F32FE303664BB32BDE6 /* BackgroundStyle.swift */; };
 		41863C333038AAB5C7950063 /* StudioAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57EAA7F7C11AA25B050A185F /* StudioAPI.swift */; };
+		41F3ED998D8DC38D9A57A07C /* HighlightsListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39C0F64728266AE58DD4BA9A /* HighlightsListSheet.swift */; };
 		44B4EC8C949C73784B00D8E2 /* BalloonOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B01CE9090EB2FD94485868 /* BalloonOverlay.swift */; };
 		4877AB84CE9E17C2FA5A2EA0 /* Panel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BBD379616C2ABEBE835F3BE /* Panel.swift */; };
 		4E986913F5A5386C7BC8A96D /* IRBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA26F658BACA6B95CD5BF356 /* IRBadge.swift */; };
+		507C3FF6E793BD9382CADD56 /* ReaderCounterBadges.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4090CC29DBA2F737433CB4D /* ReaderCounterBadges.swift */; };
 		5CCE1ABB590ACA49BD336781 /* IRButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4106F3D84C08224542E04D4 /* IRButton.swift */; };
 		5DC63A269898018C0E3B8232 /* CardStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4119EBEABE17F63A7A915765 /* CardStyle.swift */; };
 		5EB4402D64BAA39D84D47D98 /* AnimatedReaderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B56D7FAC33EBAE4593A7F5CF /* AnimatedReaderViewModel.swift */; };
 		68418DED3464B6E39BB0814E /* SectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9699E2EAFE4F3FFA1D93C807 /* SectionHeader.swift */; };
+		6849EFB6616D2B635D9AC318 /* HighlightsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D54F503D6A6F0C8933F5C4 /* HighlightsService.swift */; };
+		6BB8B9A9DF00317EA682D5E3 /* HighlightDrawingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B86472B6532577D33B077F3 /* HighlightDrawingView.swift */; };
+		90DA2781BA8110B6F317E9E8 /* HighlightOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57329EB84A95815659C2804A /* HighlightOverlay.swift */; };
 		99371532B148CC9DE017A494 /* Balloon.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE6DBA8CD20741B53DAF1DB4 /* Balloon.swift */; };
 		A1B2C3D401234567 /* ImagineReadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000001 /* ImagineReadApp.swift */; };
 		A1B2C3D402234567 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000002 /* ContentView.swift */; };
 		A1B2C3D403234567 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000003 /* Assets.xcassets */; };
 		A8A05FE664DDD60F4CF7F217 /* IRFloatingButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8627142D98B6AF695E9938 /* IRFloatingButton.swift */; };
+		A8D7D851999DF7F8BD10E0C7 /* ReaderBottomBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5201D66BD43692BA24B3 /* ReaderBottomBar.swift */; };
 		AC3020BD308CE4353E435136 /* IRColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A7B780FC5343CD6C95BF7C /* IRColors.swift */; };
 		B1000001 /* Comic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000001 /* Comic.swift */; };
 		B1000002 /* PDFService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000002 /* PDFService.swift */; };
@@ -78,17 +87,27 @@
 		B1000075 /* ShareComicSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000075 /* ShareComicSheet.swift */; };
 		B1000076 /* EditCollectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000076 /* EditCollectionSheet.swift */; };
 		B1000077 /* AddComicsToCollectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000077 /* AddComicsToCollectionSheet.swift */; };
-		D5CC00F176D2E94647685F0F /* IRGradients.swift in Sources */ = {isa = PBXBuildFile; fileRef = C02729E2BD98AD596BFD4BE5 /* IRGradients.swift */; };
 		B1000090 /* LiteDownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000090 /* LiteDownloadService.swift */; };
 		B1000091 /* DeepLinkHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000091 /* DeepLinkHandler.swift */; };
+		D55EE078B7B6B5582D8A0702 /* ImagineRead.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = D96D6CDF137DB18E88DA0182 /* ImagineRead.xcdatamodeld */; };
+		D5CC00F176D2E94647685F0F /* IRGradients.swift in Sources */ = {isa = PBXBuildFile; fileRef = C02729E2BD98AD596BFD4BE5 /* IRGradients.swift */; };
+		FB5D010821D4D96A9F637AFF /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 491CDC5A8620C343A3CB46D8 /* CoreDataStack.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0B86472B6532577D33B077F3 /* HighlightDrawingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HighlightDrawingView.swift; sourceTree = "<group>"; };
+		1B0B5201D66BD43692BA24B3 /* ReaderBottomBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReaderBottomBar.swift; sourceTree = "<group>"; };
+		23EACC727173BA4817757E9B /* ReaderTopBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReaderTopBar.swift; sourceTree = "<group>"; };
 		37A7B780FC5343CD6C95BF7C /* IRColors.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IRColors.swift; path = DesignSystem/Tokens/IRColors.swift; sourceTree = "<group>"; };
+		39C0F64728266AE58DD4BA9A /* HighlightsListSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HighlightsListSheet.swift; sourceTree = "<group>"; };
 		4119EBEABE17F63A7A915765 /* CardStyle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CardStyle.swift; path = DesignSystem/ViewModifiers/CardStyle.swift; sourceTree = "<group>"; };
+		491CDC5A8620C343A3CB46D8 /* CoreDataStack.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
+		57329EB84A95815659C2804A /* HighlightOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HighlightOverlay.swift; sourceTree = "<group>"; };
 		57EAA7F7C11AA25B050A185F /* StudioAPI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StudioAPI.swift; sourceTree = "<group>"; };
+		69422DE3CBFE69592AF695B9 /* ImagineRead.xcdatamodel */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = wrapper.xcdatamodel; path = ImagineRead.xcdatamodel; sourceTree = "<group>"; };
 		7BBD379616C2ABEBE835F3BE /* Panel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Panel.swift; sourceTree = "<group>"; };
 		7F695F32FE303664BB32BDE6 /* BackgroundStyle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BackgroundStyle.swift; path = DesignSystem/ViewModifiers/BackgroundStyle.swift; sourceTree = "<group>"; };
+		90D54F503D6A6F0C8933F5C4 /* HighlightsService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HighlightsService.swift; sourceTree = "<group>"; };
 		9699E2EAFE4F3FFA1D93C807 /* SectionHeader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SectionHeader.swift; path = DesignSystem/ViewModifiers/SectionHeader.swift; sourceTree = "<group>"; };
 		A1B2C3D400000000 /* ImagineRead.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ImagineRead.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B2C3D400000001 /* ImagineReadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagineReadApp.swift; sourceTree = "<group>"; };
@@ -149,16 +168,19 @@
 		B2000075 /* ShareComicSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareComicSheet.swift; sourceTree = "<group>"; };
 		B2000076 /* EditCollectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditCollectionSheet.swift; sourceTree = "<group>"; };
 		B2000077 /* AddComicsToCollectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddComicsToCollectionSheet.swift; sourceTree = "<group>"; };
+		B2000090 /* LiteDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiteDownloadService.swift; sourceTree = "<group>"; };
+		B2000091 /* DeepLinkHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkHandler.swift; sourceTree = "<group>"; };
 		B56D7FAC33EBAE4593A7F5CF /* AnimatedReaderViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnimatedReaderViewModel.swift; sourceTree = "<group>"; };
 		BA26F658BACA6B95CD5BF356 /* IRBadge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IRBadge.swift; path = DesignSystem/Components/IRBadge.swift; sourceTree = "<group>"; };
+		BD31A0C17F45212B8A21E238 /* HighlightCanvas.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HighlightCanvas.swift; sourceTree = "<group>"; };
+		BFC1EB275EFB11543F6081A4 /* ReaderActionsMenu.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReaderActionsMenu.swift; sourceTree = "<group>"; };
 		C02729E2BD98AD596BFD4BE5 /* IRGradients.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IRGradients.swift; path = DesignSystem/Tokens/IRGradients.swift; sourceTree = "<group>"; };
 		D1B01CE9090EB2FD94485868 /* BalloonOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BalloonOverlay.swift; sourceTree = "<group>"; };
+		D4090CC29DBA2F737433CB4D /* ReaderCounterBadges.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReaderCounterBadges.swift; sourceTree = "<group>"; };
 		DB8627142D98B6AF695E9938 /* IRFloatingButton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IRFloatingButton.swift; path = DesignSystem/Components/IRFloatingButton.swift; sourceTree = "<group>"; };
 		DE6DBA8CD20741B53DAF1DB4 /* Balloon.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Balloon.swift; sourceTree = "<group>"; };
 		EB316ABEE0D0B81A6CF0473C /* StudioProject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StudioProject.swift; sourceTree = "<group>"; };
 		F4106F3D84C08224542E04D4 /* IRButton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IRButton.swift; path = DesignSystem/Components/IRButton.swift; sourceTree = "<group>"; };
-		B2000090 /* LiteDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiteDownloadService.swift; sourceTree = "<group>"; };
-		B2000091 /* DeepLinkHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkHandler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -231,6 +253,18 @@
 			name = Tokens;
 			sourceTree = "<group>";
 		};
+		C2500F114A680B8F431729C4 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				D4090CC29DBA2F737433CB4D /* ReaderCounterBadges.swift */,
+				BFC1EB275EFB11543F6081A4 /* ReaderActionsMenu.swift */,
+				23EACC727173BA4817757E9B /* ReaderTopBar.swift */,
+				1B0B5201D66BD43692BA24B3 /* ReaderBottomBar.swift */,
+			);
+			name = Components;
+			path = Components;
+			sourceTree = "<group>";
+		};
 		CC822D99DDE76EC846AC71F9 /* ViewModifiers */ = {
 			isa = PBXGroup;
 			children = (
@@ -284,6 +318,7 @@
 				B2000053 /* NotificationService.swift */,
 				B2000090 /* LiteDownloadService.swift */,
 				B2000091 /* DeepLinkHandler.swift */,
+				90D54F503D6A6F0C8933F5C4 /* HighlightsService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -294,6 +329,7 @@
 				G0000005 /* Models */,
 				G0000006 /* ViewModels */,
 				G0000007 /* Views */,
+				C2500F114A680B8F431729C4 /* Components */,
 			);
 			path = Reader;
 			sourceTree = "<group>";
@@ -334,6 +370,10 @@
 				B2000074 /* AddAnnotationSheet.swift */,
 				B2000075 /* ShareComicSheet.swift */,
 				D1B01CE9090EB2FD94485868 /* BalloonOverlay.swift */,
+				57329EB84A95815659C2804A /* HighlightOverlay.swift */,
+				0B86472B6532577D33B077F3 /* HighlightDrawingView.swift */,
+				BD31A0C17F45212B8A21E238 /* HighlightCanvas.swift */,
+				39C0F64728266AE58DD4BA9A /* HighlightsListSheet.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -415,6 +455,8 @@
 			isa = PBXGroup;
 			children = (
 				G0000043 /* Repositories */,
+				491CDC5A8620C343A3CB46D8 /* CoreDataStack.swift */,
+				D96D6CDF137DB18E88DA0182 /* ImagineRead.xcdatamodeld */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -660,6 +702,17 @@
 				5EB4402D64BAA39D84D47D98 /* AnimatedReaderViewModel.swift in Sources */,
 				B1000090 /* LiteDownloadService.swift in Sources */,
 				B1000091 /* DeepLinkHandler.swift in Sources */,
+				90DA2781BA8110B6F317E9E8 /* HighlightOverlay.swift in Sources */,
+				6BB8B9A9DF00317EA682D5E3 /* HighlightDrawingView.swift in Sources */,
+				6849EFB6616D2B635D9AC318 /* HighlightsService.swift in Sources */,
+				2CD06B20DCB17B323307D46D /* HighlightCanvas.swift in Sources */,
+				41F3ED998D8DC38D9A57A07C /* HighlightsListSheet.swift in Sources */,
+				FB5D010821D4D96A9F637AFF /* CoreDataStack.swift in Sources */,
+				D55EE078B7B6B5582D8A0702 /* ImagineRead.xcdatamodeld in Sources */,
+				507C3FF6E793BD9382CADD56 /* ReaderCounterBadges.swift in Sources */,
+				0FC7A8F5EC6E551D768DF506 /* ReaderActionsMenu.swift in Sources */,
+				0479902D98E43256BCA38354 /* ReaderTopBar.swift in Sources */,
+				A8D7D851999DF7F8BD10E0C7 /* ReaderBottomBar.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -873,6 +926,18 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		D96D6CDF137DB18E88DA0182 /* ImagineRead.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				69422DE3CBFE69592AF695B9 /* ImagineRead.xcdatamodel */,
+			);
+			path = ImagineRead.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = A1B2C3D4P0000001 /* Project object */;
 }

@@ -173,6 +173,35 @@ struct ComicCard: View {
             }
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            // Share button
+            Button {
+                shareComic()
+            } label: {
+                Label("Compartilhar", systemImage: "square.and.arrow.up")
+            }
+            
+            // Add to collection
+            Button {
+                showCollectionSheet = true
+            } label: {
+                Label("Adicionar à Coleção", systemImage: "folder.badge.plus")
+            }
+            
+            Divider()
+            
+            // Delete button (only for downloaded files)
+            if comic.isDownloaded {
+                Button(role: .destructive) {
+                    deleteComic()
+                } label: {
+                    Label("Apagar do Device", systemImage: "trash")
+                }
+            }
+        }
+        .sheet(isPresented: $showCollectionSheet) {
+            AddToCollectionSheet(comicPath: comic.url.path, comicTitle: comic.title)
+        }
     }
     
     private func downloadComic() {
@@ -244,5 +273,22 @@ struct ComicCard: View {
         generator.impactOccurred()
         
         container.collections.toggleFavorite(comic.url.path)
+    }
+    
+    private func deleteComic() {
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
+        // Delete using LibraryService
+        if LibraryService.shared.deleteComic(comic) {
+            // Success haptic
+            let successGenerator = UINotificationFeedbackGenerator()
+            successGenerator.notificationOccurred(.success)
+        } else {
+            // Error haptic
+            let errorGenerator = UINotificationFeedbackGenerator()
+            errorGenerator.notificationOccurred(.error)
+        }
     }
 }

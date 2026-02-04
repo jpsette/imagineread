@@ -12,31 +12,55 @@ import SwiftUI
 struct VerticalPageView: View {
     let pageIndex: Int
     @ObservedObject var cache: PageCache
+    var comicPath: String? = nil  // For highlight support
+    var isHighlightMode: Bool = false
     
     @State private var displayImage: UIImage?
     @State private var aspectRatio: CGFloat = 0.7
     
     var body: some View {
-        ZStack {
-            if let image = displayImage ?? cache.getImage(for: pageIndex) {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: .infinity)
-                    .onAppear {
-                        aspectRatio = image.size.width / image.size.height
-                    }
-            } else {
-                Rectangle()
-                    .fill(Color.black)
-                    .aspectRatio(aspectRatio, contentMode: .fit)
-                    .frame(maxWidth: .infinity)
-                    .overlay(
-                        ProgressView()
-                            .tint(.white)
+        GeometryReader { geometry in
+            ZStack {
+                if let image = displayImage ?? cache.getImage(for: pageIndex) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                        .onAppear {
+                            aspectRatio = image.size.width / image.size.height
+                        }
+                } else {
+                    Rectangle()
+                        .fill(Color.black)
+                        .aspectRatio(aspectRatio, contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                        .overlay(
+                            ProgressView()
+                                .tint(.white)
+                        )
+                }
+                
+                // Highlight overlay (hidden during edit mode)
+                if let path = comicPath, !isHighlightMode {
+                    HighlightOverlay(
+                        comicPath: path,
+                        pageIndex: pageIndex,
+                        pageSize: geometry.size
                     )
+                }
+                
+                // Drawing canvas (when in highlight mode)
+                if isHighlightMode, let path = comicPath {
+                    HighlightCanvas(
+                        comicPath: path,
+                        pageIndex: pageIndex,
+                        containerSize: geometry.size,
+                        zoomScale: 1.0
+                    )
+                }
             }
         }
+        .aspectRatio(aspectRatio, contentMode: .fit)
         .onAppear {
             cache.onPageAppear(pageIndex)
             loadImage()

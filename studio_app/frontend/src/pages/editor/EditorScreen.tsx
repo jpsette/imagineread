@@ -9,22 +9,28 @@ import { EditorLeftPanel } from '@widgets/editor/EditorLeftPanel';
 import { EditorRightPanel } from '@widgets/editor/EditorRightPanel';
 import { Filmstrip } from '@widgets/editor/Filmstrip';
 import { EditorCanvasArea } from '@widgets/editor/CanvasArea';
+import { TextListPanel } from '@features/editor/components/TextListPanel';
+import DraggableWindow from '@shared/ui/DraggableWindow';
+import { DictionaryManager } from '@features/dictionary';
 
 // HOOKS & STORES
 import { useFileItem } from '@shared/hooks/useFileItem';
 import { useTabPersistence } from '@features/tabs/hooks/useTabPersistence';
 import { useEditorLogic } from '@features/editor/hooks/useEditorLogic';
 import { useEditorStore } from '@features/editor/store';
-// import { useEditorUIStore } from '@features/editor/uiStore';
 import { useVectorization } from '@features/editor/hooks/useVectorization';
 import { useShortcutManager } from '@features/editor/hooks/useShortcutManager';
 import { usePanelWorkflow } from '@features/editor/hooks/usePanelWorkflow';
 import { useTranslationStore } from '@app/store/useTranslationStore';
+import { useUIStore } from '@app/store/useUIStore';
 
 export const EditorScreen: React.FC = () => {
     // --- ROUTER PARAMS ---
     const { fileId: rawFileId } = useParams<{ fileId: string }>();
     const navigate = useNavigate();
+
+    // --- UI STORE (Glossary) ---
+    const { showDictionary, setShowDictionary } = useUIStore();
 
     // Decode URL-encoded path (for local files with slashes)
     const fileId = rawFileId ? decodeURIComponent(rawFileId) : null;
@@ -321,7 +327,26 @@ export const EditorScreen: React.FC = () => {
                         <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shadow-glow-blue"></div>
                     </div>
                 )}
+
+                {/* Text List Panel (Floating) */}
+                <TextListPanel />
             </EditorLayout>
+
+            {/* GLOSSARY WINDOW */}
+            {showDictionary && (
+                <DraggableWindow
+                    title="📖 Glossário de Termos"
+                    onClose={() => setShowDictionary(false)}
+                    minimize={false}
+                    docked={false}
+                    zIndex={9999}
+                    className="border border-white/10 shadow-2xl bg-[#09090b]"
+                    initialPosition={{ x: 200, y: 100 }}
+                    initialSize={{ width: 900, height: 550 }}
+                >
+                    <DictionaryManager />
+                </DraggableWindow>
+            )}
         </div>
     );
 };

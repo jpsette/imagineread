@@ -138,6 +138,14 @@ export const EditorHeader = () => {
     const handleDiscard = () => {
         setIsDirty(false); // Force clean state so we can leave
         setShowUnsavedModal(false);
+
+        // IMPORTANT: Clear translation data when discarding changes
+        // This prevents translation/language data from persisting after discard
+        if (fileId) {
+            useTranslationStore.getState().clearTranslations(fileId);
+            console.log('🗑️ [EditorHeader] Cleared translation data for discarded file:', fileId);
+        }
+
         performNavigation();
         setPendingNavigationPath(null);
     };

@@ -337,7 +337,8 @@ export const BalloonShape = React.memo(BalloonShapeComponent, (prev, next) => {
     const visibilityChanged =
         prev.showBalloon !== next.showBalloon ||
         prev.showText !== next.showText ||
-        prev.showMaskOverlay !== next.showMaskOverlay;
+        prev.showMaskOverlay !== next.showMaskOverlay ||
+        prev.curveEditingEnabled !== next.curveEditingEnabled;
 
     return !(balloonChanged || selectionChanged || editingChanged || visibilityChanged);
 });

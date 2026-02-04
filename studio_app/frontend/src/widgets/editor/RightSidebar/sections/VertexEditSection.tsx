@@ -88,10 +88,10 @@ export const VertexEditSection: React.FC<VertexEditSectionProps> = ({
                 onClick={handleToggleVectorEdit}
                 disabled={!hasSelectedBalloon}
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${isVectorEditMode
-                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40 shadow-lg shadow-blue-500/10'
-                        : hasSelectedBalloon
-                            ? 'bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10 hover:text-zinc-300 hover:border-white/20'
-                            : 'bg-white/5 text-zinc-600 border border-white/5 cursor-not-allowed'
+                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40 shadow-lg shadow-blue-500/10'
+                    : hasSelectedBalloon
+                        ? 'bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10 hover:text-zinc-300 hover:border-white/20'
+                        : 'bg-white/5 text-zinc-600 border border-white/5 cursor-not-allowed'
                     }`}
             >
                 <PenTool size={18} className={isVectorEditMode ? 'text-blue-400' : ''} />

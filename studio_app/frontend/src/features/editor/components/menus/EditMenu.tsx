@@ -1,21 +1,22 @@
 import React from 'react';
-import { Type, Bold, Italic, Underline, Baseline, AlignVerticalSpaceAround, AlignCenter, AlignLeft, AlignRight, AlignJustify, Plus } from 'lucide-react';
+import { Type, Bold, Italic, Underline, Baseline, AlignVerticalSpaceAround, AlignCenter, AlignLeft, AlignRight, AlignJustify, Plus, List, Book } from 'lucide-react';
 import { Balloon } from '@shared/types';
 
 import { useEditorStore } from '../../store';
 import { useEditorUIStore } from '@features/editor/uiStore';
 import { ColorPicker } from '../ui/ColorPicker';
 import { DebouncedTextarea } from '../ui/DebouncedTextarea';
+import { useUIStore } from '@app/store/useUIStore';
 
 export const EditMenu: React.FC = () => {
     // Stores
     const { balloons, updateBalloonUndoable } = useEditorStore();
-    const { selectedId, setActiveTool } = useEditorUIStore();
+    const { selectedId, setActiveTool, showTextListPanel, setShowTextListPanel } = useEditorUIStore();
+    const { showDictionary, setShowDictionary } = useUIStore();
 
     // Find balloon safely
     const selectedBalloon = balloons.find(b => b.id === selectedId);
     const isDisabled = !selectedBalloon;
-    const isEditing = false; // TODO: If we need this state, we should add it to UI Store or Local logic
 
     // Wrapper to match signature
     const onUpdate = (id: string, attrs: Partial<Balloon>) => updateBalloonUndoable(id, attrs);
@@ -35,13 +36,7 @@ export const EditMenu: React.FC = () => {
     const toggleStyle = (style: 'bold' | 'italic') => {
         if (!selectedBalloon) return;
 
-        // RICH TEXT MODE
-        if (isEditing) {
-            document.execCommand(style);
-            return;
-        }
-
-        // OBJECT MODE (Legacy)
+        // Toggle Konva font style
         const current = selectedBalloon.fontStyle || 'normal';
         let parts = current === 'normal' ? [] : current.split(' ');
 
@@ -58,12 +53,6 @@ export const EditMenu: React.FC = () => {
     // Helper for Underline
     const toggleDecoration = () => {
         if (!selectedBalloon) return;
-
-        // RICH TEXT MODE
-        if (isEditing) {
-            document.execCommand('underline');
-            return;
-        }
 
         const current = selectedBalloon.textDecoration || '';
         handleUpdate({ textDecoration: current === 'underline' ? '' : 'underline' });
@@ -122,7 +111,10 @@ export const EditMenu: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col gap-3 p-1">
+        <div className="flex flex-col gap-3 p-1 pt-4">
+            {/* HEADER */}
+            <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Ferramentas</label>
+
             {/* INSERT TEXT BUTTON - Always enabled, outside disabled container */}
             <button
                 onClick={() => setActiveTool('text')}
@@ -132,6 +124,32 @@ export const EditMenu: React.FC = () => {
             >
                 <Plus size={14} />
                 <span>Inserir Texto</span>
+            </button>
+
+            {/* View All Texts Button - Always enabled, Toggle behavior */}
+            <button
+                onClick={() => setShowTextListPanel(!showTextListPanel)}
+                className={`w-full h-8 rounded-lg flex items-center justify-center gap-2 transition-all border text-[10px] font-medium cursor-pointer
+                    ${showTextListPanel
+                        ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+                        : 'bg-zinc-800/50 hover:bg-zinc-700 text-zinc-400 hover:text-white border-zinc-700/50 hover:border-zinc-600 hover:shadow-md'
+                    }`}
+            >
+                <List size={12} />
+                <span>Ver Todos os Textos</span>
+            </button>
+
+            {/* GLOSSARY BUTTON - Always enabled, Toggle behavior */}
+            <button
+                onClick={() => setShowDictionary(!showDictionary)}
+                className={`w-full h-8 rounded-lg flex items-center justify-center gap-2 transition-all border text-[10px] font-medium cursor-pointer
+                    ${showDictionary
+                        ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+                        : 'bg-zinc-800/50 hover:bg-zinc-700 text-zinc-400 hover:text-white border-zinc-700/50 hover:border-zinc-600 hover:shadow-md'
+                    }`}
+            >
+                <Book size={12} />
+                <span>Glossário</span>
             </button>
 
             {/* Container for balloon-dependent controls */}
@@ -146,7 +164,7 @@ export const EditMenu: React.FC = () => {
                         value={selectedBalloon?.text || ''}
                         onChange={(text) => handleUpdate({ text })}
                         placeholder={isDisabled ? "Selecione para editar..." : "Digite o texto..."}
-                        disabled={isDisabled || isEditing}
+                        disabled={isDisabled}
                         className="w-full bg-white/5 border border-white/5 rounded-xl p-2.5 text-[11px] text-white focus:border-neon-blue/50 outline-none min-h-[100px] resize-none placeholder:text-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed leading-relaxed transition-colors hover:bg-white/10"
                     />
                 </div>
@@ -206,7 +224,6 @@ export const EditMenu: React.FC = () => {
                         {/* B / I / U Toggles */}
                         <div className="flex bg-white/5 rounded-xl border border-white/5 overflow-hidden h-8 flex-1">
                             <button
-                                onMouseDown={(e) => isEditing && e.preventDefault()}
                                 onClick={() => toggleStyle('bold')}
                                 className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isBold ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'
                                     }`}
@@ -215,7 +232,6 @@ export const EditMenu: React.FC = () => {
                             ><Bold size={14} /></button>
                             <div className="w-px bg-border-color" />
                             <button
-                                onMouseDown={(e) => isEditing && e.preventDefault()}
                                 onClick={() => toggleStyle('italic')}
                                 className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isItalic ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'
                                     }`}
@@ -224,7 +240,6 @@ export const EditMenu: React.FC = () => {
                             ><Italic size={14} /></button>
                             <div className="w-px bg-border-color" />
                             <button
-                                onMouseDown={(e) => isEditing && e.preventDefault()}
                                 onClick={toggleDecoration}
                                 className={`flex-1 hover:bg-white/10 transition-colors flex items-center justify-center ${isUnderline ? 'bg-white/10 text-neon-blue' : 'text-text-secondary'
                                     }`}

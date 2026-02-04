@@ -70,6 +70,9 @@ export const TranslateMenu: React.FC<TranslateMenuProps> = ({
     return (
         <>
             <div className="flex flex-col gap-3 p-1 pt-4">
+                {/* HEADER */}
+                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Essenciais</label>
+
                 {/* CENTER PAGE BUTTON */}
                 <button
                     onClick={onCenterPage}
@@ -136,8 +139,8 @@ export const TranslateMenu: React.FC<TranslateMenuProps> = ({
                         <button
                             onClick={() => setShowGlossaryDropdown(!showGlossaryDropdown)}
                             className={`w-full h-9 rounded-xl flex items-center justify-between px-3 transition-all border text-[10px] font-medium ${selectedGlossaryId
-                                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-                                    : 'bg-white/5 text-text-secondary border-white/10 hover:bg-white/10'
+                                ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+                                : 'bg-white/5 text-text-secondary border-white/10 hover:bg-white/10'
                                 }`}
                         >
                             <span className="flex items-center gap-2">
